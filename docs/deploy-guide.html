@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PloyKong — Complete Deployment Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050814; --bg2: #080d1e; --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08); --indigo: #4F46E5; --purple: #a855f7;
+      --cyan: #06b6d4; --neon-cyan: #22d3ee; --neon-purple: #c084fc;
+      --text: #e2e8f0; --muted: #94a3b8; --success: #10b981; --danger: #ef4444;
+      --ff-display: 'Syne', sans-serif; --ff-body: 'Plus Jakarta Sans', sans-serif;
+      --ff-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--ff-body); font-size: 15px; line-height: 1.7; }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 260px; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+      overflow-y: auto; background: var(--bg2); border-right: 1px solid var(--border);
+      padding: 28px 20px;
+    }
+    .main { flex: 1; max-width: 860px; padding: 48px 52px; min-width: 0; }
+    @media (max-width: 900px) { .sidebar { display: none; } .main { padding: 32px 24px; } }
+
+    /* Sidebar */
+    .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .pk-badge {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--indigo), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--ff-display); font-size: 14px; font-weight: 800; color: #fff;
+    }
+    .sidebar-title { font-family: var(--ff-display); font-size: 16px; font-weight: 800; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      border-radius: 10px; text-decoration: none; color: var(--muted);
+      font-size: 13px; font-weight: 600; transition: all 0.15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item .nav-num {
+      width: 22px; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.07);
+      display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
+    }
+    .nav-section { font-size: 10px; color: rgba(148,163,184,0.5); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 16px 12px 6px; }
+
+    /* Phase cards */
+    .phase {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; margin-bottom: 28px; overflow: hidden;
+    }
+    .phase-head {
+      display: flex; align-items: center; gap: 16px; padding: 22px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .phase-num {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--indigo), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--ff-display); font-size: 16px; font-weight: 800; flex-shrink: 0;
+    }
+    .phase-head h2 { font-family: var(--ff-display); font-size: 18px; font-weight: 800; flex: 1; }
+    .phase-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+    /* Steps */
+    .step { display: flex; gap: 16px; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; color: var(--muted); flex-shrink: 0; margin-top: 2px;
+    }
+    .step-content { flex: 1; min-width: 0; }
+    .step-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+
+    /* Code blocks */
+    .code-wrap { background: #010409; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; overflow: hidden; margin: 8px 0; }
+    .code-label { display: block; padding: 7px 14px; background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-family: var(--ff-mono); }
+    .code { padding: 18px; overflow-x: auto; }
+    pre { font-family: var(--ff-mono); font-size: 13px; line-height: 1.7; white-space: pre; }
+    .cmd { color: #79c0ff; }
+    .cm { color: #8b949e; }
+    .str { color: #a5d6ff; }
+    .kw { color: #ff7b72; }
+    .var { color: #ffa657; }
+    .cd { color: #56d364; }
+    code { font-family: var(--ff-mono); background: rgba(255,255,255,0.07); padding: 2px 7px; border-radius: 5px; font-size: 13px; color: var(--neon-cyan); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+    .badge-backend { background: rgba(79,70,229,0.15); color: #818cf8; border: 1px solid rgba(79,70,229,0.3); }
+    .badge-frontend { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-infra { background: rgba(6,182,212,0.12); color: var(--neon-cyan); border: 1px solid rgba(6,182,212,0.3); }
+    .badge-mobile { background: rgba(236,72,153,0.12); color: #f472b6; border: 1px solid rgba(236,72,153,0.3); }
+    .badge-cicd { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-db { background: rgba(168,85,247,0.12); color: var(--neon-purple); border: 1px solid rgba(168,85,247,0.3); }
+
+    /* Info boxes */
+    .info-box { display: flex; gap: 14px; padding: 16px; border-radius: 12px; font-size: 13px; line-height: 1.6; margin: 8px 0; }
+    .info-tip { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+    .info-warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+    .info-note { background: rgba(79,70,229,0.08); border: 1px solid rgba(79,70,229,0.2); }
+    .info-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* Page header */
+    .page-header { margin-bottom: 48px; }
+    .header-badge {
+      display: inline-block; padding: 6px 16px; border-radius: 100px;
+      background: rgba(79,70,229,0.12); border: 1px solid rgba(79,70,229,0.3);
+      font-size: 12px; font-weight: 700; color: #818cf8; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+    .page-header h1 { font-family: var(--ff-display); font-size: 40px; font-weight: 800; line-height: 1.15; margin-bottom: 14px; }
+    .page-header p { color: var(--muted); font-size: 16px; line-height: 1.8; }
+    .grad-text { background: linear-gradient(135deg, var(--indigo), var(--purple), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* Arch diagram */
+    .arch-diagram {
+      background: linear-gradient(135deg, rgba(79,70,229,0.08), rgba(6,182,212,0.05));
+      border: 1px solid var(--border); border-radius: 16px; padding: 28px;
+      font-family: var(--ff-mono); font-size: 12px; line-height: 1.9; color: var(--muted);
+      margin-bottom: 28px; overflow-x: auto;
+    }
+
+    /* Summary card */
+    .summary-card { background: linear-gradient(135deg, rgba(79,70,229,0.1), rgba(6,182,212,0.08)); border: 1px solid rgba(79,70,229,0.25); border-radius: 24px; padding: 36px; margin-top: 32px; }
+    .summary-card h2 { font-family: var(--ff-display); font-size: 22px; font-weight: 800; margin-bottom: 24px; }
+    .checklist { display: flex; flex-direction: column; gap: 10px; }
+    .check-item { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+    .check-icon { width: 24px; height: 24px; border-radius: 6px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--success); flex-shrink: 0; }
+    .cost-table { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .cost-row { display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+    .cost-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="pk-badge">PK</div>
+      <div class="sidebar-title">Deploy Guide</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Prerequisites</div>
+      <a href="#phase-0" class="nav-item"><span class="nav-num">0</span> Requirements</a>
+
+      <div class="nav-section">Infrastructure</div>
+      <a href="#phase-1" class="nav-item"><span class="nav-num">1</span> VPS Setup</a>
+      <a href="#phase-2" class="nav-item"><span class="nav-num">2</span> SSL Certificate</a>
+      <a href="#phase-6" class="nav-item"><span class="nav-num">6</span> Nginx Config</a>
+
+      <div class="nav-section">Application</div>
+      <a href="#phase-3" class="nav-item"><span class="nav-num">3</span> Backend (Go)</a>
+      <a href="#phase-4" class="nav-item"><span class="nav-num">4</span> Database</a>
+      <a href="#phase-5" class="nav-item"><span class="nav-num">5</span> Frontend (Vue)</a>
+
+      <div class="nav-section">Automation</div>
+      <a href="#phase-7" class="nav-item"><span class="nav-num">7</span> CI/CD Pipeline</a>
+      <a href="#phase-8" class="nav-item"><span class="nav-num">8</span> Flutter App</a>
+      <a href="#phase-9" class="nav-item"><span class="nav-num">9</span> Monitoring</a>
+
+      <div class="nav-section">Summary</div>
+      <a href="#summary" class="nav-item"><span class="nav-num">✓</span> Checklist</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-badge">🚀 DEPLOYMENT GUIDE</div>
+      <h1><span class="grad-text">PloyKong</span><br />Complete Deploy Guide</h1>
+      <p>คู่มือ Deploy ระบบ PloyKong แบบ Full-stack Production ครบทุกขั้นตอน<br />
+      ตั้งแต่ VPS Setup, SSL, Docker, จนถึง CI/CD Pipeline อัตโนมัติ</p>
+    </div>
+
+    <!-- Architecture -->
+    <div class="arch-diagram">
+      <pre>
+  ┌─────────────────────────────────────────────────────────────┐
+  │                    PloyKong Architecture                     │
+  └─────────────────────────────────────────────────────────────┘
+
+  Internet ──► Cloudflare DNS ──► VPS (Ubuntu 22.04)
+                                         │
+                          ┌──────────────┤
+                          │   Nginx      │ :80/:443
+                          │   (SSL/TLS)  │
+                          └──────┬───────┘
+                                 │
+               ┌─────────────────┼──────────────────┐
+               │                 │                   │
+        app.ploykong.com   api.ploykong.com   *.ploykong.com
+               │                 │                   │
+        Vue.js (Vercel)    Go Fiber API        Go Fiber API
+                           (Docker :3000)    + X-Portfolio-Slug
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+              MySQL 8.0                    Redis 7
+              (Docker)                   (Docker)
+      </pre>
+    </div>
+
+    <!-- ── PHASE 0 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-0">
+      <div class="phase-head">
+        <div class="phase-num">0</div>
+        <h2>Pre-requisites — สิ่งที่ต้องเตรียม</h2>
+        <span class="badge badge-infra">PREREQ</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>VPS Requirements</h4>
+            <div class="code-wrap"><span class="code-label">specs</span>
+            <div class="code"><pre><span class="str">OS:</span>      Ubuntu 22.04 LTS
+<span class="str">RAM:</span>     4 GB minimum (8 GB recommended)
+<span class="str">CPU:</span>     2 vCPU
+<span class="str">Disk:</span>    80 GB SSD
+<span class="str">Network:</span> 100 Mbps
+
+<span class="cm"># แนะนำ: DigitalOcean Droplet $24/เดือน</span>
+<span class="cm"># หรือ AWS EC2 t3.medium</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Domain & DNS</h4>
+            <div class="code-wrap"><span class="code-label">dns</span>
+            <div class="code"><pre><span class="cm"># DNS Records ที่ต้องตั้ง (ใน Cloudflare หรือ registrar):</span>
+<span class="str">A     ploykong.com          → VPS_IP</span>
+<span class="str">A     app.ploykong.com      → VPS_IP</span>
+<span class="str">A     api.ploykong.com      → VPS_IP</span>
+<span class="str">A     *.ploykong.com        → VPS_IP   ← Wildcard สำคัญมาก!</span>
+
+<span class="cm"># TTL: 300 วินาที (เพื่อให้ propagate เร็ว)</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Local Tools</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># ต้องติดตั้งบนเครื่อง Local:</span>
+<span class="cmd">git --version</span>          <span class="cm"># Git 2.x</span>
+<span class="cmd">go version</span>            <span class="cm"># Go 1.21+</span>
+<span class="cmd">node --version</span>        <span class="cm"># Node.js 20+</span>
+<span class="cmd">flutter --version</span>     <span class="cm"># Flutter 3.x</span>
+<span class="cmd">docker --version</span>      <span class="cm"># Docker 24+</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Accounts ที่ต้องสมัคร</h4>
+            <div class="code-wrap"><span class="code-label">accounts</span>
+            <div class="code"><pre><span class="str">GitHub</span>        → เก็บ code + CI/CD
+<span class="str">DigitalOcean</span>  → VPS hosting
+<span class="str">Vercel</span>        → Frontend deployment (ฟรี)
+<span class="str">OpenAI</span>        → API key สำหรับ AI features
+<span class="str">UptimeRobot</span>   → Monitor uptime (ฟรี)</pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 1 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-1">
+      <div class="phase-head">
+        <div class="phase-num">1</div>
+        <h2>VPS Setup — ตั้งค่า Server เริ่มต้น</h2>
+        <span class="badge badge-infra">INFRA</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>SSH เข้า VPS และอัปเดตระบบ</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">ssh root@YOUR_VPS_IP</span>
+
+<span class="cm"># อัปเดต packages</span>
+<span class="cmd">apt update && apt upgrade -y</span>
+
+<span class="cm"># ติดตั้ง essentials</span>
+<span class="cmd">apt install -y curl wget git unzip htop fail2ban</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>ตั้งค่า UFW Firewall</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">ufw default deny incoming
+ufw default allow outgoing
+ufw allow ssh
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw enable</span>
+
+<span class="cm"># ตรวจสอบ</span>
+<span class="cmd">ufw status verbose</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>ติดตั้ง Docker + Docker Compose</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># Install Docker ด้วย official script</span>
+<span class="cmd">curl -fsSL https://get.docker.com | sh</span>
+
+<span class="cm"># เพิ่ม user เข้า docker group</span>
+<span class="cmd">usermod -aG docker $USER
+newgrp docker</span>
+
+<span class="cm"># ตรวจสอบ</span>
+<span class="cmd">docker --version && docker compose version</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Clone โปรเจกต์และตั้งค่า .env</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">mkdir -p /opt/ploykong && cd /opt/ploykong</span>
+
+<span class="cmd">git clone https://github.com/YOUR_USERNAME/ploykong.git .</span>
+
+<span class="cm"># Copy และแก้ไข .env</span>
+<span class="cmd">cp backend/.env.example backend/.env
+nano backend/.env</span></pre></div></div>
+
+            <div class="code-wrap"><span class="code-label">.env (ค่าที่ต้องแก้)</span>
+            <div class="code"><pre><span class="var">DB_PASSWORD</span>=<span class="str">your-very-secure-db-password-here</span>
+<span class="var">JWT_SECRET</span>=<span class="str">your-64-char-random-secret-here</span>
+<span class="var">OPENAI_API_KEY</span>=<span class="str">sk-your-openai-api-key</span>
+<span class="var">MYSQL_ROOT_PASSWORD</span>=<span class="str">your-mysql-root-password</span>
+<span class="var">REDIS_PASSWORD</span>=<span class="str">your-redis-password</span>
+<span class="var">DOMAIN</span>=<span class="str">ploykong.com</span>
+
+<span class="cm"># สร้าง JWT secret แบบ random:</span>
+<span class="cm"># openssl rand -base64 48</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 2 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-2">
+      <div class="phase-head">
+        <div class="phase-num">2</div>
+        <h2>SSL Certificate — Wildcard HTTPS</h2>
+        <span class="badge badge-infra">SSL/TLS</span>
+      </div>
+      <div class="phase-body">
+        <div class="info-box info-warn">
+          <span class="info-icon">⚠️</span>
+          <div>Wildcard certificate (<code>*.ploykong.com</code>) ต้องใช้ <strong>DNS-01 challenge</strong> เท่านั้น ไม่สามารถใช้ HTTP-01 ได้</div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>ติดตั้ง Certbot + DNS Plugin</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">apt install -y certbot python3-certbot-dns-digitalocean</span>
+
+<span class="cm"># ถ้าใช้ Cloudflare:</span>
+<span class="cmd">pip3 install certbot-dns-cloudflare</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>ขอ Wildcard SSL Certificate</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># วิธี Manual DNS (ใช้ได้กับทุก registrar)</span>
+<span class="cmd">certbot certonly \
+  --manual \
+  --preferred-challenges dns \
+  -d ploykong.com \
+  -d "*.ploykong.com" \
+  --email <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0a73657f784a6f676b636624696567">[email&#160;protected]</a> \
+  --agree-tos</span>
+
+<span class="cm"># Certbot จะให้สร้าง TXT record ชื่อ:</span>
+<span class="cm"># _acme-challenge.ploykong.com → [token]</span>
+<span class="cm"># ไปสร้างใน DNS panel แล้วกด Enter</span>
+
+<span class="cm"># Cert จะอยู่ที่:</span>
+<span class="str">/etc/letsencrypt/live/ploykong.com/fullchain.pem</span>
+<span class="str">/etc/letsencrypt/live/ploykong.com/privkey.pem</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>ตั้งค่า Auto-Renewal Cron</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">crontab -e</span>
+
+<span class="cm"># เพิ่มบรรทัดนี้ — renew ทุกวัน และ reload nginx</span>
+<span class="str">0 3 * * * certbot renew --quiet && docker exec ploykong-nginx nginx -s reload</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 3 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-3">
+      <div class="phase-head">
+        <div class="phase-num">3</div>
+        <h2>Backend — Go Fiber API Deploy</h2>
+        <span class="badge badge-backend">GO FIBER</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Build และ Start API Container</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cd">cd /opt/ploykong</span>
+
+<span class="cm"># Build ทุก services</span>
+<span class="cmd">docker compose build</span>
+
+<span class="cm"># Start ทุก services (detached)</span>
+<span class="cmd">docker compose up -d</span>
+
+<span class="cm"># ดู logs</span>
+<span class="cmd">docker compose logs -f api</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>ทดสอบ Health Endpoint</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">curl http://localhost:3000/health</span>
+<span class="cm"># Response: {"status":"ok","service":"ploykong-api",...}</span>
+
+<span class="cm"># ทดสอบ Register endpoint</span>
+<span class="cmd">curl -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d4a0b1a7a094b1acb5b9a4b8b1fab7bbb9">[email&#160;protected]</a>","password":"Password123!","name":"Test User"}'</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>ดู Container Status</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">docker compose ps</span>
+<span class="cm"># ควรเห็นทุก service STATUS: healthy หรือ running</span>
+
+<span class="cmd">docker stats --no-stream</span>
+<span class="cm"># ดู memory และ CPU usage</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 4 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-4">
+      <div class="phase-head">
+        <div class="phase-num">4</div>
+        <h2>Database — MySQL Setup & Backup</h2>
+        <span class="badge badge-db">MYSQL 8</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>ตรวจสอบ Schema</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">docker exec -it ploykong-mysql mysql -u ploykong -p${DB_PASSWORD} ploykong</span>
+
+<span class="cm">-- ดู tables ทั้งหมด</span>
+<span class="cmd">SHOW TABLES;</span>
+<span class="cm">-- users, portfolios, sections, analytics, refresh_tokens, ai_chat_logs, files</span>
+
+<span class="cm">-- ดู seed data</span>
+<span class="cmd">SELECT email, plan FROM users LIMIT 5;</span>
+<span class="cmd">SELECT slug, title FROM portfolios LIMIT 5;</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>ตั้งค่า Auto Backup (Cron)</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">mkdir -p /opt/backups/mysql</span>
+
+<span class="cm"># สร้าง backup script</span>
+<span class="cmd">cat > /opt/backup-mysql.sh << 'EOF'
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+FILE="/opt/backups/mysql/ploykong_${DATE}.sql.gz"
+docker exec ploykong-mysql mysqldump \
+  -u root -p${MYSQL_ROOT_PASSWORD} ploykong \
+  | gzip > "$FILE"
+# ลบ backup เก่ากว่า 7 วัน
+find /opt/backups/mysql -name "*.sql.gz" -mtime +7 -delete
+echo "Backup: $FILE"
+EOF
+chmod +x /opt/backup-mysql.sh</span>
+
+<span class="cm"># เพิ่มใน crontab (backup ทุกคืน 2AM)</span>
+<span class="cmd">echo "0 2 * * * /opt/backup-mysql.sh >> /var/log/mysql-backup.log 2>&1" | crontab -</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 5 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-5">
+      <div class="phase-head">
+        <div class="phase-num">5</div>
+        <h2>Frontend — Vue.js Deploy</h2>
+        <span class="badge badge-frontend">VUE.JS 3</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Build Vue.js App</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cd">cd frontend</span>
+
+<span class="cm"># สร้าง .env.production</span>
+<span class="cmd">echo "VITE_API_URL=https://api.ploykong.com/api/v1" > .env.production</span>
+
+<span class="cm"># ติดตั้ง dependencies</span>
+<span class="cmd">npm ci</span>
+
+<span class="cm"># Build</span>
+<span class="cmd">npm run build</span>
+<span class="cm"># Output: frontend/dist/</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Deploy ด้วย Vercel (แนะนำ)</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># ติดตั้ง Vercel CLI</span>
+<span class="cmd">npm i -g vercel</span>
+
+<span class="cm"># Login และ Deploy</span>
+<span class="cmd">vercel login
+vercel --prod</span>
+
+<span class="cm"># ใน Vercel Dashboard → Settings → Environment Variables:</span>
+<span class="str">VITE_API_URL = https://api.ploykong.com/api/v1</span>
+
+<span class="cm"># ตั้ง Custom Domain: app.ploykong.com → ใน Vercel Domains</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>หรือ Serve บน VPS ด้วย Nginx</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># Copy build output ไปยัง VPS</span>
+<span class="cmd">scp -r ./dist root@VPS_IP:/var/www/frontend/</span>
+
+<span class="cm"># Nginx จะ serve จาก /var/www/frontend/dist/</span>
+<span class="cm"># (ดู nginx.conf section: app.ploykong.com)</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 6 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-6">
+      <div class="phase-head">
+        <div class="phase-num">6</div>
+        <h2>Nginx — Reverse Proxy + Wildcard</h2>
+        <span class="badge badge-infra">NGINX</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Routing Architecture</h4>
+            <div class="code-wrap"><span class="code-label">routing</span>
+            <div class="code"><pre><span class="str">app.ploykong.com</span>        → Vue.js Frontend (static files / Vercel)
+<span class="str">api.ploykong.com</span>        → Go Fiber API (Docker :3000)
+<span class="str">napat.ploykong.com</span>      → Go API + X-Portfolio-Slug: napat
+<span class="str">alice.ploykong.com</span>      → Go API + X-Portfolio-Slug: alice
+<span class="str">*.ploykong.com</span>          → Wildcard → Go API (slug extracted from subdomain)</pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Start Nginx และทดสอบ</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">docker compose up -d nginx</span>
+
+<span class="cm"># ทดสอบ Nginx config</span>
+<span class="cmd">docker exec ploykong-nginx nginx -t</span>
+<span class="cm"># nginx: configuration file ... syntax is ok</span>
+
+<span class="cm"># ทดสอบ HTTPS</span>
+<span class="cmd">curl -I https://api.ploykong.com/health</span>
+<span class="cm"># HTTP/2 200</span>
+
+<span class="cm"># ทดสอบ Wildcard subdomain</span>
+<span class="cmd">curl -I https://demo.ploykong.com</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 7 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-7">
+      <div class="phase-head">
+        <div class="phase-num">7</div>
+        <h2>CI/CD Pipeline — GitHub Actions</h2>
+        <span class="badge badge-cicd">CI/CD</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>ตั้งค่า GitHub Secrets</h4>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:10px">ไปที่ Repository → Settings → Secrets and variables → Actions</p>
+            <div class="code-wrap"><span class="code-label">secrets</span>
+            <div class="code"><pre><span class="var">VPS_HOST</span>             = 203.x.x.x         <span class="cm"># IP ของ VPS</span>
+<span class="var">VPS_USER</span>             = root
+<span class="var">VPS_SSH_KEY</span>          = (SSH private key)
+<span class="var">DB_PASSWORD</span>          = your-db-password
+<span class="var">JWT_SECRET</span>           = your-64-char-secret
+<span class="var">OPENAI_API_KEY</span>       = sk-...
+<span class="var">MYSQL_ROOT_PASSWORD</span>  = root-password
+<span class="var">REDIS_PASSWORD</span>       = redis-password</pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>ตั้งค่า Deploy SSH Key</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># สร้าง SSH key สำหรับ GitHub Actions</span>
+<span class="cmd">ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/ploykong_deploy -N ""</span>
+
+<span class="cm"># Copy public key ไปยัง VPS</span>
+<span class="cmd">ssh-copy-id -i ~/.ssh/ploykong_deploy.pub root@YOUR_VPS_IP</span>
+
+<span class="cm"># นำ private key ไปใส่ใน GitHub Secret VPS_SSH_KEY</span>
+<span class="cmd">cat ~/.ssh/ploykong_deploy</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Pipeline Flow</h4>
+            <div class="code-wrap"><span class="code-label">flow</span>
+            <div class="code"><pre><span class="cm"># เมื่อ push ไป main branch:</span>
+<span class="str">1.</span> ✅  go test ./...          <span class="cm"># Unit tests + race detector</span>
+<span class="str">2.</span> 🏗️  npm run build           <span class="cm"># Vue.js production build</span>
+<span class="str">3.</span> 📤  upload artifact         <span class="cm"># Store dist/ เป็น GitHub artifact</span>
+<span class="str">4.</span> 🚀  SSH to VPS             <span class="cm"># rsync + docker compose deploy</span>
+<span class="str">5.</span> 🐳  docker compose up -d   <span class="cm"># Rolling restart</span>
+<span class="str">6.</span> 🔍  health check           <span class="cm"># curl /health → verify 200</span>
+<span class="str">7.</span> 🧹  docker image prune     <span class="cm"># Clean old images</span>
+
+<span class="cm"># เวลาเฉลี่ย: ~4-6 นาที</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>ทดสอบ Pipeline</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cmd">git add .
+git commit -m "feat: initial PloyKong deployment"
+git push origin main</span>
+
+<span class="cm"># ดู pipeline ที่ GitHub → Actions tab</span>
+<span class="cm"># ✓ test-backend → ✓ test-frontend → ✓ deploy</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 8 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-8">
+      <div class="phase-head">
+        <div class="phase-num">8</div>
+        <h2>Flutter App — Build & Release</h2>
+        <span class="badge badge-mobile">FLUTTER</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Config API Endpoint</h4>
+            <div class="code-wrap"><span class="code-label">dart</span>
+            <div class="code"><pre><span class="cm">// flutter_app/lib/config/env.dart</span>
+<span class="kw">const</span> <span class="var">apiBaseUrl</span> = <span class="str">'https://api.ploykong.com/api/v1'</span>;
+<span class="kw">const</span> <span class="var">appName</span> = <span class="str">'PloyKong'</span>;</pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Build Release</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cd">cd flutter_app && flutter pub get</span>
+
+<span class="cm"># Android APK (sideload/testing)</span>
+<span class="cmd">flutter build apk --release</span>
+<span class="cm"># → build/app/outputs/flutter-apk/app-release.apk</span>
+
+<span class="cm"># Android Bundle (Play Store)</span>
+<span class="cmd">flutter build appbundle --release</span>
+<span class="cm"># → build/app/outputs/bundle/release/app-release.aab</span>
+
+<span class="cm"># iOS (ต้องใช้ macOS + Xcode)</span>
+<span class="cmd">flutter build ios --release --no-codesign
+open ios/Runner.xcworkspace</span>
+<span class="cm"># Product → Archive → Distribute → TestFlight</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHASE 9 ──────────────────────────────────────────────────── -->
+    <div class="phase" id="phase-9">
+      <div class="phase-head">
+        <div class="phase-num">9</div>
+        <h2>Monitoring, Logs & Backup</h2>
+        <span class="badge badge-infra">OPS</span>
+      </div>
+      <div class="phase-body">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>ดู Logs</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># ดู logs ทุก services</span>
+<span class="cmd">docker compose logs -f</span>
+
+<span class="cm"># เฉพาะ API</span>
+<span class="cmd">docker compose logs -f api --tail=100</span>
+
+<span class="cm"># Resource usage</span>
+<span class="cmd">docker stats</span>
+
+<span class="cm"># MySQL slow queries</span>
+<span class="cmd">docker exec ploykong-mysql tail -f /var/lib/mysql/slow-query.log</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Uptime Monitoring (UptimeRobot)</h4>
+            <div class="code-wrap"><span class="code-label">monitors</span>
+            <div class="code"><pre><span class="cm"># Monitor URLs (ตั้งใน uptimerobot.com — ฟรี):</span>
+<span class="str">https://api.ploykong.com/health</span>     <span class="cm"># API health</span>
+<span class="str">https://app.ploykong.com</span>            <span class="cm"># Frontend</span>
+
+<span class="cm"># แจ้งเตือนผ่าน Email / Line Notify / Telegram เมื่อ down</span>
+<span class="cm"># ตรวจสอบทุก 5 นาที (free tier)</span></pre></div></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Emergency Commands</h4>
+            <div class="code-wrap"><span class="code-label">bash</span>
+            <div class="code"><pre><span class="cm"># Restart ทุก services</span>
+<span class="cmd">docker compose restart</span>
+
+<span class="cm"># Restart เฉพาะ API</span>
+<span class="cmd">docker compose restart api</span>
+
+<span class="cm"># Restore database จาก backup</span>
+<span class="cmd">gunzip -c /opt/backups/mysql/ploykong_20250101_020000.sql.gz | \
+  docker exec -i ploykong-mysql mysql \
+  -u root -p${MYSQL_ROOT_PASSWORD} ploykong</span>
+
+<span class="cm"># Scale API (high traffic)</span>
+<span class="cmd">docker compose up -d --scale api=3</span>
+
+<span class="cm"># ดู disk usage</span>
+<span class="cmd">df -h && docker system df</span></pre></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-card" id="summary">
+      <h2>🎯 Deployment Checklist</h2>
+      <div class="checklist" style="margin-bottom:32px">
+        <div class="check-item"><span class="check-icon">✓</span> VPS Ubuntu 22.04 + Docker + UFW Firewall</div>
+        <div class="check-item"><span class="check-icon">✓</span> Wildcard SSL *.ploykong.com (Let's Encrypt DNS-01)</div>
+        <div class="check-item"><span class="check-icon">✓</span> Nginx: app, api, wildcard portfolio routing</div>
+        <div class="check-item"><span class="check-icon">✓</span> Go Fiber API ใน Docker (multi-stage ~25MB image)</div>
+        <div class="check-item"><span class="check-icon">✓</span> MySQL 8 + JSON Schema + Daily Auto-Backup</div>
+        <div class="check-item"><span class="check-icon">✓</span> Redis Cache สำหรับ session + rate limiting</div>
+        <div class="check-item"><span class="check-icon">✓</span> Vue.js 3 บน Vercel (Global CDN)</div>
+        <div class="check-item"><span class="check-icon">✓</span> GitHub Actions CI/CD (push → auto deploy ~5 min)</div>
+        <div class="check-item"><span class="check-icon">✓</span> Flutter App AAB/IPA สำหรับ Play Store / TestFlight</div>
+        <div class="check-item"><span class="check-icon">✓</span> Uptime Monitoring + Fail2ban Security</div>
+      </div>
+
+      <div style="margin-bottom:24px">
+        <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">💰 ค่าใช้จ่ายประมาณ</div>
+        <div class="cost-table">
+          <div class="cost-row"><span>VPS DigitalOcean 4GB</span><span>~$24 / เดือน</span></div>
+          <div class="cost-row"><span>Domain .com</span><span>~$1.25 / เดือน</span></div>
+          <div class="cost-row"><span>Vercel Frontend</span><span>ฟรี</span></div>
+          <div class="cost-row"><span>SSL (Let's Encrypt)</span><span>ฟรี</span></div>
+          <div class="cost-row"><span>OpenAI API (GPT-4o-mini)</span><span>Pay-as-you-go</span></div>
+          <div class="cost-row" style="border-top:1px solid var(--indigo)">
+            <span><strong>รวมประมาณ</strong></span>
+            <span style="color:var(--neon-purple)"><strong>~$25 / เดือน</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info-tip" style="margin:0">
+        <span class="info-icon">🚀</span>
+        <div>
+          ระบบ PloyKong พร้อม Deploy ครบทุกส่วน — Backend (Go Fiber), Frontend (Vue.js 3),
+          Database (MySQL 8), Mobile (Flutter), Nginx + 

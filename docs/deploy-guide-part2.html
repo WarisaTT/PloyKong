@@ -1,0 +1,351 @@
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cmd">cd frontend</span>
+
+<span class="cm"># สร้าง .env.production</span>
+<span class="cmd">echo "VITE_API_URL=https://api.ploykong.com/api/v1" > .env.production</span>
+
+<span class="cm"># ติดตั้ง dependencies</span>
+<span class="cmd">npm ci</span>
+
+<span class="cm"># Build</span>
+<span class="cmd">npm run build</span>
+<span class="cm"># Output อยู่ใน: frontend/dist/</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Deploy ขึ้น Vercel (แนะนำ)</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># ติดตั้ง Vercel CLI</span>
+<span class="cmd">npm i -g vercel</span>
+
+<span class="cm"># Login</span>
+<span class="cmd">vercel login</span>
+
+<span class="cm"># Deploy (ครั้งแรก)</span>
+<span class="cmd">vercel</span>
+<span class="cm"># ตอบคำถาม: project name=ploykong-app, framework=Vite</span>
+
+<span class="cm"># Deploy production</span>
+<span class="cmd">vercel --prod</span>
+
+<span class="cm"># ตั้ง Environment Variable ใน Vercel Dashboard</span>
+<span class="cm"># Settings → Environment Variables:</span>
+<span class="str">VITE_API_URL = https://api.ploykong.com/api/v1</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>หรือ Serve บน VPS ด้วย Nginx</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># Copy build output ไปยัง VPS</span>
+<span class="cmd">scp -r ./frontend/dist root@VPS_IP:/var/www/frontend/</span>
+
+<span class="cm"># บน VPS — Nginx จะ serve ไฟล์จาก /var/www/frontend/dist</span>
+<span class="cm"># ดู nginx.conf section: app.ploykong.com</span></pre></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 6: Nginx ────────────────────────────────────────────── -->
+  <div class="phase" id="phase-6">
+    <div class="phase-head">
+      <div class="phase-num">6</div>
+      <h2>Nginx — Reverse Proxy + Wildcard Domain</h2>
+      <span class="badge badge-infra">NGINX</span>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>เข้าใจ Routing Architecture</h4>
+          <div class="code-wrap"><span class="code-label">routing</span>
+          <div class="code"><pre><span class="cm"># Traffic flow:</span>
+<span class="str">app.ploykong.com</span>        → Vue.js Frontend (Vercel หรือ Nginx static)
+<span class="str">api.ploykong.com</span>        → Go Fiber API (Docker container :3000)
+<span class="str">napat.ploykong.com</span>      → Go API renders portfolio by slug "napat"
+<span class="str">alice.ploykong.com</span>      → Go API renders portfolio by slug "alice"
+<span class="str">*.ploykong.com</span>          → Wildcard → Go API + X-Portfolio-Slug header</pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Start Nginx Container</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># รัน nginx ด้วย docker compose (ดู docker-compose.yml)</span>
+<span class="cmd">docker compose up -d nginx</span>
+
+<span class="cm"># ทดสอบ config</span>
+<span class="cmd">docker exec ploykong-nginx nginx -t</span>
+<span class="cm"># nginx: the configuration file /etc/nginx/nginx.conf syntax is ok</span>
+<span class="cm"># nginx: configuration file /etc/nginx/nginx.conf test is successful</span>
+
+<span class="cm"># Reload nginx</span>
+<span class="cmd">docker exec ploykong-nginx nginx -s reload</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>ทดสอบ Wildcard Subdomain</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># สร้าง portfolio ที่มี slug = "napat"</span>
+<span class="cmd">curl -X POST https://api.ploykong.com/api/v1/portfolios \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"napat","title":"Napat Portfolio"}'</span>
+
+<span class="cm"># Publish portfolio</span>
+<span class="cmd">curl -X POST https://api.ploykong.com/api/v1/portfolios/PORTFOLIO_ID/publish \
+  -H "Authorization: Bearer YOUR_TOKEN"</span>
+
+<span class="cm"># เข้า napat.ploykong.com จาก browser ✅</span>
+<span class="cmd">curl https://napat.ploykong.com/api/v1/public/p/napat</span></pre></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 7: CI/CD ────────────────────────────────────────────── -->
+  <div class="phase" id="phase-7">
+    <div class="phase-head">
+      <div class="phase-num">7</div>
+      <h2>CI/CD Pipeline — GitHub Actions Auto Deploy</h2>
+      <span class="badge badge-cicd">CI/CD</span>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>ตั้งค่า GitHub Secrets</h4>
+          <p>ไปที่ GitHub Repository → Settings → Secrets and variables → Actions → New repository secret</p>
+          <div class="code-wrap"><span class="code-label">secrets</span>
+          <div class="code"><pre><span class="var">VPS_HOST</span>         = 203.0.113.10          <span class="cm"># IP ของ VPS</span>
+<span class="var">VPS_USER</span>         = root                   <span class="cm"># หรือ deploy user</span>
+<span class="var">VPS_SSH_KEY</span>      = (SSH private key)      <span class="cm"># cat ~/.ssh/id_rsa</span>
+<span class="var">DB_PASSWORD</span>      = your-db-password
+<span class="var">JWT_SECRET</span>       = your-jwt-secret-64-chars
+<span class="var">OPENAI_API_KEY</span>   = sk-your-openai-key
+<span class="var">MYSQL_ROOT_PASSWORD</span> = root-password</pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>ตั้งค่า SSH Access บน VPS</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># บน Local Machine — สร้าง SSH key สำหรับ GitHub Actions</span>
+<span class="cmd">ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/ploykong_deploy</span>
+
+<span class="cm"># Copy public key ไปยัง VPS</span>
+<span class="cmd">ssh-copy-id -i ~/.ssh/ploykong_deploy.pub root@YOUR_VPS_IP</span>
+
+<span class="cm"># Copy private key เป็น GitHub Secret VPS_SSH_KEY</span>
+<span class="cmd">cat ~/.ssh/ploykong_deploy</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Workflow File ที่สร้างไว้แล้ว</h4>
+          <p>ไฟล์ <code>.github/workflows/deploy.yml</code> ทำงานดังนี้:</p>
+          <div class="code-wrap"><span class="code-label">flow</span>
+          <div class="code"><pre><span class="cm"># เมื่อ push ไป main branch:</span>
+<span class="str">1.</span> ✅ Run Go tests (go test ./...)
+<span class="str">2.</span> 🏗️  Build Vue.js frontend
+<span class="str">3.</span> 📤 Upload dist artifact
+<span class="str">4.</span> 🚀 SSH ไป VPS
+<span class="str">5.</span> 📥 Copy files
+<span class="str">6.</span> 🐳 docker compose build + up -d
+<span class="str">7.</span> 🔍 Health check
+<span class="str">8.</span> 🧹 Docker prune
+
+<span class="cm"># เวลาเฉลี่ย: ~4-6 นาที</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>ทดสอบ CI/CD Pipeline</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># Push code และดู Actions</span>
+<span class="cmd">git add .
+git commit -m "feat: initial deployment"
+git push origin main</span>
+
+<span class="cm"># ดู pipeline ที่ GitHub → Actions tab</span>
+<span class="cm"># หรือ trigger manual:</span>
+<span class="cm"># GitHub → Actions → "Deploy PloyKong" → Run workflow</span></pre></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 8: Flutter App ──────────────────────────────────────── -->
+  <div class="phase" id="phase-8">
+    <div class="phase-head">
+      <div class="phase-num">8</div>
+      <h2>Flutter App — Build & Release</h2>
+      <span class="badge badge-mobile">MOBILE</span>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>ตั้งค่า API Endpoint</h4>
+          <div class="code-wrap"><span class="code-label">dart</span>
+          <div class="code"><pre><span class="cm">// lib/config/env.dart</span>
+<span class="kw">const</span> <span class="var">apiBaseUrl</span> = <span class="str">'https://api.ploykong.com/api/v1'</span>;
+<span class="kw">const</span> <span class="var">appName</span> = <span class="str">'PloyKong'</span>;</pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Build Android App Bundle</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cd">cd flutter_app</span>
+
+<span class="cm"># ตรวจสอบ dependencies</span>
+<span class="cmd">flutter pub get</span>
+
+<span class="cm"># Build Release APK (สำหรับ sideload / testing)</span>
+<span class="cmd">flutter build apk --release</span>
+<span class="cm"># Output: build/app/outputs/flutter-apk/app-release.apk</span>
+
+<span class="cm"># Build AAB (สำหรับ Play Store)</span>
+<span class="cmd">flutter build appbundle --release</span>
+<span class="cm"># Output: build/app/outputs/bundle/release/app-release.aab</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Build iOS App</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># ต้องใช้ macOS + Xcode</span>
+<span class="cmd">flutter build ios --release --no-codesign</span>
+
+<span class="cm"># เปิด Xcode เพื่อ Archive และ Upload</span>
+<span class="cmd">open ios/Runner.xcworkspace</span>
+<span class="cm"># Product → Archive → Distribute App → TestFlight</span></pre></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 9: Monitoring ───────────────────────────────────────── -->
+  <div class="phase" id="phase-9">
+    <div class="phase-head">
+      <div class="phase-num">9</div>
+      <h2>Monitoring, Logs & Backup</h2>
+      <span class="badge badge-infra">OPS</span>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>ดู Logs ทุก Services</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># ดู logs ทุก containers</span>
+<span class="cmd">docker compose logs -f</span>
+
+<span class="cm"># ดูเฉพาะ API</span>
+<span class="cmd">docker compose logs -f api --tail=100</span>
+
+<span class="cm"># ดู MySQL slow queries</span>
+<span class="cmd">docker exec ploykong-mysql tail -f /var/lib/mysql/slow-query.log</span>
+
+<span class="cm"># ดู resource usage</span>
+<span class="cmd">docker stats</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Uptime Monitoring (ฟรี)</h4>
+          <p>ใช้ UptimeRobot หรือ Better Stack เพื่อ monitor endpoint:</p>
+          <div class="code-wrap"><span class="code-label">config</span>
+          <div class="code"><pre><span class="cm"># Monitor URLs ที่ควร track:</span>
+<span class="str">https://api.ploykong.com/health</span>     <span class="cm"># API health</span>
+<span class="str">https://app.ploykong.com</span>            <span class="cm"># Frontend</span>
+<span class="cm"># ตั้ง alert ผ่าน Email/Line เมื่อ down</span></pre></div></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Commands ยามฉุกเฉิน</h4>
+          <div class="code-wrap"><span class="code-label">bash</span>
+          <div class="code"><pre><span class="cm"># Restart ทุก services</span>
+<span class="cmd">docker compose restart</span>
+
+<span class="cm"># Restart เฉพาะ API</span>
+<span class="cmd">docker compose restart api</span>
+
+<span class="cm"># ดู container health</span>
+<span class="cmd">docker inspect ploykong-api | grep -A5 Health</span>
+
+<span class="cm"># Restore database จาก backup</span>
+<span class="cmd">gunzip -c /opt/backups/mysql/ploykong_20240101_020000.sql.gz | \
+docker exec -i ploykong-mysql mysql -u root -p${MYSQL_ROOT_PASSWORD} ploykong</span>
+
+<span class="cm"># Scale API (ถ้า traffic สูง)</span>
+<span class="cmd">docker compose up -d --scale api=3</span></pre></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUMMARY ───────────────────────────────────────────────────── -->
+  <div class="summary-card">
+    <h2>🎯 Deployment Checklist สรุปครบ</h2>
+    <div class="checklist" style="margin-bottom:28px">
+      <div class="check-item"><span class="check-icon">✓</span> VPS Ubuntu 22.04 + Docker + UFW Firewall</div>
+      <div class="check-item"><span class="check-icon">✓</span> Wildcard SSL *.ploykong.com ด้วย Certbot DNS-01</div>
+      <div class="check-item"><span class="check-icon">✓</span> Nginx: app, api, wildcard portfolio routing</div>
+      <div class="check-item"><span class="check-icon">✓</span> Go Fiber API ใน Docker (multi-stage build ~25MB)</div>
+      <div class="check-item"><span class="check-icon">✓</span> MySQL 8 + Auto Schema Migration + Daily Backup</div>
+      <div class="check-item"><span class="check-icon">✓</span> Redis Cache สำหรับ session + rate limiting</div>
+      <div class="check-item"><span class="check-icon">✓</span> Vue.js 3 บน Vercel (CDN global)</div>
+      <div class="check-item"><span class="check-icon">✓</span> GitHub Actions CI/CD (push to main → auto deploy)</div>
+      <div class="check-item"><span class="check-icon">✓</span> Flutter App AAB/IPA สำหรับ Play Store / TestFlight</div>
+      <div class="check-item"><span class="check-icon">✓</span> Uptime Monitoring + Log Management</div>
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase">💰 ค่าใช้จ่ายรายเดือน (ประมาณ)</div>
+      <div class="cost-table">
+        <div class="cost-row"><span>VPS DigitalOcean (4GB RAM)</span><span>~$24/เดือน</span></div>
+        <div class="cost-row"><span>Domain Name (.com)</span><span>~$1.25/เดือน</span></div>
+        <div class="cost-row"><span>Vercel (Free tier)</span><span>$0</span></div>
+        <div class="cost-row"><span>OpenAI API (GPT-4o-mini)</span><span>Pay-as-you-go ~$0.15/1M tokens</span></div>
+        <div class="cost-row"><span>SSL Certificate (Let's Encrypt)</span><span>ฟรี</span></div>
+        <div class="cost-row" style="border-top:1px solid var(--neon-purple)"><span><strong>รวมประมาณ</strong></span><span style="color:var(--neon-purple)"><strong>~$25/เดือน</strong></span></div>
+      </div>
+    </div>
+
+    <div class="info-box info-tip" style="margin:0">
+      <span class="info-icon">🚀</span>
+      <div>ระบบ PloyKong ทั้งหมดพร้อม Deploy! Backend (Go Fiber), Frontend (Vue.js 3), Database (MySQL 8), Mobile (Flutter), Nginx + SSL, และ CI/CD Pipeline ครบทุกส่วน ทีม KMUTT IT สามารถเริ่ม dev ได้เลยตาม roadmap ที่วางไว้</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
