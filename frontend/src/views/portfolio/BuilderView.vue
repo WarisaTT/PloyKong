@@ -2,25 +2,34 @@
   <div class="builder-layout">
     <!-- ─── Top Bar ─────────────────────────────────────────────────────── -->
     <header class="builder-topbar">
-      <RouterLink to="/dashboard" class="back-btn">
-        ← Dashboard
+      <RouterLink to="/dashboard" class="back-btn" title="Dashboard">
+        <ArrowLeft class="icon" :size="20" />
       </RouterLink>
 
       <div class="topbar-center">
-        <span class="portfolio-slug">🌐 {{ store.activePortfolio?.slug }}.ploykong.com</span>
-        <span v-if="store.saving" class="saving-indicator">💾 Saving...</span>
+        <span class="portfolio-slug"><Globe :size="14" class="icon-inline" /> {{ store.activePortfolio?.slug }}.ploykong.com</span>
+        <span v-if="store.saving" class="saving-indicator"><Save :size="12" class="icon-inline" /> Saving...</span>
       </div>
 
       <div class="topbar-actions">
-        <button class="btn btn-secondary btn-sm" @click="previewPortfolio">
-          👁️ Preview
+        <button 
+          class="btn btn-secondary btn-sm btn-icon-text" 
+          :disabled="!store.activePortfolio?.is_published"
+          :title="!store.activePortfolio?.is_published ? 'ไม่สามารถเปิดดูได้เว้นแต่จะ Publish' : 'Preview'"
+          @click="previewPortfolio"
+        >
+          <Eye v-if="store.activePortfolio?.is_published" :size="14" />
+          <EyeOff v-else :size="14" />
+          Preview
         </button>
         <button
-          class="btn btn-sm"
+          class="btn btn-sm btn-icon-text publish-btn"
           :class="store.activePortfolio?.is_published ? 'btn-danger' : 'btn-primary'"
           @click="togglePublish"
         >
-          {{ store.activePortfolio?.is_published ? '⏸ Unpublish' : '⚡ Publish' }}
+          <Play v-if="store.activePortfolio?.is_published" :size="14" />
+          <Zap v-else :size="14" />
+          {{ store.activePortfolio?.is_published ? 'Unpublish' : 'Publish' }}
         </button>
       </div>
     </header>
@@ -30,17 +39,17 @@
       <!-- Left: Block Palette -->
       <aside class="block-palette">
         <div class="palette-header">
-          <span class="palette-title">🧩 Blocks</span>
-          <span class="palette-hint">คลิกเพื่อเพิ่ม</span>
+          <span class="palette-title"><Blocks :size="14" class="icon-inline" /> Blocks</span>
+          <span class="palette-hint">Click to add</span>
         </div>
         <div class="palette-list">
-          <div
+            <div
             v-for="block in BLOCK_TYPES"
             :key="block.type"
             class="palette-item"
             @click="addBlock(block.type)"
           >
-            <span class="palette-icon">{{ block.icon }}</span>
+            <component :is="block.icon" class="palette-icon" :size="18" />
             <div>
               <div class="palette-name">{{ block.label }}</div>
               <div class="palette-desc">{{ block.description }}</div>
@@ -59,9 +68,9 @@
         </div>
 
         <div v-else-if="store.sections.length === 0" class="canvas-empty">
-          <div class="empty-icon">🎨</div>
-          <h3>เริ่มสร้างพอร์ตของคุณ!</h3>
-          <p>คลิก Block ด้านซ้ายเพื่อเพิ่มส่วนประกอบ</p>
+          <div class="empty-icon"><Palette :size="48" stroke-width="1.5" /></div>
+          <h3>Create Your Portfolio!</h3>
+          <p>Click Block on the left to add components</p>
         </div>
 
         <TransitionGroup v-else name="section-list" tag="div" class="sections-list">
@@ -70,6 +79,8 @@
             :key="section.id"
             :section="section"
             :is-selected="selectedSectionId === section.id"
+            :theme-class="themeClass"
+            :theme-vars="themeVars"
             @select="selectSection(section.id)"
             @delete="store.deleteSection(section.id)"
             @toggle-visibility="store.toggleSectionVisibility(section.id)"
@@ -82,7 +93,7 @@
       <!-- Right: Properties Panel -->
       <aside class="props-panel">
         <div class="props-header">
-          <span class="props-title">🎨 Properties</span>
+          <span class="props-title"><Palette :size="14" class="icon-inline" /> Properties</span>
         </div>
 
         <!-- Theme Settings -->
@@ -91,18 +102,18 @@
           <div class="theme-toggle">
             <button
               :class="['toggle-btn', { active: theme.mode === 'dark' }]"
-              @click="updateTheme({ mode: 'dark' })"
-            >🌙 Dark</button>
+              @click="updateTheme({ mode: 'dark', bg_color: '#000000' })"
+            ><Moon :size="14" /> Dark</button>
             <button
               :class="['toggle-btn', { active: theme.mode === 'light' }]"
-              @click="updateTheme({ mode: 'light' })"
-            >☀️ Light</button>
+              @click="updateTheme({ mode: 'light', bg_color: '#ffffff' })"
+            ><Sun :size="14" /> Light</button>
           </div>
         </div>
 
         <div class="props-section">
-          <div class="props-label">Primary Color</div>
-          <div class="color-palette">
+          <div class="props-label">Primary Gradient</div>
+          <div class="color-palette" style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
             <div
               v-for="color in COLORS"
               :key="color.value"
@@ -110,9 +121,24 @@
               :style="{ background: color.value }"
               :class="{ active: theme.primary_color === color.value }"
               :title="color.name"
-              @click="updateTheme({ primary_color: color.value })"
+              @click="updateTheme({ primary_color: color.value, secondary_color: '' })"
             />
           </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+            <input type="color" class="form-input" style="height: 36px; padding: 2px" :value="theme.primary_color" @input="updateTheme({ primary_color: ($event.target as HTMLInputElement).value })" />
+            <span style="font-size: 11px; color: var(--muted)">To</span>
+            <input type="color" class="form-input" style="height: 36px; padding: 2px" :value="theme.secondary_color" @input="updateTheme({ secondary_color: ($event.target as HTMLInputElement).value })" />
+          </div>
+        </div>
+
+        <div class="props-section">
+          <div class="props-label">Background Custom Color</div>
+          <input type="color" class="form-input" style="height: 40px; padding: 2px" v-model="theme.bg_color" @change="updateTheme({ bg_color: theme.bg_color })" />
+        </div>
+
+        <div class="props-section">
+          <div class="props-label">Image Border Color</div>
+          <input type="color" class="form-input" style="height: 40px; padding: 2px" v-model="theme.border_color" @change="updateTheme({ border_color: theme.border_color })" />
         </div>
 
         <div class="props-section">
@@ -142,7 +168,7 @@
         <!-- Section Editor (when section selected) -->
         <div v-if="selectedSection" class="section-editor">
           <div class="editor-divider"></div>
-          <div class="props-label">✏️ Edit: {{ selectedSection.type }}</div>
+          <div class="props-label"><Pencil :size="12" class="icon-inline" /> Edit: {{ selectedSection.type }}</div>
           <SectionEditor
             :section="selectedSection"
             @update="handleSectionUpdate"
@@ -151,12 +177,12 @@
 
         <!-- AI Actions -->
         <div class="ai-panel">
-          <div class="ai-panel-title">🤖 AI Assistant</div>
-          <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:8px" @click="aiScoreResume">
-            📊 Score My Resume
+          <div class="ai-panel-title"><Bot :size="14" class="icon-inline" /> AI Assistant</div>
+          <button class="btn btn-secondary btn-sm btn-icon-text" style="width:100%;margin-bottom:8px" @click="aiScoreResume">
+            <BarChart2 :size="14" /> Score My Resume
           </button>
-          <button class="btn btn-secondary btn-sm" style="width:100%" @click="aiImproveContent">
-            ✨ Improve Content
+          <button class="btn btn-secondary btn-sm btn-icon-text" style="width:100%" @click="aiImproveContent">
+            <Sparkles :size="14" /> Improve Content
           </button>
           <div v-if="aiResult" class="ai-result">
             <pre>{{ aiResult }}</pre>
@@ -173,8 +199,13 @@ import { useRoute, RouterLink } from 'vue-router'
 import { usePortfolioStore } from '@/stores/portfolio'
 import { aiAPI } from '@/api'
 import { BLOCK_TYPES, type SectionType } from '@/types'
+import {
+  Globe, Save, Eye, EyeOff, Zap, Blocks, Palette,
+  Moon, Sun, Pencil, Bot, BarChart2, Sparkles, ArrowLeft, Play
+} from 'lucide-vue-next'
 import SectionBlock from '@/components/builder/SectionBlock.vue'
 import SectionEditor from '@/components/builder/SectionEditor.vue'
+import { debounce } from 'lodash'
 
 const route = useRoute()
 const store = usePortfolioStore()
@@ -192,12 +223,15 @@ const COLORS = [
   { name: 'Orange', value: '#f97316' },
 ]
 
-const FONTS = ['Syne', 'Plus Jakarta Sans', 'Sarabun', 'Prompt', 'Noto Sans Thai']
+const FONTS = ['Plus Jakarta Sans', 'Syne', 'Sarabun', 'Prompt', 'Noto Sans Thai']
 
 const theme = reactive({
   mode: 'dark' as 'dark' | 'light',
   primary_color: '#4F46E5',
-  font: 'Syne',
+  secondary_color: '',
+  bg_color: '',
+  border_color: '',
+  font: 'Plus Jakarta Sans',
   layout: 'centered' as 'centered' | 'left' | 'split',
 })
 
@@ -214,7 +248,36 @@ onMounted(async () => {
   await store.loadPortfolio(portfolioId)
   if (store.activePortfolio?.theme) {
     Object.assign(theme, store.activePortfolio.theme)
+    if (theme.mode === ('system' as any)) {
+      theme.mode = 'dark'
+    }
   }
+})
+
+const themeClass = computed(() => {
+  return `theme-${theme.mode || 'dark'}`
+})
+
+const themeVars = computed(() => {
+  const primary = theme.primary_color || '#4F46E5'
+  const secondary = theme.secondary_color || ''
+  const font = theme.font || 'Prompt'
+  // In light mode, glow needs to be slightly more transparent so it isn't overpowering, but visible.
+  const glowHex = theme.mode === 'light' ? '15' : '40'
+  const vars: Record<string, string> = {
+    '--primary': primary,
+    '--primary-glow': `${primary}${glowHex}`,
+    '--secondary': secondary ? secondary : `${primary}${glowHex}`,
+    '--font-display': font,
+    '--font-body': font
+  }
+  if (theme.bg_color && theme.bg_color !== '#000000') {
+     vars['--bg'] = theme.bg_color
+  }
+  if (theme.border_color && theme.border_color !== '#000000') {
+     vars['--avatar-border'] = theme.border_color
+  }
+  return vars
 })
 
 function selectSection(id: string) {
@@ -243,9 +306,20 @@ function previewPortfolio() {
   if (slug) window.open(`/p/${slug}`, '_blank')
 }
 
-async function handleSectionUpdate(data: any) {
+// Debounce the backend API call to save bandwidth
+const debouncedSave = debounce(async (id: string, data: any) => {
+  await store.updateSection(id, data)
+}, 500)
+
+// Update local state instantly so the Preview refreshes immediately in real-time
+function handleSectionUpdate(data: any) {
   if (!selectedSectionId.value) return
-  await store.updateSection(selectedSectionId.value, data)
+  
+  // Optimistic update for real-time canvas preview
+  const sec = store.sections.find(s => s.id === selectedSectionId.value)
+  if (sec) sec.data = JSON.parse(JSON.stringify(data))
+  
+  debouncedSave(selectedSectionId.value, data)
 }
 
 function moveSection(id: string, direction: 'up' | 'down') {
@@ -300,17 +374,41 @@ async function aiImproveContent() {
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
-  background: rgba(8, 13, 31, 0.95);
+  background: var(--sidebar-bg);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   z-index: 50;
 }
-.back-btn { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
-.back-btn:hover { color: #fff; }
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+  color: var(--text);
+  border-color: var(--indigo);
+  background: rgba(79, 70, 229, 0.1);
+  transform: translateY(-1px);
+}
+
+.back-btn:hover .icon {
+  transform: translateX(-2px);
+  transition: transform 0.2s ease;
+}
 .topbar-center { display: flex; align-items: center; gap: 12px; }
-.portfolio-slug { font-size: 13px; color: var(--neon-cyan); font-weight: 600; }
-.saving-indicator { font-size: 12px; color: var(--muted); animation: pulse 1s infinite; }
+.portfolio-slug { font-size: 13px; color: var(--indigo); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.saving-indicator { font-size: 12px; color: var(--muted); animation: pulse 1s infinite; display: inline-flex; align-items: center; gap: 6px; }
 .topbar-actions { display: flex; gap: 10px; }
+.publish-btn { min-width: 115px; }
 
 /* Main 3-column layout */
 .builder-main {
@@ -322,12 +420,25 @@ async function aiImproveContent() {
 
 /* Block Palette */
 .block-palette {
-  background: rgba(8, 13, 31, 0.9);
+  background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   overflow-y: auto;
   padding: 16px 12px;
 }
-.palette-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
+
+.palette-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-top: -10px;   /* 👈 ขยับขึ้น */
+  margin-bottom: 5px;
+  padding: 12px 16px;
+
+  border-radius: 2px;
+  border-bottom: 1px solid var(--divider-color);
+}
+
 .palette-title { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
 .palette-hint { font-size: 10px; color: rgba(148,163,184,0.5); }
 
@@ -374,7 +485,7 @@ async function aiImproveContent() {
 
 /* Props Panel */
 .props-panel {
-  background: rgba(8, 13, 31, 0.9);
+  background: var(--sidebar-bg);
   border-left: 1px solid var(--border);
   overflow-y: auto;
   padding: 16px;
@@ -390,7 +501,7 @@ async function aiImproveContent() {
   background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: all 0.15s;
 }
 .toggle-btn.active {
-  background: rgba(79, 70, 229, 0.2); border-color: var(--indigo); color: #fff;
+  background: rgba(79, 70, 229, 0.15); border-color: var(--indigo); color: var(--indigo);
 }
 
 .color-palette { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -403,19 +514,31 @@ async function aiImproveContent() {
 .color-swatch.active { border-color: #fff; transform: scale(1.1); }
 
 .url-display {
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  background: var(--bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 8px 12px; font-size: 12px;
 }
 .url-prefix { color: var(--muted); }
-.url-slug { color: var(--neon-cyan); font-weight: 600; }
+.url-slug { color: var(--indigo); font-weight: 600; }
 
 .section-editor { margin-bottom: 20px; }
 .editor-divider { height: 1px; background: var(--border); margin: 20px 0; }
 
 .ai-panel { background: rgba(79,70,229,0.08); border: 1px solid rgba(79,70,229,0.2); border-radius: 12px; padding: 14px; }
-.ai-panel-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--neon-purple); }
-.ai-result { margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 11px; color: var(--muted); max-height: 120px; overflow-y: auto; }
+.ai-panel-title { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--neon-purple); }
+.ai-result { margin-top: 12px; padding: 10px; background: var(--bg); border-radius: 8px; font-size: 11px; color: var(--muted); max-height: 120px; overflow-y: auto; border: 1px solid var(--border); }
 .ai-result pre { white-space: pre-wrap; word-break: break-word; }
+
+.icon-inline { vertical-align: middle; }
+.btn-icon-text { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+.palette-title { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.props-title { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.props-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+
+.toggle-btn {
+  flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
 
 @media (max-width: 1024px) {
   .builder-main { grid-template-columns: 200px 1fr; }
@@ -424,5 +547,13 @@ async function aiImproveContent() {
 @media (max-width: 768px) {
   .builder-main { grid-template-columns: 1fr; }
   .block-palette { display: none; }
+}
+
+.builder-layout.theme-dark {
+  --divider-color: rgba(255,255,255,0.15);
+}
+
+.builder-layout.theme-light {
+  --divider-color: rgba(0, 0, 0, 0.15);
 }
 </style>

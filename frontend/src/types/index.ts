@@ -11,8 +11,11 @@ export interface User {
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 export interface ThemeConfig {
-  mode: 'dark' | 'light'
+  mode: 'dark' | 'light' | 'system'
   primary_color: string
+  secondary_color?: string
+  bg_color?: string
+  border_color?: string
   font: string
   layout: 'centered' | 'left' | 'split'
 }
@@ -127,23 +130,37 @@ export interface AnalyticsSummary {
   daily_views: { date: string; count: number }[]
 }
 
+import { markRaw } from 'vue'
+import {
+  User,
+  Briefcase,
+  Wrench,
+  Rocket,
+  GraduationCap,
+  Mail,
+  Bot,
+  Type,
+  BarChart2,
+  Globe
+} from 'lucide-vue-next'
+
 // ─── Block Types (for the builder sidebar) ────────────────────────────────────
 export interface BlockType {
   type: SectionType
   label: string
-  icon: string
+  icon: any
   description: string
 }
 
 export const BLOCK_TYPES: BlockType[] = [
-  { type: 'hero',        icon: '👤', label: 'Hero Section',    description: 'ชื่อ ตำแหน่ง รูปโปรไฟล์' },
-  { type: 'experience',  icon: '💼', label: 'Experience',      description: 'ประสบการณ์การทำงาน' },
-  { type: 'skills',      icon: '⚡', label: 'Skills',          description: 'ทักษะและความเชี่ยวชาญ' },
-  { type: 'projects',    icon: '🚀', label: 'Projects',        description: 'แสดงผลงาน' },
-  { type: 'education',   icon: '🎓', label: 'Education',       description: 'ประวัติการศึกษา' },
-  { type: 'contact',     icon: '📬', label: 'Contact',         description: 'ช่องทางการติดต่อ' },
-  { type: 'ai_chat',     icon: '🤖', label: 'AI Interview Coach', description: 'แชทบอทสำหรับ HR' },
-  { type: 'custom_text', icon: '✍️', label: 'Custom Text',    description: 'ข้อความกำหนดเอง' },
-  { type: 'stats',       icon: '📊', label: 'Stats Counter',   description: 'ตัวเลขผลงาน' },
-  { type: 'social',      icon: '🌐', label: 'Social Links',    description: 'Social Media Links' },
+  { type: 'hero', icon: markRaw(User), label: 'Hero Section', description: 'ชื่อ ตำแหน่ง รูปโปรไฟล์' },
+  { type: 'experience', icon: markRaw(Briefcase), label: 'Experience', description: 'ประสบการณ์การทำงาน' },
+  { type: 'skills', icon: markRaw(Wrench), label: 'Skills', description: 'ทักษะและความเชี่ยวชาญ' },
+  { type: 'projects', icon: markRaw(Rocket), label: 'Projects', description: 'แสดงผลงาน' },
+  { type: 'education', icon: markRaw(GraduationCap), label: 'Education', description: 'ประวัติการศึกษา' },
+  { type: 'contact', icon: markRaw(Mail), label: 'Contact', description: 'ช่องทางการติดต่อ' },
+  { type: 'ai_chat', icon: markRaw(Bot), label: 'AI Interview Coach', description: 'แชทบอทสำหรับ HR' },
+  { type: 'custom_text', icon: markRaw(Type), label: 'Custom Text', description: 'ข้อความกำหนดเอง' },
+  { type: 'stats', icon: markRaw(BarChart2), label: 'Stats Counter', description: 'ตัวเลขผลงาน' },
+  { type: 'social', icon: markRaw(Globe), label: 'Social Links', description: 'Social Media Links' },
 ]

@@ -1,6 +1,6 @@
 <template>
   <section class="pub-custom pub-section">
-    <div class="custom-content" :style="{ textAlign: data.alignment || 'left' }">
+    <div class="custom-content animate-slide-up" v-intersect :style="{ textAlign: data.alignment || 'left' }">
       {{ data.content }}
     </div>
   </section>

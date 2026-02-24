@@ -1,6 +1,6 @@
 <template>
   <div class="exp-preview">
-    <div v-if="!data.items || !data.items.length" class="empty-msg">ยังไม่มี experience</div>
+    <div v-if="!data.items || !data.items.length" class="empty-msg">Not have experiences</div>
     <div v-else class="exp-list">
       <div v-for="(item, i) in data.items.slice(0,3)" :key="i" class="exp-item">
         <div class="exp-dot"></div>

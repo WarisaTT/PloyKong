@@ -48,10 +48,13 @@ func (u *User) ToResponse() *UserResponse {
 // ─── Portfolio ────────────────────────────────────────────────────────────────
 
 type ThemeConfig struct {
-	Mode        string `json:"mode"`        // dark | light
-	PrimaryColor string `json:"primary_color"`
-	Font        string `json:"font"`
-	Layout      string `json:"layout"`      // centered | left | split
+	Mode           string `json:"mode"` // dark | light
+	PrimaryColor   string `json:"primary_color"`
+	SecondaryColor string `json:"secondary_color,omitempty"`
+	BgColor        string `json:"bg_color,omitempty"`
+	BorderColor    string `json:"border_color,omitempty"`
+	Font           string `json:"font"`
+	Layout         string `json:"layout"` // centered | left | split
 }
 
 type Portfolio struct {
@@ -146,8 +149,8 @@ type ExperienceData struct {
 // ─── Skills Section Data ──────────────────────────────────────────────────────
 
 type SkillItem struct {
-	Name    string `json:"name"`
-	Level   int    `json:"level"` // 0-100
+	Name     string `json:"name"`
+	Level    int    `json:"level"` // 0-100
 	Category string `json:"category"`
 }
 
@@ -173,15 +176,15 @@ type ProjectsData struct {
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
 type AnalyticsSummary struct {
-	TotalViews     int              `json:"total_views"`
-	TodayViews     int              `json:"today_views"`
-	WeekViews      int              `json:"week_views"`
-	MonthViews     int              `json:"month_views"`
-	PDFDownloads   int              `json:"pdf_downloads"`
-	HireClicks     int              `json:"hire_clicks"`
-	AIChatCount    int              `json:"ai_chat_count"`
-	CountryStats   []CountryStat    `json:"country_stats"`
-	DailyViews     []DailyView      `json:"daily_views"`
+	TotalViews   int           `json:"total_views"`
+	TodayViews   int           `json:"today_views"`
+	WeekViews    int           `json:"week_views"`
+	MonthViews   int           `json:"month_views"`
+	PDFDownloads int           `json:"pdf_downloads"`
+	HireClicks   int           `json:"hire_clicks"`
+	AIChatCount  int           `json:"ai_chat_count"`
+	CountryStats []CountryStat `json:"country_stats"`
+	DailyViews   []DailyView   `json:"daily_views"`
 }
 
 type CountryStat struct {

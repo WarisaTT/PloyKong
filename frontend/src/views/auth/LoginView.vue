@@ -7,7 +7,7 @@
         <span class="logo-text grad-text">PloyKong</span>
       </div>
       <h2 class="auth-title">เข้าสู่ระบบ</h2>
-      <p class="auth-sub">ยินดีต้อนรับกลับ! 👋</p>
+      <p class="auth-sub">ยินดีต้อนรับกลับ!</p>
 
       <form @submit.prevent="handleLogin" class="auth-form">
         <div class="form-group">
@@ -20,12 +20,12 @@
         </div>
 
         <div v-if="authStore.error" class="auth-error">
-          ⚠️ {{ authStore.error }}
+          <AlertTriangle :size="14" class="icon-inline" /> {{ authStore.error }}
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg" style="width:100%" :disabled="authStore.loading">
-          <span v-if="authStore.loading">⏳ กำลังเข้าสู่ระบบ...</span>
-          <span v-else">🚀 เข้าสู่ระบบ</span>
+        <button type="submit" class="btn btn-primary btn-lg btn-icon-text" style="width:100%" :disabled="authStore.loading">
+          <span v-if="authStore.loading" class="btn-icon-text"><Loader2 :size="18" class="spin" /> กำลังเข้าสู่ระบบ...</span>
+          <span v-else class="btn-icon-text"><Rocket :size="18" /> เข้าสู่ระบบ</span>
         </button>
       </form>
 
@@ -41,6 +41,7 @@
 import { reactive } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { Hand, AlertTriangle, Loader2, Rocket } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -55,42 +56,208 @@ async function handleLogin() {
 
 <style scoped>
 .auth-page {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 20px; position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
 }
+
+/* ✨ Animated Background */
 .auth-bg {
-  position: fixed; inset: 0;
-  background:
-    radial-gradient(ellipse 70% 60% at 30% 20%, rgba(79,70,229,0.25) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(6,182,212,0.15) 0%, transparent 50%);
-}
-.auth-card {
-  position: relative; z-index: 1;
-  background: rgba(10, 14, 30, 0.9);
-  border: 1px solid var(--border);
-  border-radius: 24px; padding: 44px;
-  width: 100%; max-width: 420px;
-  backdrop-filter: blur(30px);
-  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
-}
-.auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; justify-content: center; }
-.logo-pk {
-  width: 44px; height: 44px; border-radius: 12px;
+  position: fixed;
+  inset: 0;
   background: linear-gradient(135deg, var(--indigo), var(--purple));
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #fff;
+  animation: floatBg 12s ease-in-out infinite alternate;
 }
-.logo-text { font-family: var(--font-display); font-size: 22px; font-weight: 800; }
-.auth-title { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 6px; }
-.auth-sub { color: var(--muted); font-size: 14px; text-align: center; margin-bottom: 32px; }
-.auth-form { display: flex; flex-direction: column; gap: 16px; }
-.form-group { display: flex; flex-direction: column; }
+
+@keyframes floatBg {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(1.05) rotate(2deg); }
+}
+
+/* ✨ Card */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 48px 44px;
+  width: 100%;
+  max-width: 420px;
+
+  backdrop-filter: blur(40px);
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.15),
+    0 0 60px rgba(147,51,234,0.08);
+
+  transition: transform 0.3s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-4px);
+}
+
+/* ✨ Logo */
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  justify-content: center;
+}
+
+.logo-pk {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--indigo), var(--purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(147,51,234,0.4);
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+/* ✨ Title */
+.auth-title {
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.auth-sub {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+/* ✨ Form */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ✨ Inputs */
+/* ✨ Inputs */
+.form-input {
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+
+  background: rgba(15, 20, 40, 0.85); /* แทนสีเทาขาว */
+  color: #f1f5f9; /* 👈 ตัวหนังสือชัดขึ้น */
+  caret-color: var(--purple);
+
+  font-size: 14px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+/* placeholder */
+.form-input::placeholder {
+  color: #94a3b8; /* ไม่จางเกิน */
+  opacity: 0.8;
+}
+
+/* focus */
+.form-input:focus {
+  background: rgba(20, 25, 50, 0.95);
+  border-color: var(--purple);
+  box-shadow: 0 0 0 4px rgba(147,51,234,0.2);
+}
+
+/* ✨ Error */
 .auth-error {
-  padding: 10px 14px; background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.3); border-radius: 10px;
-  font-size: 13px; color: #fca5a5;
+  padding: 12px 14px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--muted); }
-.auth-link { color: var(--neon-purple); text-decoration: none; font-weight: 600; }
-.auth-link:hover { text-decoration: underline; }
+
+/* ✨ Button */
+.btn-lg {
+  padding: 12px 20px;
+  font-size: 15px;
+  border-radius: 14px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--indigo), var(--purple));
+  box-shadow: 0 10px 30px rgba(79,70,229,0.35);
+  transition: all 0.25s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(147,51,234,0.5);
+}
+
+/* ✨ Switch */
+.auth-switch {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.auth-link {
+  color: var(--purple);
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.auth-link:hover {
+  color: var(--indigo);
+  text-decoration: underline;
+}
+
+/* ✨ Icons */
+.icon-inline {
+  vertical-align: middle;
+}
+
+.btn-icon-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+
 </style>

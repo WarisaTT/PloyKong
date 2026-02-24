@@ -1,100 +1,46 @@
-name: 🚀 Deploy PloyKong to Production
+name: 🚀 Deploy PloyKong
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # Allow manual trigger
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/ploykong-api
+  workflow_dispatch:
 
 jobs:
-  # ─── 1. Test Backend ──────────────────────────────────────────────
-  test-backend:
-    name: 🧪 Test Go Backend
+  deploy:
+    name: 🚀 Deploy to VPS
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-          cache: true
-
-      - name: Download dependencies
-        working-directory: ./backend
-        run: go mod download
-
-      - name: Run tests
-        working-directory: ./backend
-        run: go test ./... -v -race -coverprofile=coverage.out
-
-      - name: Vet code
-        working-directory: ./backend
-        run: go vet ./...
-
-  # ─── 2. Build & Test Frontend ────────────────────────────────────
-  test-frontend:
-    name: 🎨 Build Vue Frontend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # ─── Build Frontend ────────────────────────────────────────
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: ./frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Build frontend
         working-directory: ./frontend
-        run: npm ci
-
-      - name: Build
-        working-directory: ./frontend
-        run: npm run build
+        run: |
+          npm ci
+          npm run build
         env:
-          VITE_API_URL: https://api.ploykong.com/api/v1
+          # แก้ YOUR_VPS_IP เป็น IP จริง หรือใส่ใน GitHub Secrets
+          VITE_API_URL: http://${{ secrets.VPS_HOST }}:8082/api/v1
+          VITE_APP_URL: http://${{ secrets.VPS_HOST }}:5173
+          VITE_PORTFOLIO_BASE_URL: http://${{ secrets.VPS_HOST }}:5173/p/{slug}
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: ./frontend/dist
-          retention-days: 1
-
-  # ─── 3. Deploy to VPS ────────────────────────────────────────────
-  deploy:
-    name: 🚀 Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: production
-      url: https://app.ploykong.com
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download frontend build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-dist
-          path: ./frontend/dist
-
+      # ─── Copy files to VPS ────────────────────────────────────
       - name: Copy files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.yml,backend/,database/,nginx/,frontend/dist/"
+          source: "docker-compose.yml,backend/,database/,frontend/dist/"
           target: "/opt/ploykong"
           overwrite: true
 
+      # ─── Deploy ───────────────────────────────────────────────
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -105,31 +51,20 @@ jobs:
             set -e
             cd /opt/ploykong
 
-            echo "📦 Pulling latest changes..."
-            
-            echo "🏗️  Building and starting containers..."
-            docker compose pull || true
+            # สร้าง .env ถ้ายังไม่มี
+            if [ ! -f .env ]; then
+              cat > .env << ENVEOF
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=ploykong
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            ALLOWED_ORIGINS=http://${{ secrets.VPS_HOST }}:5173,http://${{ secrets.VPS_HOST }}:8082
+            ENVEOF
+            fi
+
             docker compose build --no-cache api
             docker compose up -d --remove-orphans
-            
-            echo "⏳ Waiting for API to be healthy..."
             sleep 15
-            
-            echo "🔍 Checking health..."
-            curl -f http://localhost:3000/health || exit 1
-            
-            echo "🧹 Cleaning up old images..."
-            docker system prune -f --volumes --filter "until=24h"
-            
-            echo "✅ Deployment successful!"
-            docker compose ps
-
-      - name: Notify deployment success
-        if: success()
-        run: |
-          echo "🎉 PloyKong deployed successfully to https://app.ploykong.com"
-
-      - name: Notify deployment failure
-        if: failure()
-        run: |
-          echo "❌ Deployment FAILED"
+            curl -f http://localhost:8082/health || exit 1
+            echo "✅ Deploy สำเร็จ!"
+            echo "🌐 API: http://${{ secrets.VPS_HOST }}:8082"

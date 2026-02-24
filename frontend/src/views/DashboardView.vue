@@ -7,23 +7,32 @@
         <span class="logo-text">PloyKong</span>
       </div>
       <nav class="sidebar-nav">
-        <RouterLink to="/dashboard" class="nav-item active">
-          <span>📊</span> Dashboard
+        <RouterLink to="/dashboard" class="nav-item" exact-active-class="active">
+          <BarChart2 :size="16" /> Dashboard
         </RouterLink>
-        <RouterLink to="/portfolios/new" class="nav-item">
-          <span>➕</span> สร้างพอร์ตใหม่
+        <RouterLink to="/portfolios/new" class="nav-item" exact-active-class="active">
+          <Plus :size="16" /> สร้างพอร์ตใหม่
         </RouterLink>
-        <RouterLink to="/settings" class="nav-item">
-          <span>⚙️</span> Settings
+        <RouterLink to="/settings" class="nav-item" exact-active-class="active">
+          <Settings :size="16" /> Settings
         </RouterLink>
+
+        <div class="sidebar-theme-toggle">
+          <div class="theme-label">Theme</div>
+          <div class="theme-toggle-group">
+            <button :class="['theme-btn', { active: themeStore.mode === 'dark' }]" @click="themeStore.setMode('dark')" title="Dark Mode"><Moon :size="16" /></button>
+            <button :class="['theme-btn', { active: themeStore.mode === 'light' }]" @click="themeStore.setMode('light')" title="Light Mode"><Sun :size="16" /></button>
+            <button :class="['theme-btn', { active: themeStore.mode === 'auto' }]" @click="themeStore.setMode('auto')" title="System Setting"><Monitor :size="16" /></button>
+          </div>
+        </div>
       </nav>
-      <div class="sidebar-user" @click="authStore.logout">
+      <div class="sidebar-user" @click="handleLogout">
         <div class="user-avatar">{{ userInitial }}</div>
         <div>
           <div class="user-name">{{ authStore.user?.name }}</div>
           <div class="user-plan">{{ authStore.user?.plan }} plan</div>
         </div>
-        <span class="logout-icon" title="Logout">↩</span>
+        <LogOut :size="16" class="logout-icon" title="Logout" />
       </div>
     </aside>
 
@@ -32,36 +41,40 @@
       <!-- Header -->
       <div class="dash-header">
         <div>
-          <h1 class="dash-greeting">สวัสดี, {{ firstName }} 👋</h1>
+          <h1 class="dash-greeting">Hi, {{ firstName }} ⭐️ </h1>
           <p class="dash-sub">จัดการพอร์ตโฟลิโอและดูสถิติได้ที่นี่</p>
         </div>
-        <RouterLink to="/portfolios/new" class="btn btn-primary">
-          ➕ สร้างพอร์ตใหม่
+        <RouterLink to="/portfolios/new" class="btn btn-primary btn-icon-text">
+          <Plus :size="16" /> สร้างพอร์ตใหม่
         </RouterLink>
       </div>
 
       <!-- Stats Row -->
       <div class="stats-grid">
         <StatCard
-          label="📈 Total Views"
+          label="Total Views"
+          :icon="TrendingUp"
           :value="totalViews"
           change="+12%"
           color="indigo"
         />
         <StatCard
-          label="📄 PDF Downloads"
+          label="PDF Downloads"
+          :icon="FileDown"
           :value="totalPDF"
           change="+8%"
           color="cyan"
         />
         <StatCard
-          label="🎯 Hire Me Clicks"
+          label="Hire Me Clicks"
+          :icon="Briefcase"
           :value="totalHire"
           change="+3 วันนี้"
           color="pink"
         />
         <StatCard
-          label="🗂️ Portfolios"
+          label="Portfolios"
+          :icon="LayoutGrid"
           :value="portfolioStore.portfolios.length"
           :change="`${activeCount} active`"
           color="green"
@@ -71,7 +84,7 @@
       <!-- Portfolio List -->
       <section class="section-card">
         <div class="section-card-header">
-          <h2>🗂️ พอร์ตโฟลิโอของฉัน</h2>
+          <h2><Layers :size="20" class="icon-inline" /> My Portfolios</h2>
         </div>
 
         <div v-if="portfolioStore.loading" class="portfolio-loading">
@@ -79,7 +92,7 @@
         </div>
 
         <div v-else-if="portfolioStore.portfolios.length === 0" class="portfolio-empty">
-          <p>ยังไม่มีพอร์ตโฟลิโอ — <RouterLink to="/portfolios/new" class="link">สร้างเลย!</RouterLink></p>
+          <p>No portfolios found — <RouterLink to="/portfolios/new" class="link">Create one!</RouterLink></p>
         </div>
 
         <div v-else class="portfolio-list">
@@ -97,14 +110,19 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePortfolioStore } from '@/stores/portfolio'
+import { useThemeStore } from '@/stores/theme'
 import StatCard from '@/components/dashboard/StatCard.vue'
 import PortfolioListItem from '@/components/dashboard/PortfolioListItem.vue'
+import { BarChart2, Plus, Settings, Moon, Sun, Monitor, LogOut, LayoutGrid, TrendingUp, FileDown, Briefcase, Layers } from 'lucide-vue-next'
+import Swal from 'sweetalert2'
 
 const authStore = useAuthStore()
 const portfolioStore = usePortfolioStore()
+const themeStore = useThemeStore()
+const router = useRouter()
 
 const totalViews = ref(0)
 const totalPDF = ref(0)
@@ -123,9 +141,22 @@ onMounted(async () => {
 })
 
 async function deletePortfolio(id: string) {
-  if (confirm('ลบพอร์ตโฟลิโอนี้หรือไม่?')) {
+  const { isConfirmed } = await Swal.fire({
+    title: 'Delete this portfolio?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: 'Delete'
+  })
+  if (isConfirmed) {
     await portfolioStore.deletePortfolio(id)
   }
+}
+
+async function handleLogout() {
+  await authStore.logout()
+  router.push('/login')
 }
 </script>
 
@@ -139,7 +170,7 @@ async function deletePortfolio(id: string) {
 
 /* Sidebar */
 .sidebar {
-  background: rgba(8, 13, 31, 0.95);
+  background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   padding: 24px 16px;
   display: flex; flex-direction: column;
@@ -165,8 +196,47 @@ async function deletePortfolio(id: string) {
   font-size: 14px; font-weight: 500; transition: all 0.15s;
 }
 .nav-item:hover, .nav-item.active {
-  background: rgba(79, 70, 229, 0.15);
-  color: #fff;
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--indigo);
+}
+
+.sidebar-theme-toggle {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.theme-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.theme-toggle-group {
+  display: flex;
+  background: var(--bg2);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+.theme-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.theme-btn:hover { background: var(--surface); color: var(--text); }
+.theme-btn.active {
+  background: var(--surface);
+  color: var(--indigo);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .sidebar-user {
@@ -174,8 +244,9 @@ async function deletePortfolio(id: string) {
   padding: 12px; border-radius: 12px;
   border: 1px solid var(--border); cursor: pointer;
   transition: all 0.15s; margin-top: 16px;
+  background: var(--surface);
 }
-.sidebar-user:hover { background: rgba(255,255,255,0.05); }
+.sidebar-user:hover { background: var(--bg2); }
 .user-avatar {
   width: 36px; height: 36px; border-radius: 50%;
   background: linear-gradient(135deg, var(--indigo), var(--purple));
@@ -212,6 +283,9 @@ async function deletePortfolio(id: string) {
 .portfolio-empty { color: var(--muted); font-size: 14px; }
 .link { color: var(--neon-purple); text-decoration: none; }
 .portfolio-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.icon-inline { vertical-align: text-bottom; }
+.btn-icon-text { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 
 @media (max-width: 768px) {
   .dashboard-layout { grid-template-columns: 1fr; }

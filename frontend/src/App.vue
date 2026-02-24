@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :class="[theme]">
+  <div id="app" :class="[themeStore.themeClass]">
     <RouterView v-slot="{ Component }">
       <Transition name="page" mode="out-in">
         <component :is="Component" />
@@ -12,9 +12,10 @@
 import { computed, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 
 const authStore = useAuthStore()
-const theme = computed(() => 'theme-dark')
+const themeStore = useThemeStore()
 
 onMounted(async () => {
   if (authStore.isAuthenticated && !authStore.user) {

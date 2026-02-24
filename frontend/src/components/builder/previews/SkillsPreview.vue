@@ -23,7 +23,12 @@ defineProps<{ data: any }>()
 .skill-row { display: flex; align-items: center; gap: 10px; }
 .skill-name { font-size: 12px; font-weight: 600; width: 80px; flex-shrink: 0; }
 .skill-bar-wrap { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+:global(.theme-light) .skill-bar-wrap { background: rgba(0,0,0,0.15); }
 .skill-bar { height: 100%; background: linear-gradient(90deg, var(--indigo), var(--neon-cyan)); border-radius: 2px; transition: width 0.5s ease; }
+:global(.theme-light) .skill-bar { background: linear-gradient(90deg, var(--indigo), color-mix(in srgb, var(--indigo) 60%, black)); }
 .skill-level { font-size: 11px; color: var(--muted); width: 32px; text-align: right; flex-shrink: 0; }
 .more-hint { font-size: 11px; color: var(--muted); text-align: center; margin-top: 2px; }
+:global(.theme-light) .skill-name { color: #111827; }
+:global(.theme-light) .skill-level { color: #4b5563; }
+:global(.theme-light) .empty-msg, :global(.theme-light) .more-hint { color: #6b7280; }
 </style>

@@ -19,7 +19,7 @@
     <!-- Hero -->
     <section class="hero-section">
       <div class="hero-glow"></div>
-      <div class="hero-content">
+      <div class="hero-content animate-slide-up" v-intersect>
         <div class="hero-badge">✨ No-Code · AI-Powered · Gen-Z Ready</div>
         <h1 class="hero-headline">
           มีดีต้อง<span class="grad-text">ปล่อยของ</span><br />
@@ -63,11 +63,11 @@
 
     <!-- Features -->
     <section id="features" class="features-section">
-      <div class="section-inner">
+      <div class="section-inner animate-slide-up" v-intersect>
         <div class="section-tag">FEATURES</div>
         <h2 class="section-title">ครบทุกอย่างที่ต้องใช้</h2>
         <div class="features-grid">
-          <div v-for="f in features" :key="f.title" class="feature-card glass">
+          <div v-for="(f, i) in features" :key="f.title" class="feature-card glass animate-slide-up" v-intersect :style="{ transitionDelay: `${i * 50}ms` }">
             <div class="feat-icon">{{ f.icon }}</div>
             <div class="feat-title">{{ f.title }}</div>
             <div class="feat-desc">{{ f.desc }}</div>
@@ -78,11 +78,11 @@
 
     <!-- How it works -->
     <section id="demo" class="how-section">
-      <div class="section-inner">
+      <div class="section-inner animate-slide-up" v-intersect>
         <div class="section-tag">HOW IT WORKS</div>
         <h2 class="section-title">3 ขั้นตอน สร้างพอร์ตมืออาชีพ</h2>
         <div class="steps-row">
-          <div v-for="(step, i) in steps" :key="i" class="how-step">
+          <div v-for="(step, i) in steps" :key="i" class="how-step animate-slide-up" v-intersect :style="{ transitionDelay: `${i * 100}ms` }">
             <div class="how-num">{{ i + 1 }}</div>
             <div class="how-icon">{{ step.icon }}</div>
             <div class="how-title">{{ step.title }}</div>
@@ -94,11 +94,11 @@
 
     <!-- Pricing -->
     <section id="pricing" class="pricing-section">
-      <div class="section-inner">
+      <div class="section-inner animate-slide-up" v-intersect>
         <div class="section-tag">PRICING</div>
         <h2 class="section-title">ราคาที่เป็นมิตร</h2>
         <div class="pricing-grid">
-          <div v-for="plan in plans" :key="plan.name" class="pricing-card" :class="{ featured: plan.featured }">
+          <div v-for="(plan, i) in plans" :key="plan.name" class="pricing-card animate-slide-up" :class="{ featured: plan.featured }" v-intersect :style="{ transitionDelay: `${i * 100}ms` }">
             <div v-if="plan.featured" class="plan-badge">⭐ ยอดนิยม</div>
             <div class="plan-name">{{ plan.name }}</div>
             <div class="plan-price">
@@ -119,7 +119,7 @@
     <!-- CTA -->
     <section class="cta-section">
       <div class="cta-glow"></div>
-      <div class="cta-content">
+      <div class="cta-content animate-slide-up" v-intersect>
         <h2>พร้อมปล่อยของแล้วหรือยัง? 🚀</h2>
         <p>สมัครฟรี ไม่ต้องใส่บัตรเครดิต</p>
         <RouterLink to="/register" class="btn btn-primary btn-lg neon-glow">เริ่มสร้างพอร์ตฟรี</RouterLink>
@@ -195,9 +195,9 @@ const plans = [
 .landing { min-height: 100vh; }
 
 /* --- Navbar --- */
-.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 0 24px; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(5,8,20,0.8); backdrop-filter: blur(20px); }
+.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--bg); backdrop-filter: blur(20px); }
 .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; height: 60px; gap: 20px; }
-.nav-logo { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.nav-logo { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; color: var(--text); }
 .logo-pk { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--indigo), var(--purple)); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0; }
 .logo-pk.small { width: 24px; height: 24px; font-size: 10px; border-radius: 6px; }
 .logo-name { font-family: var(--font-display); font-size: 18px; font-weight: 800; }
@@ -243,10 +243,10 @@ const plans = [
 .section-title { font-size: clamp(26px, 4vw, 40px); font-weight: 800; margin-bottom: 48px; }
 
 /* --- Features --- */
-.features-section { background: rgba(255,255,255,0.01); }
+.features-section { background: var(--bg2); }
 .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; text-align: left; }
-.feature-card { padding: 24px; border-radius: 18px; transition: all 0.25s; }
-.feature-card:hover { transform: translateY(-4px); border-color: rgba(79,70,229,0.35); }
+.feature-card { padding: 24px; border-radius: 18px; transition: all 0.25s; background: var(--surface); border: 1px solid var(--border); }
+.feature-card:hover { transform: translateY(-4px); border-color: var(--indigo); }
 .feat-icon { font-size: 28px; margin-bottom: 14px; }
 .feat-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
 .feat-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
@@ -260,11 +260,11 @@ const plans = [
 .how-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
 
 /* --- Pricing --- */
-.pricing-section { background: rgba(255,255,255,0.01); }
+.pricing-section { background: var(--bg2); }
 .pricing-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 .pricing-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px 28px; min-width: 240px; max-width: 280px; flex: 1; text-align: left; position: relative; transition: all 0.25s; }
-.pricing-card.featured { border-color: var(--indigo); background: rgba(79,70,229,0.06); transform: scale(1.03); }
-.plan-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); padding: 4px 16px; background: linear-gradient(135deg, var(--indigo), var(--purple)); border-radius: 100px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.pricing-card.featured { border-color: var(--indigo); background: var(--bg2); transform: scale(1.03); }
+.plan-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); padding: 4px 16px; background: linear-gradient(135deg, var(--indigo), var(--purple)); border-radius: 100px; font-size: 12px; font-weight: 700; white-space: nowrap; color: #fff; }
 .plan-name { font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
 .plan-price { display: flex; align-items: baseline; gap: 6px; margin-bottom: 24px; }
 .price-num { font-family: var(--font-display); font-size: 40px; font-weight: 800; }

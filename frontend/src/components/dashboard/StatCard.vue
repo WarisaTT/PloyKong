@@ -1,13 +1,16 @@
 <template>
   <div class="stat-card" :class="`color-${color}`">
-    <div class="stat-label">{{ label }}</div>
+    <div class="stat-label">
+      <component v-if="icon" :is="icon" :size="14" class="icon-inline" />
+      {{ label }}
+    </div>
     <div class="stat-value">{{ value.toLocaleString() }}</div>
     <div class="stat-change">{{ change }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{ label: string; value: number; change: string; color: string }>()
+defineProps<{ label: string; value: number; change: string; color: string; icon?: any }>()
 </script>
 
 <style scoped>
@@ -23,12 +26,14 @@ defineProps<{ label: string; value: number; change: string; color: string }>()
 .stat-value { font-family: var(--font-display); font-size: 32px; font-weight: 800; margin-bottom: 6px; }
 .stat-change { font-size: 12px; font-weight: 600; }
 
-.color-indigo .stat-value { color: #818cf8; }
-.color-indigo .stat-change { color: #818cf8; }
-.color-cyan .stat-value { color: var(--neon-cyan); }
-.color-cyan .stat-change { color: var(--neon-cyan); }
-.color-pink .stat-value { color: #f472b6; }
-.color-pink .stat-change { color: #f472b6; }
+.color-indigo .stat-value { color: var(--indigo); }
+.color-indigo .stat-change { color: var(--indigo); }
+.color-cyan .stat-value { color: var(--cyan); }
+.color-cyan .stat-change { color: var(--cyan); }
+.color-pink .stat-value { color: var(--pink); }
+.color-pink .stat-change { color: var(--pink); }
 .color-green .stat-value { color: var(--success); }
 .color-green .stat-change { color: var(--success); }
+
+.icon-inline { vertical-align: text-bottom; margin-right: 6px; }
 </style>

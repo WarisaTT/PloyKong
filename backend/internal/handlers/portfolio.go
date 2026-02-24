@@ -188,7 +188,11 @@ func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "portfolio not found")
 	}
 
-	themeJSON, _ := json.Marshal(req.Theme)
+	var themeParam interface{}
+	if req.Theme != nil {
+		themeJSON, _ := json.Marshal(req.Theme)
+		themeParam = string(themeJSON)
+	}
 
 	_, err := h.db.Exec(
 		`UPDATE portfolios SET title = COALESCE(?, title),
@@ -197,7 +201,7 @@ func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
 		 seo_title = COALESCE(?, seo_title),
 		 seo_desc = COALESCE(?, seo_desc)
 		 WHERE id = ?`,
-		req.Title, req.Description, string(themeJSON), req.SEOTitle, req.SEODesc, id,
+		req.Title, req.Description, themeParam, req.SEOTitle, req.SEODesc, id,
 	)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to update portfolio")

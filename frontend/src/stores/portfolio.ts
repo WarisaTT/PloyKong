@@ -108,7 +108,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     if (!activePortfolio.value) return
     saving.value = true
     try {
-      await sectionAPI.update(activePortfolio.value.id, sectionId, { data: sectionData })
+      await sectionAPI.update(sectionId, { data: sectionData })
       const idx = sections.value.findIndex((s) => s.id === sectionId)
       if (idx !== -1) sections.value[idx].data = sectionData
     } finally {
@@ -118,7 +118,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
   async function deleteSection(sectionId: string) {
     if (!activePortfolio.value) return
-    await sectionAPI.delete(activePortfolio.value.id, sectionId)
+    await sectionAPI.delete(sectionId)
     sections.value = sections.value.filter((s) => s.id !== sectionId)
   }
 
@@ -126,14 +126,14 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     if (!activePortfolio.value) return
     sections.value = newOrder.map((s, i) => ({ ...s, position: i }))
     const order = sections.value.map((s) => ({ id: s.id, position: s.position }))
-    await sectionAPI.reorder(activePortfolio.value.id, order)
+    await sectionAPI.reorder(order)
   }
 
   function toggleSectionVisibility(sectionId: string) {
     const section = sections.value.find((s) => s.id === sectionId)
     if (!section || !activePortfolio.value) return
     section.is_visible = !section.is_visible
-    sectionAPI.update(activePortfolio.value.id, sectionId, { is_visible: section.is_visible })
+    sectionAPI.update(sectionId, { is_visible: section.is_visible })
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

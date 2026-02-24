@@ -469,7 +469,7 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 
 	// Load sections
 	rows, _ := h.db.Query(
-		"SELECT id, type, position, data FROM sections WHERE portfolio_id = ? AND is_visible = TRUE ORDER BY position",
+		"SELECT id, type, position, data, is_visible FROM sections WHERE portfolio_id = ? AND is_visible = TRUE ORDER BY position",
 		p.ID,
 	)
 	if rows != nil {
@@ -477,14 +477,20 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 		for rows.Next() {
 			var s models.Section
 			var dataRaw []byte
-			rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw)
+			rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw, &s.IsVisible)
 			s.Data = json.RawMessage(dataRaw)
 			p.Sections = append(p.Sections, s)
 		}
 	}
 
+	// Extract necessary strings synchronously before spawning the goroutine
+	// because Fiber's *fiber.Ctx is not thread-safe after the handler returns.
+	ip := c.IP()
+	userAgent := c.Get("User-Agent")
+	referer := c.Get("Referer")
+
 	// Track view (async — fire and forget)
-	go h.trackView(c, p.ID)
+	go h.trackView(ip, userAgent, referer, p.ID)
 
 	return c.JSON(fiber.Map{"success": true, "data": p})
 }
@@ -544,8 +550,6 @@ func (h *PublicHandler) AIChat(c *fiber.Ctx) error {
 		portfolioID, req.SessionID, req.Message)
 
 	// Call AI with RAG context
-	aiHandler := &AIHandler{cfg: &config.Config{}} // minimal config for this call
-	_ = aiHandler
 	prompt := fmt.Sprintf(
 		`You are an AI representative for a portfolio owner. Answer questions about them based ONLY on their portfolio data below.
 		Be professional, enthusiastic about their skills, and helpful to HR/recruiters.
@@ -570,11 +574,15 @@ func (h *PublicHandler) AIChat(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "data": fiber.Map{"response": response}})
 }
 
-func (h *PublicHandler) trackView(c *fiber.Ctx, portfolioID string) {
-	import_hash := fmt.Sprintf("%x", c.IP())[:16]
+func (h *PublicHandler) trackView(ip, userAgent, referer, portfolioID string) {
+	ipHash := fmt.Sprintf("%x", ip)
+	if len(ipHash) > 16 {
+		ipHash = ipHash[:16]
+	}
+
 	h.db.Exec(
 		"INSERT INTO analytics (portfolio_id, event_type, ip_hash, user_agent, source) VALUES (?, 'view', ?, ?, ?)",
-		portfolioID, import_hash, c.Get("User-Agent"), c.Get("Referer"),
+		portfolioID, ipHash, userAgent, referer,
 	)
 	h.db.Exec("UPDATE portfolios SET view_count = view_count + 1 WHERE id = ?", portfolioID)
 }

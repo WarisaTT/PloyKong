@@ -1,14 +1,15 @@
 <!-- NotFoundView.vue -->
 <template>
   <div class="notfound-page">
-    <div style="font-size:72px;margin-bottom:16px">🛸</div>
-    <h1>404 — ไม่พบหน้านี้</h1>
-    <p>หน้าที่คุณตามหาอาจถูกย้ายหรือลบไปแล้ว</p>
-    <RouterLink to="/dashboard" class="btn btn-primary" style="margin-top:24px">กลับหน้าหลัก</RouterLink>
+    <div style="margin-bottom:16px; color: var(--muted)"><Ghost :size="72" :stroke-width="1.5" /></div>
+    <h1>404 — Page not found</h1>
+    <p> The page you are looking for might have been removed, had its name changed, or is temporarily unavailable. </p>
+    <RouterLink to="/dashboard" class="btn btn-primary" style="margin-top:24px">Back to dashboard</RouterLink>
   </div>
 </template>
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { Ghost } from 'lucide-vue-next'
 </script>
 <style scoped>
 .notfound-page { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px; }

@@ -1,9 +1,5 @@
 version: '3.8'
 
-# ════════════════════════════════════════════════════════════════════
-# PloyKong — Production Docker Compose
-# ════════════════════════════════════════════════════════════════════
-
 services:
 
   # ─── Go API Server ──────────────────────────────────────────────
@@ -14,34 +10,32 @@ services:
     container_name: ploykong-api
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "8082:8082"
     environment:
       - ENV=production
-      - PORT=3000
+      - PORT=8082
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_USER=${DB_USER:-ploykong}
+      - DB_USER=root
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME:-ploykong}
       - JWT_SECRET=${JWT_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://app.ploykong.com}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=gpt-4o-mini
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     networks:
       - ploykong-net
     healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost:3000/health" ]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
 
   # ─── MySQL 8 ─────────────────────────────────────────────────────
   mysql:
@@ -49,83 +43,29 @@ services:
     container_name: ploykong-mysql
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3306:3306" # Only accessible locally
+      - "127.0.0.1:3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME:-ploykong}
-      MYSQL_USER: ${DB_USER:-ploykong}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     command: >
-      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=256M --max-connections=200 --slow-query-log=1 --slow-query-log-file=/var/lib/mysql/slow-query.log --long-query-time=2
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
     networks:
       - ploykong-net
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 30s
 
-  # ─── Redis (session cache + rate limiting) ───────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: ploykong-redis
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redispass} --maxmemory 128mb --maxmemory-policy allkeys-lru
-    networks:
-      - ploykong-net
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  # ─── Nginx (Reverse Proxy + SSL) ────────────────────────────────
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: ploykong-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - certbot_www:/var/www/certbot:ro
-    depends_on:
-      - api
-    networks:
-      - ploykong-net
-
-  # ─── Certbot (SSL Certificate Auto-Renewal) ──────────────────────
-  certbot:
-    image: certbot/certbot:latest
-    container_name: ploykong-certbot
-    volumes:
-      - /etc/letsencrypt:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
-# ─── Volumes ──────────────────────────────────────────────────────
 volumes:
   mysql_data:
-    driver: local
-  redis_data:
-    driver: local
   uploads_data:
-    driver: local
-  certbot_www:
-    driver: local
 
-# ─── Networks ─────────────────────────────────────────────────────
 networks:
   ploykong-net:
     driver: bridge

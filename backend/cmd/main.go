@@ -34,6 +34,7 @@ func main() {
 		AppName:      "PloyKong API v1.0",
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
+		BodyLimit:    50 * 1024 * 1024, // 50MB
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			if e, ok := err.(*fiber.Error); ok {
@@ -53,12 +54,12 @@ func main() {
 	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.AllowedOrigins,
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
 	}))
 	app.Use(limiter.New(limiter.Config{
-		Max:        100,
+		Max:        1000,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()
@@ -85,7 +86,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(db)
 	users := api.Group("/users", middleware.Protected(cfg))
 	users.Get("/me", userHandler.GetMe)
-	users.Put("/me", userHandler.UpdateMe)
+	users.Patch("/me", userHandler.UpdateMe)
 	users.Delete("/me", userHandler.DeleteMe)
 
 	// Portfolio (protected)
@@ -94,7 +95,7 @@ func main() {
 	portfolios.Get("/", portfolioHandler.ListMyPortfolios)
 	portfolios.Post("/", portfolioHandler.Create)
 	portfolios.Get("/:id", portfolioHandler.GetByID)
-	portfolios.Put("/:id", portfolioHandler.Update)
+	portfolios.Patch("/:id", portfolioHandler.Update)
 	portfolios.Delete("/:id", portfolioHandler.Delete)
 	portfolios.Post("/:id/publish", portfolioHandler.Publish)
 	portfolios.Post("/:id/unpublish", portfolioHandler.Unpublish)
@@ -102,12 +103,14 @@ func main() {
 
 	// Sections (protected)
 	sectionHandler := handlers.NewSectionHandler(db)
-	sections := api.Group("/portfolios/:portfolioId/sections", middleware.Protected(cfg))
-	sections.Get("/", sectionHandler.List)
-	sections.Post("/", sectionHandler.Create)
-	sections.Put("/:id", sectionHandler.Update)
-	sections.Delete("/:id", sectionHandler.Delete)
-	sections.Post("/reorder", sectionHandler.Reorder)
+	portSections := api.Group("/portfolios/:portfolioId/sections", middleware.Protected(cfg))
+	portSections.Get("/", sectionHandler.List)
+	portSections.Post("/", sectionHandler.Create)
+
+	globalSections := api.Group("/sections", middleware.Protected(cfg))
+	globalSections.Patch("/:id", sectionHandler.Update)
+	globalSections.Delete("/:id", sectionHandler.Delete)
+	globalSections.Post("/reorder", sectionHandler.Reorder)
 
 	// Analytics (protected)
 	analyticsHandler := handlers.NewAnalyticsHandler(db)
@@ -122,6 +125,9 @@ func main() {
 	ai.Post("/improve-text", aiHandler.ImproveText)
 	ai.Post("/score-resume", aiHandler.ScoreResume)
 	ai.Post("/suggest-skills", aiHandler.SuggestSkills)
+
+	// Upload (protected)
+	api.Post("/upload", middleware.Protected(cfg), handlers.UploadImage)
 
 	// Public (no auth)
 	publicHandler := handlers.NewPublicHandler(db)

@@ -9,23 +9,29 @@
     </div>
 
     <div class="portfolio-stats">
-      <span class="stat-chip">👁️ {{ portfolio.view_count.toLocaleString() }}</span>
+      <span class="stat-chip"><Eye :size="14" class="icon" /> {{ portfolio.view_count.toLocaleString() }}</span>
       <span class="badge" :class="portfolio.is_published ? 'badge-live' : 'badge-draft'">
         {{ portfolio.is_published ? '● Live' : '○ Draft' }}
       </span>
     </div>
 
     <div class="portfolio-actions">
-      <RouterLink :to="`/portfolios/${portfolio.id}/edit`" class="btn btn-secondary btn-sm">
-        ✏️ Edit
+      <RouterLink :to="`/portfolios/${portfolio.id}/edit`" class="btn btn-secondary btn-sm icon-btn-labeled">
+        <Pencil :size="14" /> Edit
       </RouterLink>
-      <RouterLink :to="`/portfolios/${portfolio.id}/analytics`" class="btn btn-secondary btn-sm">
-        📊
+      <RouterLink :to="`/portfolios/${portfolio.id}/analytics`" class="btn btn-secondary btn-sm" title="Analytics">
+        <BarChart2 :size="16" />
       </RouterLink>
-      <a :href="`/p/${portfolio.slug}`" target="_blank" class="btn btn-secondary btn-sm">
-        🔗
+      <!-- View Public Link Button -->
+      <a v-if="portfolio.is_published" :href="`/p/${portfolio.slug}`" target="_blank" class="btn btn-secondary btn-sm" title="View Public Link">
+        <ExternalLink :size="16" />
       </a>
-      <button class="btn btn-danger btn-sm" @click="$emit('delete')">🗑️</button>
+      <button v-else disabled class="btn btn-secondary btn-sm" title="Portfolio is unpublished">
+        <EyeOff :size="16" />
+      </button>
+      <button class="btn btn-danger btn-sm" @click="$emit('delete')" title="Delete">
+        <Trash2 :size="16" />
+      </button>
     </div>
   </div>
 </template>
@@ -33,6 +39,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import type { Portfolio } from '@/types'
+import { Eye, EyeOff, Pencil, BarChart2, ExternalLink, Trash2 } from 'lucide-vue-next'
 
 defineProps<{ portfolio: Portfolio }>()
 defineEmits<{ delete: [] }>()
@@ -41,11 +48,11 @@ defineEmits<{ delete: [] }>()
 <style scoped>
 .portfolio-item {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; background: rgba(255,255,255,0.02);
+  padding: 14px 16px; background: var(--surface);
   border: 1px solid var(--border); border-radius: 12px;
   gap: 16px; flex-wrap: wrap; transition: all 0.15s;
 }
-.portfolio-item:hover { border-color: rgba(79,70,229,0.3); background: rgba(79,70,229,0.04); }
+.portfolio-item:hover { border-color: rgba(79,70,229,0.3); background: var(--bg2); }
 
 .portfolio-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 160px; }
 .portfolio-dot {
@@ -57,7 +64,10 @@ defineEmits<{ delete: [] }>()
 .portfolio-slug { font-size: 11px; color: var(--neon-cyan); }
 
 .portfolio-stats { display: flex; align-items: center; gap: 10px; }
-.stat-chip { font-size: 12px; color: var(--muted); }
+.stat-chip { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.stat-chip .icon { opacity: 0.7; }
 
 .portfolio-actions { display: flex; gap: 6px; }
+.portfolio-actions .btn { padding: 6px 10px; }
+.icon-btn-labeled { display: inline-flex; align-items: center; gap: 6px; }
 </style>
