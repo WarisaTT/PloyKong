@@ -1,9 +1,14 @@
 <!-- PublicHero.vue - renders the hero section on the public portfolio page -->
 <template>
-  <section class="pub-hero">
+  <section class="pub-hero" :class="'layout-' + (theme?.layout || 'centered')">
     <div class="hero-avatar-wrap">
-      <img v-if="data.avatar_url" :src="data.avatar_url" :alt="data.name" class="hero-img" />
-      <div v-else class="hero-avatar-fallback">{{ (data.name || '?')[0] }}</div>
+      <img
+        v-if="data.avatar_url"
+        :src="data.avatar_url"
+        :alt="data.name"
+        class="hero-img"
+      />
+      <div v-else class="hero-avatar-fallback">{{ (data.name || "?")[0] }}</div>
       <div class="hero-ring"></div>
     </div>
     <div class="hero-text">
@@ -11,16 +16,33 @@
         {{ data.role }}
       </div>
 
-      <h1 class="hero-name animate-slide-up" v-intersect style="transition-delay: 100ms;">
+      <h1
+        class="hero-name animate-slide-up"
+        v-intersect
+        style="transition-delay: 100ms"
+      >
         {{ data.name }}
       </h1>
 
-      <p class="hero-tagline animate-slide-up" v-intersect style="transition-delay: 200ms;">
+      <p
+        class="hero-tagline animate-slide-up"
+        v-intersect
+        style="transition-delay: 200ms"
+      >
         {{ data.tagline }}
       </p>
 
-      <div v-if="data.show_hire_me" class="hero-cta animate-scale-up" v-intersect style="transition-delay: 300ms;">
-        <a :href="data.hire_me_link || 'mailto:'" class="hero-btn primary" @click="trackHire">
+      <div
+        v-if="data.show_hire_me"
+        class="hero-cta animate-scale-up"
+        v-intersect
+        style="transition-delay: 300ms"
+      >
+        <a
+          :href="data.hire_me_link || 'mailto:'"
+          class="hero-btn primary"
+          @click="trackHire"
+        >
           <Send :size="18" />
           <span>Hire Me</span>
         </a>
@@ -34,13 +56,13 @@
   </section>
 </template>
 <script setup lang="ts">
-import { publicAPI } from '@/api'
-import { useRoute } from 'vue-router'
-import { Send, Mail } from 'lucide-vue-next'
-const route = useRoute()
-defineProps<{ data: any; theme?: any; portfolio?: any }>()
+import { publicAPI } from "@/api";
+import { useRoute } from "vue-router";
+import { Send, Mail } from "lucide-vue-next";
+const route = useRoute();
+defineProps<{ data: any; theme?: any; portfolio?: any }>();
 function trackHire() {
-  publicAPI.track(route.params.slug as string, 'hire_click')
+  publicAPI.track(route.params.slug as string, "hire_click");
 }
 </script>
 <style scoped>
@@ -53,12 +75,12 @@ function trackHire() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;   /* 👈 จัดกลางแนวตั้งจริง */
+  justify-content: center; /* 👈 จัดกลางแนวตั้งจริง */
 
   text-align: center;
 
-  min-height: 50vh;          /* 👈 ให้สูงเกือบเต็มจอ */
-  padding: 80px 20px 60px;   /* 👈 ลดล่างลง */
+  min-height: 50vh; /* 👈 ให้สูงเกือบเต็มจอ */
+  padding: 80px 20px 60px; /* 👈 ลดล่างลง */
 
   overflow: hidden;
   background:
@@ -155,7 +177,7 @@ function trackHire() {
   font-size: 18px;
   color: var(--muted);
   max-width: 640px;
-  margin: 0 auto 40px;   /* จาก 40px เหลือ 32 */
+  margin: 0 auto 40px; /* จาก 40px เหลือ 32 */
   line-height: 1.8;
 }
 
@@ -231,5 +253,59 @@ function trackHire() {
 
 :global(.theme-light) .hero-btn.primary:hover {
   box-shadow: 0 15px 35px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+/* =========================
+   LAYOUT MODIFIERS
+========================= */
+
+/* LEFT ALIGNED */
+.pub-hero.layout-left {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.pub-hero.layout-left .hero-tagline {
+  margin: 0 0 32px 0;
+}
+
+.pub-hero.layout-left .hero-cta {
+  justify-content: flex-start;
+}
+
+/* SPLIT / TWO-COLUMN */
+.pub-hero.layout-split {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  text-align: left;
+  gap: 60px;
+  align-items: center;
+  padding: 80px 40px;
+}
+
+.pub-hero.layout-split .hero-text {
+  flex: 1;
+}
+
+.pub-hero.layout-split .hero-tagline {
+  margin: 0 0 32px 0;
+}
+
+.pub-hero.layout-split .hero-cta {
+  justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+  .pub-hero.layout-split {
+    flex-direction: column;
+    text-align: center;
+    gap: 30px;
+  }
+  .pub-hero.layout-split .hero-tagline {
+    margin: 0 auto 32px;
+  }
+  .pub-hero.layout-split .hero-cta {
+    justify-content: center;
+  }
 }
 </style>

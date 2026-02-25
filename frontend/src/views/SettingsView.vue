@@ -15,10 +15,21 @@
       </div>
       <div class="form-field">
         <label class="form-label">Email</label>
-        <input :value="authStore.user?.email" class="form-input" disabled style="opacity:0.5" />
+        <input
+          :value="authStore.user?.email"
+          class="form-input"
+          disabled
+          style="opacity: 0.5"
+        />
       </div>
-      <button class="btn btn-primary btn-icon-text" @click="saveProfile" :disabled="saving">
-        <template v-if="saving"><Loader2 :size="16" class="spin" /> Saving...</template>
+      <button
+        class="btn btn-primary btn-icon-text"
+        @click="saveProfile"
+        :disabled="saving"
+      >
+        <template v-if="saving"
+          ><Loader2 :size="16" class="spin" /> Saving...</template
+        >
         <template v-else><Save :size="16" /> Save</template>
       </button>
     </div>
@@ -52,55 +63,79 @@
 
     <div class="settings-card danger-zone">
       <h3><AlertTriangle :size="18" class="icon-inline" />Danger Zone</h3>
-      <p>Deleting your account will delete all your data and portfolios, and cannot be undone.</p>
-      <button class="btn btn-danger" @click="deleteAccount">Delete Account</button>
+      <p>
+        Deleting your account will delete all your data and portfolios, and
+        cannot be undone.
+      </p>
+      <button class="btn btn-danger" @click="deleteAccount">
+        Delete Account
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import Swal from 'sweetalert2'
-import { useThemeStore } from '@/stores/theme'
-import { userAPI } from '@/api'
-import { Settings as SettingsIcon, User, Loader2, Save, Palette, Sun, Moon, Monitor, AlertTriangle, ArrowLeft } from 'lucide-vue-next'
+import { reactive, ref } from "vue";
+import { RouterLink, useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import Swal from "sweetalert2";
+import { useThemeStore } from "@/stores/theme";
+import { userAPI } from "@/api";
+import {
+  Settings as SettingsIcon,
+  User,
+  Loader2,
+  Save,
+  Palette,
+  Sun,
+  Moon,
+  Monitor,
+  AlertTriangle,
+  ArrowLeft,
+} from "lucide-vue-next";
 
-
-const authStore = useAuthStore()
-const themeStore = useThemeStore()
-const router = useRouter()
-const saving = ref(false)
-const form = reactive({ name: authStore.user?.name || '' })
+const authStore = useAuthStore();
+const themeStore = useThemeStore();
+const router = useRouter();
+const saving = ref(false);
+const form = reactive({ name: authStore.user?.name || "" });
 
 async function saveProfile() {
-  saving.value = true
-  await userAPI.updateMe({ name: form.name })
-  if (authStore.user) authStore.user.name = form.name
-  saving.value = false
+  saving.value = true;
+  await userAPI.updateMe({ name: form.name });
+  if (authStore.user) authStore.user.name = form.name;
+  saving.value = false;
 }
 
 async function deleteAccount() {
   const { isConfirmed } = await Swal.fire({
-    title: 'Confirm deletion?',
-    text: 'This action cannot be undone.',
-    icon: 'warning',
+    title: "Confirm deletion?",
+    text: "This action cannot be undone.",
+    icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#94a3b8',
-    confirmButtonText: 'Confirm deletion'
-  })
-  if (!isConfirmed) return
-  await userAPI.deleteMe()
-  authStore.logout()
-  router.push('/')
+    confirmButtonColor: "#ef4444",
+    cancelButtonColor: "#94a3b8",
+    confirmButtonText: "Confirm deletion",
+  });
+  if (!isConfirmed) return;
+  await userAPI.deleteMe();
+  authStore.logout();
+  router.push("/");
 }
 </script>
 
 <style scoped>
-.settings-page { max-width:600px;margin:0 auto;padding:36px 24px; }
-.settings-header { display:flex;align-items:center;gap:16px;margin-bottom:32px; }
+.settings-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 36px 24px;
+}
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
 .back-btn {
   display: inline-flex;
   align-items: center;
@@ -126,12 +161,36 @@ async function deleteAccount() {
   transform: translateX(-2px);
   transition: transform 0.2s ease;
 }
-h1 { font-size:24px;font-weight:800; }
-.settings-card { background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px; }
-.settings-card h3 { font-size:16px;font-weight:700;margin-bottom:20px; }
-.form-field { display:flex;flex-direction:column;margin-bottom:14px; }
-.danger-zone { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
-.danger-zone p { font-size:13px;color:var(--danger);margin-bottom:16px; }
+h1 {
+  font-size: 24px;
+  font-weight: 800;
+}
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 20px;
+}
+.settings-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.form-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+.danger-zone {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+.danger-zone p {
+  font-size: 13px;
+  color: var(--danger);
+  margin-bottom: 16px;
+}
 
 .theme-options {
   display: flex;
@@ -164,8 +223,22 @@ h1 { font-size:24px;font-weight:800; }
 .theme-icon {
   margin-bottom: 4px;
 }
-.icon-inline { vertical-align: text-bottom; margin-right: 4px; }
-.btn-icon-text { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-.spin { animation: spin 1s linear infinite; }
+.icon-inline {
+  vertical-align: text-bottom;
+  margin-right: 4px;
+}
+.btn-icon-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
 </style>

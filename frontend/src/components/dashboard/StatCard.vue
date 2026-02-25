@@ -10,7 +10,13 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ label: string; value: number; change: string; color: string; icon?: any }>()
+defineProps<{
+  label: string;
+  value: number;
+  change: string;
+  color: string;
+  icon?: any;
+}>();
 </script>
 
 <style scoped>
@@ -21,19 +27,53 @@ defineProps<{ label: string; value: number; change: string; color: string; icon?
   padding: 22px;
   transition: all 0.2s;
 }
-.stat-card:hover { transform: translateY(-2px); }
-.stat-label { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
-.stat-value { font-family: var(--font-display); font-size: 32px; font-weight: 800; margin-bottom: 6px; }
-.stat-change { font-size: 12px; font-weight: 600; }
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+.stat-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.stat-change {
+  font-size: 12px;
+  font-weight: 600;
+}
 
-.color-indigo .stat-value { color: var(--indigo); }
-.color-indigo .stat-change { color: var(--indigo); }
-.color-cyan .stat-value { color: var(--cyan); }
-.color-cyan .stat-change { color: var(--cyan); }
-.color-pink .stat-value { color: var(--pink); }
-.color-pink .stat-change { color: var(--pink); }
-.color-green .stat-value { color: var(--success); }
-.color-green .stat-change { color: var(--success); }
+.color-indigo .stat-value {
+  color: var(--indigo);
+}
+.color-indigo .stat-change {
+  color: var(--indigo);
+}
+.color-cyan .stat-value {
+  color: var(--cyan);
+}
+.color-cyan .stat-change {
+  color: var(--cyan);
+}
+.color-pink .stat-value {
+  color: var(--pink);
+}
+.color-pink .stat-change {
+  color: var(--pink);
+}
+.color-green .stat-value {
+  color: var(--success);
+}
+.color-green .stat-change {
+  color: var(--success);
+}
 
-.icon-inline { vertical-align: text-bottom; margin-right: 6px; }
+.icon-inline {
+  vertical-align: text-bottom;
+  margin-right: 6px;
+}
 </style>

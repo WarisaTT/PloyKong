@@ -9,19 +9,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { RouterView } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useThemeStore } from '@/stores/theme'
+import { computed, onMounted } from "vue";
+import { RouterView } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { useThemeStore } from "@/stores/theme";
 
-const authStore = useAuthStore()
-const themeStore = useThemeStore()
+const authStore = useAuthStore();
+const themeStore = useThemeStore();
 
 onMounted(async () => {
   if (authStore.isAuthenticated && !authStore.user) {
-    await authStore.fetchMe()
+    await authStore.fetchMe();
   }
-})
+});
 </script>
 
 <style>

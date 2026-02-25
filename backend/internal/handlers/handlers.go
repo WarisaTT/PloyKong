@@ -88,13 +88,27 @@ func (h *SectionHandler) Update(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "invalid body")
 	}
+	// prepare params: if Data is not provided, pass NULL so COALESCE keeps existing value
+	var dataParam interface{}
+	if req.Data == nil || len(req.Data) == 0 {
+		dataParam = nil
+	} else {
+		dataParam = string(req.Data)
+	}
 
-	_, err := h.db.Exec(
+	// IsVisible is a pointer to allow distinguishing between omitted and explicit boolean
+	res, err := h.db.Exec(
 		"UPDATE sections SET data = COALESCE(?, data), is_visible = COALESCE(?, is_visible) WHERE id = ?",
-		string(req.Data), req.IsVisible, id,
+		dataParam, req.IsVisible, id,
 	)
 	if err != nil {
-		return fiber.NewError(500, "failed to update section")
+		// return DB error message for easier debugging
+		return fiber.NewError(500, err.Error())
+	}
+
+	// ensure a row was affected
+	if affected, _ := res.RowsAffected(); affected == 0 {
+		return fiber.NewError(404, "section not found")
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "section updated"})
 }

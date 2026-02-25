@@ -12,20 +12,41 @@
       <form @submit.prevent="handleLogin" class="auth-form">
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input v-model="form.email" type="email" class="form-input" placeholder="you@example.com" required />
+          <input
+            v-model="form.email"
+            type="email"
+            class="form-input"
+            placeholder="you@example.com"
+            required
+          />
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input v-model="form.password" type="password" class="form-input" placeholder="••••••••" required />
+          <input
+            v-model="form.password"
+            type="password"
+            class="form-input"
+            placeholder="••••••••"
+            required
+          />
         </div>
 
         <div v-if="authStore.error" class="auth-error">
           <AlertTriangle :size="14" class="icon-inline" /> {{ authStore.error }}
         </div>
 
-        <button type="submit" class="btn btn-primary btn-lg btn-icon-text" style="width:100%" :disabled="authStore.loading">
-          <span v-if="authStore.loading" class="btn-icon-text"><Loader2 :size="18" class="spin" /> กำลังเข้าสู่ระบบ...</span>
-          <span v-else class="btn-icon-text"><Rocket :size="18" /> เข้าสู่ระบบ</span>
+        <button
+          type="submit"
+          class="btn btn-primary btn-lg btn-icon-text"
+          style="width: 100%"
+          :disabled="authStore.loading"
+        >
+          <span v-if="authStore.loading" class="btn-icon-text"
+            ><Loader2 :size="18" class="spin" /> กำลังเข้าสู่ระบบ...</span
+          >
+          <span v-else class="btn-icon-text"
+            ><Rocket :size="18" /> เข้าสู่ระบบ</span
+          >
         </button>
       </form>
 
@@ -38,19 +59,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { Hand, AlertTriangle, Loader2, Rocket } from 'lucide-vue-next'
+import { reactive } from "vue";
+import { useRouter, RouterLink } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { Hand, AlertTriangle, Loader2, Rocket } from "lucide-vue-next";
 
-const authStore = useAuthStore()
-const router = useRouter()
+const authStore = useAuthStore();
+const router = useRouter();
 
-const form = reactive({ email: '', password: '' })
+const form = reactive({ email: "", password: "" });
 
 async function handleLogin() {
-  const success = await authStore.login(form.email, form.password)
-  if (success) router.push('/dashboard')
+  const success = await authStore.login(form.email, form.password);
+  if (success) router.push("/dashboard");
 }
 </script>
 
@@ -74,8 +95,12 @@ async function handleLogin() {
 }
 
 @keyframes floatBg {
-  0% { transform: scale(1) rotate(0deg); }
-  100% { transform: scale(1.05) rotate(2deg); }
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    transform: scale(1.05) rotate(2deg);
+  }
 }
 
 /* ✨ Card */
@@ -91,8 +116,8 @@ async function handleLogin() {
 
   backdrop-filter: blur(40px);
   box-shadow:
-    0 30px 80px rgba(0,0,0,0.15),
-    0 0 60px rgba(147,51,234,0.08);
+    0 30px 80px rgba(0, 0, 0, 0.15),
+    0 0 60px rgba(147, 51, 234, 0.08);
 
   transition: transform 0.3s ease;
 }
@@ -122,7 +147,7 @@ async function handleLogin() {
   font-size: 18px;
   font-weight: 800;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(147,51,234,0.4);
+  box-shadow: 0 8px 24px rgba(147, 51, 234, 0.4);
 }
 
 .logo-text {
@@ -185,14 +210,14 @@ async function handleLogin() {
 .form-input:focus {
   background: rgba(20, 25, 50, 0.95);
   border-color: var(--purple);
-  box-shadow: 0 0 0 4px rgba(147,51,234,0.2);
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.2);
 }
 
 /* ✨ Error */
 .auth-error {
   padding: 12px 14px;
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 12px;
   font-size: 13px;
   color: var(--danger);
@@ -210,13 +235,13 @@ async function handleLogin() {
 
 .btn-primary {
   background: linear-gradient(135deg, var(--indigo), var(--purple));
-  box-shadow: 0 10px 30px rgba(79,70,229,0.35);
+  box-shadow: 0 10px 30px rgba(79, 70, 229, 0.35);
   transition: all 0.25s ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(147,51,234,0.5);
+  box-shadow: 0 16px 40px rgba(147, 51, 234, 0.5);
 }
 
 /* ✨ Switch */
@@ -252,12 +277,12 @@ async function handleLogin() {
 }
 
 @keyframes spin {
-  100% { transform: rotate(360deg); }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .spin {
   animation: spin 1s linear infinite;
 }
-
-
 </style>

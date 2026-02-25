@@ -1,6 +1,12 @@
 <template>
-  <div class="section-block" :class="[`type-${section.type}`, { selected: isSelected, hidden: !section.is_visible }]"
-    @click="$emit('select')">
+  <div
+    class="section-block"
+    :class="[
+      `type-${section.type}`,
+      { selected: isSelected, hidden: !section.is_visible },
+    ]"
+    @click="$emit('select')"
+  >
     <!-- Section Header -->
     <div class="section-header">
       <div class="section-left">
@@ -21,7 +27,11 @@
         </button>
 
         <!-- Toggle Visibility -->
-        <button class="icon-btn" :title="section.is_visible ? 'Hide' : 'Show'" @click="$emit('toggle-visibility')">
+        <button
+          class="icon-btn"
+          :title="section.is_visible ? 'Hide' : 'Show'"
+          @click="$emit('toggle-visibility')"
+        >
           <Eye v-if="section.is_visible" :size="14" />
           <EyeOff v-else :size="14" />
         </button>
@@ -34,12 +44,28 @@
     </div>
 
     <!-- Section Preview -->
-    <div class="section-preview" :class="themeClass" :style="[themeVars || {}, { pointerEvents: 'none' }]">
+    <div
+      class="section-preview"
+      :class="themeClass"
+      :style="[themeVars || {}, { pointerEvents: 'none' }]"
+    >
       <PublicHero v-if="section.type === 'hero'" :data="section.data" />
-      <PublicSkills v-else-if="section.type === 'skills'" :data="section.data" />
-      <PublicProjects v-else-if="section.type === 'projects'" :data="section.data" />
-      <PublicExperience v-else-if="section.type === 'experience'" :data="section.data" />
-      <PublicContact v-else-if="section.type === 'contact'" :data="section.data" />
+      <PublicSkills
+        v-else-if="section.type === 'skills'"
+        :data="section.data"
+      />
+      <PublicProjects
+        v-else-if="section.type === 'projects'"
+        :data="section.data"
+      />
+      <PublicExperience
+        v-else-if="section.type === 'experience'"
+        :data="section.data"
+      />
+      <PublicContact
+        v-else-if="section.type === 'contact'"
+        :data="section.data"
+      />
       <GenericPreview v-else :section="section" />
     </div>
 
@@ -51,48 +77,57 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Section } from '@/types'
-import { BLOCK_TYPES } from '@/types'
-import { Package, Eye, EyeOff, ArrowUp, ArrowDown, Trash2 } from 'lucide-vue-next'
-import Swal from 'sweetalert2'
-import PublicHero from '../portfolio/PublicHero.vue'
-import PublicSkills from '../portfolio/PublicSkills.vue'
-import PublicProjects from '../portfolio/PublicProjects.vue'
-import PublicExperience from '../portfolio/PublicExperience.vue'
-import PublicContact from '../portfolio/PublicContact.vue'
-import GenericPreview from './previews/GenericPreview.vue'
+import { computed } from "vue";
+import type { Section } from "@/types";
+import { BLOCK_TYPES } from "@/types";
+import {
+  Package,
+  Eye,
+  EyeOff,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+} from "lucide-vue-next";
+import Swal from "sweetalert2";
+import PublicHero from "../portfolio/PublicHero.vue";
+import PublicSkills from "../portfolio/PublicSkills.vue";
+import PublicProjects from "../portfolio/PublicProjects.vue";
+import PublicExperience from "../portfolio/PublicExperience.vue";
+import PublicContact from "../portfolio/PublicContact.vue";
+import GenericPreview from "./previews/GenericPreview.vue";
 
 const props = defineProps<{
-  section: Section
-  isSelected: boolean
-  themeClass?: string
-  themeVars?: Record<string, string>
-}>()
+  section: Section;
+  isSelected: boolean;
+  themeClass?: string;
+  themeVars?: Record<string, string>;
+}>();
 
 const emit = defineEmits<{
-  select: []
-  delete: []
-  'toggle-visibility': []
-  'move-up': []
-  'move-down': []
-}>()
+  select: [];
+  delete: [];
+  "toggle-visibility": [];
+  "move-up": [];
+  "move-down": [];
+}>();
 
-const blockMeta = computed(() => BLOCK_TYPES.find((b) => b.type === props.section.type))
-const icon = computed(() => blockMeta.value?.icon || Package)
-const label = computed(() => blockMeta.value?.label || props.section.type)
+const blockMeta = computed(() =>
+  BLOCK_TYPES.find((b) => b.type === props.section.type),
+);
+const icon = computed(() => blockMeta.value?.icon || Package);
+const label = computed(() => blockMeta.value?.label || props.section.type);
 
 async function confirmDelete() {
   const { isConfirmed } = await Swal.fire({
-    title: 'Delete this section?',
-    icon: 'warning',
+    title: "Delete this section?",
+    icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    cancelButtonColor: '#94a3b8',
-    confirmButtonText: 'Delete'
-  })
+    confirmButtonColor: "#ef4444",
+    cancelButtonColor: "#94a3b8",
+    confirmButtonText: "Delete",
+  });
   if (isConfirmed) {
-    emit('delete')
+    emit("delete");
   }
 }
 </script>
@@ -141,6 +176,12 @@ async function confirmDelete() {
   color: var(--muted);
   cursor: grab;
   font-size: 16px;
+  padding: 4px;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: var(--indigo);
 }
 
 .section-icon {
@@ -193,6 +234,7 @@ async function confirmDelete() {
 
 .section-preview {
   background: var(--bg);
+  border-radius: 0 0 11px 11px;
   color: var(--text);
   font-family: var(--font-body);
   padding: 14px;

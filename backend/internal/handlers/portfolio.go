@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oklog/ulid/v2"
+	"github.com/signintech/gopdf"
 )
 
 type PortfolioHandler struct {
@@ -79,7 +81,7 @@ func (h *PortfolioHandler) Create(c *fiber.Ctx) error {
 	var count int
 	h.db.QueryRow("SELECT COUNT(*) FROM portfolios WHERE slug = ?", req.Slug).Scan(&count)
 	if count > 0 {
-		return fiber.NewError(fiber.StatusConflict, "slug already taken")
+		return fiber.NewError(fiber.StatusConflict, "URL already exists")
 	}
 
 	// Default theme
@@ -280,7 +282,8 @@ func (h *PortfolioHandler) ExportPDF(c *fiber.Ctx) error {
 
 func (h *PortfolioHandler) loadSections(portfolioID string) ([]models.Section, error) {
 	rows, err := h.db.Query(
-		"SELECT id, portfolio_id, type, position, data, is_visible, created_at, updated_at FROM sections WHERE portfolio_id = ? ORDER BY position ASC",
+		`SELECT id, portfolio_id, type, position, data, is_visible 
+		 FROM portfolio_sections WHERE portfolio_id = ? ORDER BY position ASC`,
 		portfolioID,
 	)
 	if err != nil {
@@ -292,13 +295,128 @@ func (h *PortfolioHandler) loadSections(portfolioID string) ([]models.Section, e
 	for rows.Next() {
 		var s models.Section
 		var dataRaw []byte
-		if err := rows.Scan(&s.ID, &s.PortfolioID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.PortfolioID, &s.Type, &s.Position, &dataRaw, &s.IsVisible); err != nil {
 			continue
 		}
 		s.Data = json.RawMessage(dataRaw)
 		sections = append(sections, s)
 	}
 	return sections, nil
+}
+
+// ─── Generate PDF ─────────────────────────────────────────────────────────────
+
+func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
+	claims := middleware.GetUserClaims(c)
+	id := c.Params("id")
+
+	// 1. Fetch Portfolio
+	var p models.Portfolio
+	err := h.db.QueryRow(
+		`SELECT id, title FROM portfolios WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		id, claims.UserID,
+	).Scan(&p.ID, &p.Title)
+
+	if err == sql.ErrNoRows {
+		return fiber.NewError(fiber.StatusNotFound, "portfolio not found")
+	}
+
+	// 2. Fetch Sections
+	sections, _ := h.loadSections(id)
+
+	// 3. Init gopdf
+	pdf := gopdf.GoPdf{}
+	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
+	pdf.AddPage()
+
+	// 4. Load Font
+	err = pdf.AddTTFFont("THSarabun", "assets/fonts/THSarabunNew.ttf")
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to load font: "+err.Error())
+	}
+
+	pdf.SetFont("THSarabun", "", 24)
+
+	// Draw Title
+	pdf.SetXY(30, 30)
+	pdf.Cell(nil, p.Title)
+
+	pdf.SetFont("THSarabun", "", 16)
+	yVal := 60.0
+
+	// 5. Draw simple sections
+	for _, sec := range sections {
+		if !sec.IsVisible {
+			continue
+		}
+
+		var dataMap map[string]interface{}
+		if err := json.Unmarshal(sec.Data, &dataMap); err != nil {
+			continue
+		}
+
+		if sec.Type == "hero" {
+			name, _ := dataMap["name"].(string)
+			tagline, _ := dataMap["tagline"].(string)
+
+			pdf.SetXY(30, yVal)
+			pdf.SetFont("THSarabun", "", 20)
+			pdf.Cell(nil, name)
+			yVal += 20
+
+			pdf.SetXY(30, yVal)
+			pdf.SetFont("THSarabun", "", 16)
+			pdf.Cell(nil, tagline)
+			yVal += 30
+		} else if sec.Type == "skills" {
+			pdf.SetXY(30, yVal)
+			pdf.Cell(nil, "--- SKILLS ---")
+			yVal += 20
+			items, _ := dataMap["items"].([]interface{})
+			for _, item := range items {
+				im, ok := item.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				sName, _ := im["name"].(string)
+				pdf.SetXY(40, yVal)
+				pdf.Cell(nil, "- "+sName)
+				yVal += 15
+			}
+			yVal += 15
+		} else if sec.Type == "experience" {
+			pdf.SetXY(30, yVal)
+			pdf.Cell(nil, "--- EXPERIENCE ---")
+			yVal += 20
+			items, _ := dataMap["items"].([]interface{})
+			for _, item := range items {
+				im, ok := item.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				role, _ := im["title"].(string)
+				company, _ := im["company"].(string)
+				pdf.SetXY(40, yVal)
+				pdf.Cell(nil, role+" @ "+company)
+				yVal += 15
+			}
+			yVal += 15
+		}
+
+		// Add page if yVal exceeds page height
+		if yVal > 800 {
+			pdf.AddPage()
+			yVal = 30
+		}
+	}
+
+	// 6. Output PDF
+	buf := pdf.GetBytesPdf()
+
+	c.Set("Content-Type", "application/pdf")
+	c.Set("Content-Disposition", `attachment; filename="resume.pdf"`)
+
+	return c.SendStream(bytes.NewReader(buf))
 }
 
 func (h *PortfolioHandler) createStarterSections(portfolioID string) {

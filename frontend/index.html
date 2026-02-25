@@ -1,43 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
+  <head>
+    <script>
+      const saved = localStorage.getItem("theme");
+      const systemLight = window.matchMedia(
+        "(prefers-color-scheme: light)",
+      ).matches;
 
-<head>
-  <script>
-    const saved = localStorage.getItem('theme')
-    const systemLight = window.matchMedia('(prefers-color-scheme: light)').matches
+      if (saved) {
+        document.documentElement.classList.add("theme-" + saved);
+      } else if (systemLight) {
+        document.documentElement.classList.add("theme-system");
+      } else {
+        document.documentElement.classList.add("theme-dark");
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PloyKong — มีดีต้องปล่อยของ</title>
+    <meta
+      name="description"
+      content="สร้างพอร์ตโฟลิโอสวยงามในไม่กี่คลิก ไม่ต้องเขียนโค้ด"
+    />
+    <meta name="theme-color" content="#4F46E5" />
 
-    if (saved) {
-      document.documentElement.classList.add('theme-' + saved)
-    } else if (systemLight) {
-      document.documentElement.classList.add('theme-system')
-    } else {
-      document.documentElement.classList.add('theme-dark')
-    }
-  </script>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/favicon.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PloyKong — มีดีต้องปล่อยของ</title>
-  <meta name="description" content="สร้างพอร์ตโฟลิโอสวยงามในไม่กี่คลิก ไม่ต้องเขียนโค้ด" />
-  <meta name="theme-color" content="#4F46E5" />
+    <!-- Open Graph -->
+    <meta property="og:title" content="PloyKong — No-Code Portfolio Builder" />
+    <meta
+      property="og:description"
+      content="มีดีต้องปล่อยของ สร้างพอร์ตสวยง่ายๆ ในไม่กี่คลิก"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.png" />
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="PloyKong — No-Code Portfolio Builder" />
-  <meta property="og:description" content="มีดีต้องปล่อยของ สร้างพอร์ตสวยง่ายๆ ในไม่กี่คลิก" />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="/og-image.png" />
+    <!-- Preconnect Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
 
-  <!-- Preconnect Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
-    rel="stylesheet" />
-</head>
-
-<body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
-
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

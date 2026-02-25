@@ -95,6 +95,7 @@ func main() {
 	portfolios.Get("/", portfolioHandler.ListMyPortfolios)
 	portfolios.Post("/", portfolioHandler.Create)
 	portfolios.Get("/:id", portfolioHandler.GetByID)
+	portfolios.Get("/:id/pdf", portfolioHandler.GeneratePDF)
 	portfolios.Patch("/:id", portfolioHandler.Update)
 	portfolios.Delete("/:id", portfolioHandler.Delete)
 	portfolios.Post("/:id/publish", portfolioHandler.Publish)

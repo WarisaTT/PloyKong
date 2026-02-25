@@ -1,39 +1,122 @@
 <template>
   <section id="contact" class="pub-contact pub-section">
-    <h2 class="pub-section-title">
-      <Mail :size="24" class="icon-inline" /> Contact
-    </h2>
+    <div class="section-header-wrapper">
+      <h2 class="layered-title" data-text="Contact">Contact</h2>
+    </div>
     <div class="contact-grid">
-      <a v-if="data.email" :href="`mailto:${data.email}`" class="contact-card animate-scale-up" v-intersect>
+      <a
+        v-if="data.email"
+        :href="`mailto:${data.email}`"
+        class="contact-card animate-scale-up"
+        v-intersect
+      >
         <Mail :size="24" class="contact-icon" />
         <span class="contact-label">Email</span>
         <span class="contact-val">{{ data.email }}</span>
       </a>
-      <a v-if="data.linkedin" :href="data.linkedin" target="_blank" class="contact-card animate-scale-up" v-intersect style="transition-delay: 100ms;">
+      <a
+        v-if="data.linkedin"
+        :href="data.linkedin"
+        target="_blank"
+        class="contact-card animate-scale-up"
+        v-intersect
+        style="transition-delay: 100ms"
+      >
         <Linkedin :size="24" class="contact-icon" />
         <span class="contact-label">LinkedIn</span>
         <span class="contact-val">View Profile</span>
       </a>
-      <a v-if="data.github" :href="data.github" target="_blank" class="contact-card animate-scale-up" v-intersect style="transition-delay: 200ms;">
+      <a
+        v-if="data.github"
+        :href="data.github"
+        target="_blank"
+        class="contact-card animate-scale-up"
+        v-intersect
+        style="transition-delay: 200ms"
+      >
         <Github :size="24" class="contact-icon" />
         <span class="contact-label">GitHub</span>
         <span class="contact-val">View Profile</span>
       </a>
-      <div v-if="data.location" class="contact-card static animate-scale-up" v-intersect style="transition-delay: 300ms;">
+      <div
+        v-if="data.location"
+        class="contact-card static animate-scale-up"
+        v-intersect
+        style="transition-delay: 300ms"
+      >
         <MapPin :size="24" class="contact-icon" />
         <span class="contact-label">Location</span>
         <span class="contact-val">{{ data.location }}</span>
       </div>
+
+      <!-- Custom Contacts -->
+      <component
+        v-for="(contact, i) in data.custom_items"
+        :key="contact.id"
+        :is="contact.link ? 'a' : 'div'"
+        :href="contact.link || undefined"
+        :target="
+          contact.link &&
+          !contact.link.startsWith('tel:') &&
+          !contact.link.startsWith('mailto:')
+            ? '_blank'
+            : undefined
+        "
+        class="contact-card animate-scale-up"
+        :class="{ static: !contact.link }"
+        v-intersect
+        :style="{ transitionDelay: `${400 + Number(i) * 100}ms` }"
+      >
+        <component
+          :is="getIcon(contact.platform)"
+          :size="24"
+          class="contact-icon"
+        />
+        <span class="contact-label">{{ contact.label }}</span>
+        <span class="contact-val">{{ contact.value }}</span>
+      </component>
     </div>
   </section>
 </template>
 <script setup lang="ts">
-import { Mail, Linkedin, Github, MapPin } from 'lucide-vue-next'
-defineProps<{ data: any }>()
+import {
+  Mail,
+  Linkedin,
+  Github,
+  MapPin,
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
+  MessageCircle,
+  Phone,
+  Link,
+} from "lucide-vue-next";
+
+defineProps<{ data: any }>();
+
+function getIcon(platform: string) {
+  switch (platform) {
+    case "facebook":
+      return Facebook;
+    case "twitter":
+      return Twitter;
+    case "instagram":
+      return Instagram;
+    case "youtube":
+      return Youtube;
+    case "message-circle":
+      return MessageCircle;
+    case "phone":
+      return Phone;
+    default:
+      return Link;
+  }
+}
 </script>
 <style scoped>
 .pub-section {
-  padding: 48px 0;
+  padding: 80px 0;
 }
 
 /* Dark theme */
@@ -44,12 +127,6 @@ defineProps<{ data: any }>()
 /* Light theme */
 :global(.theme-light) .pub-section {
   border-top: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.pub-section-title {
-  font-size: 22px;
-  font-weight: 800;
-  margin-bottom: 28px;
 }
 
 .contact-grid {
@@ -75,7 +152,7 @@ defineProps<{ data: any }>()
 
 :global(.theme-light) .contact-card {
   background: var(--surface);
-  border-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .contact-card:not(.static):hover {
