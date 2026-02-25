@@ -90,7 +90,7 @@ func (h *SectionHandler) Update(c *fiber.Ctx) error {
 	}
 	// prepare params: if Data is not provided, pass NULL so COALESCE keeps existing value
 	var dataParam interface{}
-	if req.Data == nil || len(req.Data) == 0 {
+	if len(req.Data) == 0 {
 		dataParam = nil
 	} else {
 		dataParam = string(req.Data)

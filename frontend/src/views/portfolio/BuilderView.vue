@@ -32,6 +32,15 @@
           Preview
         </button>
         <button
+          class="btn btn-secondary btn-sm btn-icon-text"
+          :disabled="!store.activePortfolio?.id || isExporting"
+          title="Export as PDF"
+          @click="exportPDF"
+        >
+          <Download :size="14" />
+          {{ isExporting ? 'Exporting...' : 'Export' }}
+        </button>
+        <button
           class="btn btn-sm btn-icon-text publish-btn"
           :class="
             store.activePortfolio?.is_published ? 'btn-danger' : 'btn-primary'
@@ -40,7 +49,7 @@
         >
           <Play v-if="store.activePortfolio?.is_published" :size="14" />
           <Zap v-else :size="14" />
-          {{ store.activePortfolio?.is_published ? "Unpublish" : "Publish" }}
+          {{ store.activePortfolio?.is_published ? 'Unpublish' : 'Publish' }}
         </button>
       </div>
     </header>
@@ -186,7 +195,7 @@
               :value="theme.primary_color"
               @input="
                 updateTheme({
-                  primary_color: ($event.target as HTMLInputElement).value,
+                  primary_color: ($event.target as HTMLInputElement).value
                 })
               "
             />
@@ -198,7 +207,7 @@
               :value="theme.secondary_color"
               @input="
                 updateTheme({
-                  secondary_color: ($event.target as HTMLInputElement).value,
+                  secondary_color: ($event.target as HTMLInputElement).value
                 })
               "
             />
@@ -303,11 +312,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive, nextTick, watch } from "vue";
-import { useRoute, RouterLink } from "vue-router";
-import { usePortfolioStore } from "@/stores/portfolio";
-import { aiAPI } from "@/api";
-import { BLOCK_TYPES, type SectionType } from "@/types";
+import { ref, computed, onMounted, reactive, nextTick, watch } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+import { usePortfolioStore } from '@/stores/portfolio'
+import { aiAPI, portfolioAPI } from '@/api'
+import { BLOCK_TYPES, type SectionType } from '@/types'
 import {
   Globe,
   Save,
@@ -323,232 +332,261 @@ import {
   Sparkles,
   ArrowLeft,
   Play,
-} from "lucide-vue-next";
-import SectionBlock from "@/components/builder/SectionBlock.vue";
-import SectionEditor from "@/components/builder/SectionEditor.vue";
-import { debounce } from "lodash";
-import Sortable from "sortablejs";
+  Download
+} from 'lucide-vue-next'
+import SectionBlock from '@/components/builder/SectionBlock.vue'
+import SectionEditor from '@/components/builder/SectionEditor.vue'
+import { debounce } from 'lodash'
+import Sortable from 'sortablejs'
 
-const route = useRoute();
-const store = usePortfolioStore();
+const route = useRoute()
+const store = usePortfolioStore()
 
-const selectedSectionId = ref<string | null>(null);
-const aiResult = ref<string | null>(null);
-const canvasRef = ref<HTMLElement | null>(null);
-const listRef = ref<any>(null);
-const highlightedBlocks = ref<Set<string>>(new Set());
+const selectedSectionId = ref<string | null>(null)
+const aiResult = ref<string | null>(null)
+const canvasRef = ref<HTMLElement | null>(null)
+const listRef = ref<any>(null)
+const highlightedBlocks = ref<Set<string>>(new Set())
+const isExporting = ref(false)
 
 const COLORS = [
-  { name: "Indigo", value: "#4F46E5" },
-  { name: "Purple", value: "#a855f7" },
-  { name: "Pink", value: "#ec4899" },
-  { name: "Cyan", value: "#06b6d4" },
-  { name: "Emerald", value: "#10b981" },
-  { name: "Orange", value: "#f97316" },
-];
+  { name: 'Indigo', value: '#4F46E5' },
+  { name: 'Purple', value: '#a855f7' },
+  { name: 'Pink', value: '#ec4899' },
+  { name: 'Cyan', value: '#06b6d4' },
+  { name: 'Emerald', value: '#10b981' },
+  { name: 'Orange', value: '#f97316' }
+]
 
 const FONTS = [
-  "Plus Jakarta Sans",
-  "Syne",
-  "Sarabun",
-  "Prompt",
-  "Noto Sans Thai",
-];
+  'Plus Jakarta Sans',
+  'Syne',
+  'Sarabun',
+  'Prompt',
+  'Noto Sans Thai'
+]
 
 const theme = reactive({
-  mode: "dark" as "dark" | "light",
-  primary_color: "#4F46E5",
-  secondary_color: "",
-  bg_color: "",
-  border_color: "",
-  font: "Plus Jakarta Sans",
-  layout: "centered" as "centered" | "left" | "split",
-});
+  mode: 'dark' as 'dark' | 'light',
+  primary_color: '#4F46E5',
+  secondary_color: '',
+  bg_color: '',
+  border_color: '',
+  font: 'Plus Jakarta Sans',
+  layout: 'centered' as 'centered' | 'left' | 'split'
+})
 
 const heroSection = computed(() =>
-  store.sections.find((s) => s.type === "hero" && s.is_visible !== false),
-);
+  store.sections.find((s) => s.type === 'hero' && s.is_visible !== false)
+)
 
 const contentSections = computed(() =>
   [...store.sections]
-    .filter((s) => s.type !== "hero" && s.is_visible !== false)
-    .sort((a, b) => a.position - b.position),
-);
+    .filter((s) => s.type !== 'hero' && s.is_visible !== false)
+    .sort((a, b) => a.position - b.position)
+)
 
 const sortedSections = computed(() =>
-  [...store.sections].sort((a, b) => a.position - b.position),
-);
+  [...store.sections].sort((a, b) => a.position - b.position)
+)
 
 const selectedSection = computed(() =>
-  store.sections.find((s) => s.id === selectedSectionId.value),
-);
+  store.sections.find((s) => s.id === selectedSectionId.value)
+)
 
 onMounted(async () => {
-  const portfolioId = route.params.id as string;
-  await store.loadPortfolio(portfolioId);
+  const portfolioId = route.params.id as string
+  await store.loadPortfolio(portfolioId)
   if (store.activePortfolio?.theme) {
-    Object.assign(theme, store.activePortfolio.theme);
-    if (theme.mode === ("system" as any)) {
-      theme.mode = "dark";
+    Object.assign(theme, store.activePortfolio.theme)
+    if (theme.mode === ('system' as any)) {
+      theme.mode = 'dark'
     }
   }
 
   // Initialize Drag and Drop if list exists
   if (listRef.value) {
-    initSortable();
+    initSortable()
   } else {
     // If it's initially empty, wait for sections to load/add
-    const unwatch = watch(() => store.sections.length, (newLen) => {
-      if (newLen > 0) {
-        nextTick(() => {
-          if (listRef.value) initSortable();
-        });
-        unwatch();
+    const unwatch = watch(
+      () => store.sections.length,
+      (newLen) => {
+        if (newLen > 0) {
+          nextTick(() => {
+            if (listRef.value) initSortable()
+          })
+          unwatch()
+        }
       }
-    });
+    )
   }
-});
+})
 
 function initSortable() {
-  const el = listRef.value.$el || listRef.value;
-  if (!el) return;
-  
+  const el = listRef.value.$el || listRef.value
+  if (!el) return
+
   Sortable.create(el, {
-    handle: ".drag-handle", // Drag only by this icon
+    handle: '.drag-handle', // Drag only by this icon
     animation: 250, // Smooth slide animation
     delay: 150, // Require 150ms hold to start dragging (Great for preventing accidental drags on touch)
     delayOnTouchOnly: true, // Only require hold on touch devices
-    ghostClass: "sortable-ghost", // Class added to the dragged item
+    ghostClass: 'sortable-ghost', // Class added to the dragged item
     onEnd: (evt: Sortable.SortableEvent) => {
-      if (evt.oldIndex === undefined || evt.newIndex === undefined) return;
-      if (evt.oldIndex === evt.newIndex) return;
+      if (evt.oldIndex === undefined || evt.newIndex === undefined) return
+      if (evt.oldIndex === evt.newIndex) return
 
-      const newOrder = [...sortedSections.value];
-      const [movedItem] = newOrder.splice(evt.oldIndex, 1);
-      newOrder.splice(evt.newIndex, 0, movedItem);
-      
-      store.reorderSections(newOrder);
-    },
-  });
+      const newOrder = [...sortedSections.value]
+      const [movedItem] = newOrder.splice(evt.oldIndex, 1)
+      newOrder.splice(evt.newIndex, 0, movedItem)
+
+      store.reorderSections(newOrder)
+    }
+  })
 }
 
 const themeClass = computed(() => {
-  return `theme-${theme.mode || "dark"}`;
-});
+  return `theme-${theme.mode || 'dark'}`
+})
 
 const themeVars = computed(() => {
-  const primary = theme.primary_color || "#4F46E5";
-  const secondary = theme.secondary_color || "";
-  const font = theme.font || "Prompt";
+  const primary = theme.primary_color || '#4F46E5'
+  const secondary = theme.secondary_color || ''
+  const font = theme.font || 'Prompt'
   // In light mode, glow needs to be slightly more transparent so it isn't overpowering, but visible.
-  const glowHex = theme.mode === "light" ? "15" : "40";
+  const glowHex = theme.mode === 'light' ? '15' : '40'
   const vars: Record<string, string> = {
-    "--primary": primary,
-    "--primary-glow": `${primary}${glowHex}`,
-    "--secondary": secondary ? secondary : `${primary}${glowHex}`,
-    "--font-display": font,
-    "--font-body": font,
-  };
-  if (theme.bg_color && theme.bg_color !== "#000000") {
-    vars["--bg"] = theme.bg_color;
+    '--primary': primary,
+    '--primary-glow': `${primary}${glowHex}`,
+    '--secondary': secondary ? secondary : `${primary}${glowHex}`,
+    '--font-display': font,
+    '--font-body': font
   }
-  if (theme.border_color && theme.border_color !== "#000000") {
-    vars["--avatar-border"] = theme.border_color;
+  if (theme.bg_color && theme.bg_color !== '#000000') {
+    vars['--bg'] = theme.bg_color
   }
-  return vars;
-});
+  if (theme.border_color && theme.border_color !== '#000000') {
+    vars['--avatar-border'] = theme.border_color
+  }
+  return vars
+})
 
 function selectSection(id: string) {
-  selectedSectionId.value = selectedSectionId.value === id ? null : id;
+  selectedSectionId.value = selectedSectionId.value === id ? null : id
 }
 
 async function addBlock(type: SectionType) {
-  const newSectionId = await store.addSection(type);
-  if (!newSectionId) return;
+  const newSectionId = await store.addSection(type)
+  if (!newSectionId) return
 
   // Auto-scroll to bottom
-  await nextTick();
+  await nextTick()
   if (canvasRef.value) {
     canvasRef.value.scrollTo({
       top: canvasRef.value.scrollHeight,
-      behavior: "smooth"
-    });
+      behavior: 'smooth'
+    })
   }
 
   // Highlight effect
-  highlightedBlocks.value.add(newSectionId);
+  highlightedBlocks.value.add(newSectionId)
   setTimeout(() => {
-    highlightedBlocks.value.delete(newSectionId);
-  }, 1000); // Remove class after animation ends
+    highlightedBlocks.value.delete(newSectionId)
+  }, 1000) // Remove class after animation ends
 }
 
 function updateTheme(partial: Partial<typeof theme>) {
-  Object.assign(theme, partial);
-  store.savePortfolio({ theme: { ...theme } });
+  Object.assign(theme, partial)
+  store.savePortfolio({ theme: { ...theme } })
 }
 
 async function togglePublish() {
   if (store.activePortfolio?.is_published) {
-    await store.unpublishPortfolio();
+    await store.unpublishPortfolio()
   } else {
-    await store.publishPortfolio();
+    await store.publishPortfolio()
   }
 }
 
 function previewPortfolio() {
-  const slug = store.activePortfolio?.slug;
-  if (slug) window.open(`/p/${slug}`, "_blank");
+  const slug = store.activePortfolio?.slug
+  if (slug) window.open(`/p/${slug}`, '_blank')
+}
+
+async function exportPDF() {
+  if (!store.activePortfolio?.id) return
+
+  try {
+    isExporting.value = true
+    const response = await portfolioAPI.exportPdf(store.activePortfolio.id)
+
+    // Create a blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${store.activePortfolio.slug || 'portfolio'}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Failed to export PDF:', error)
+  } finally {
+    isExporting.value = false
+  }
 }
 
 // Debounce the backend API call to save bandwidth
 const debouncedSave = debounce(async (id: string, data: any) => {
-  await store.updateSection(id, data);
-}, 500);
+  await store.updateSection(id, data)
+}, 500)
 
 // Update local state instantly so the Preview refreshes immediately in real-time
 function handleSectionUpdate(data: any) {
-  if (!selectedSectionId.value) return;
+  if (!selectedSectionId.value) return
 
   // Optimistic update for real-time canvas preview
-  const sec = store.sections.find((s) => s.id === selectedSectionId.value);
-  if (sec) sec.data = JSON.parse(JSON.stringify(data));
+  const sec = store.sections.find((s) => s.id === selectedSectionId.value)
+  if (sec) sec.data = JSON.parse(JSON.stringify(data))
 
-  debouncedSave(selectedSectionId.value, data);
+  debouncedSave(selectedSectionId.value, data)
 }
 
-function moveSection(id: string, direction: "up" | "down") {
-  const idx = sortedSections.value.findIndex((s) => s.id === id);
-  if (direction === "up" && idx === 0) return;
-  if (direction === "down" && idx === sortedSections.value.length - 1) return;
+function moveSection(id: string, direction: 'up' | 'down') {
+  const idx = sortedSections.value.findIndex((s) => s.id === id)
+  if (direction === 'up' && idx === 0) return
+  if (direction === 'down' && idx === sortedSections.value.length - 1) return
 
-  const newOrder = [...sortedSections.value];
-  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-  [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
-  store.reorderSections(newOrder);
+  const newOrder = [...sortedSections.value]
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+  ;[newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]]
+  store.reorderSections(newOrder)
 }
 
 async function aiScoreResume() {
-  const content = JSON.stringify(store.sections.map((s) => s.data));
+  const content = JSON.stringify(store.sections.map((s) => s.data))
   try {
-    const { data } = await aiAPI.scoreResume(content, "Software Developer");
-    aiResult.value = data.data.analysis;
+    const { data } = await aiAPI.scoreResume(content, 'Software Developer')
+    aiResult.value = data.data.analysis
   } catch {
-    aiResult.value = "AI unavailable. Please check API key.";
+    aiResult.value = 'AI unavailable. Please check API key.'
   }
 }
 
 async function aiImproveContent() {
-  const heroSection = store.sections.find((s) => s.type === "hero");
+  const heroSection = store.sections.find((s) => s.type === 'hero')
   if (!heroSection || !selectedSectionId.value) {
-    aiResult.value = "Select a section first to improve its content.";
-    return;
+    aiResult.value = 'Select a section first to improve its content.'
+    return
   }
-  const text = heroSection.data?.tagline || "";
+  const text = heroSection.data?.tagline || ''
   try {
-    const { data } = await aiAPI.improveText(text, "portfolio tagline");
-    aiResult.value = data.data.improved_text;
+    const { data } = await aiAPI.improveText(text, 'portfolio tagline')
+    aiResult.value = data.data.improved_text
   } catch {
-    aiResult.value = "AI unavailable.";
+    aiResult.value = 'AI unavailable.'
   }
 }
 </script>

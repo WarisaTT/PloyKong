@@ -5,31 +5,29 @@
     </button>
 
     <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="isOpen" class="modal-overlay" @mousedown.self="close">
-          <div class="modal-content animate-slide-up">
-            <div class="modal-header">
-              <h2 class="layered-title" :data-text="title" style="font-size: 24px;">{{ title }}</h2>
-              <button type="button" class="icon-btn" style="background: transparent; border: none; cursor: pointer; color: var(--text);" @click.prevent="close">
-                <X :size="24" />
-              </button>
-            </div>
-            <div class="modal-body">
-              <textarea
-                v-model="tempValue"
-                class="form-input"
-                :rows="rows || 8"
-                :placeholder="placeholder"
-                style="resize: vertical; font-size: 16px; padding: 16px;"
-              ></textarea>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click.prevent="close">Cancel</button>
-              <button type="button" class="btn btn-primary" @click.prevent="save">Save Changes</button>
-            </div>
+      <div v-if="isOpen" class="raw-modal-overlay" @mousedown.self="close">
+        <div class="raw-modal-content">
+          <div class="raw-modal-header">
+            <h2 class="layered-title" :data-text="title" style="font-size: 24px; margin: 0;">{{ title }}</h2>
+            <button type="button" @click.prevent="close" style="background: transparent; border: none; cursor: pointer; color: var(--text);">
+              <X :size="24" />
+            </button>
+          </div>
+          <div class="raw-modal-body">
+            <textarea
+              v-model="tempValue"
+              class="form-input"
+              :rows="rows || 8"
+              :placeholder="placeholder"
+              style="resize: vertical; font-size: 16px; padding: 16px; width: 100%;"
+            ></textarea>
+          </div>
+          <div class="raw-modal-footer">
+            <button type="button" class="btn btn-secondary" @click.prevent="close">Cancel</button>
+            <button type="button" class="btn btn-primary" @click.prevent="save">Save Changes</button>
           </div>
         </div>
-      </Transition>
+      </div>
     </Teleport>
   </div>
 </template>
@@ -86,59 +84,49 @@ function save() {
 </script>
 
 <style scoped>
-.modal-overlay {
+.raw-modal-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
-  z-index: 999999;
+  z-index: 2147483647; /* Maximum visible z-index */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
 }
 
-.modal-content {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+.raw-modal-content {
+  background: var(--surface, #1e1e2f);
+  border: 1px solid var(--border, #333);
+  border-radius: 16px;
   width: 100%;
   max-width: 800px;
-  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
-.modal-header {
-  padding: 24px 32px 16px;
+.raw-modal-header {
+  padding: 24px;
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+  align-items: center;
+  border-bottom: 1px solid var(--border, #333);
 }
 
-.modal-body {
-  padding: 32px;
-  overflow-y: auto;
-  flex: 1;
+.raw-modal-body {
+  padding: 24px;
 }
 
-.modal-footer {
-  padding: 24px 32px;
+.raw-modal-footer {
+  padding: 16px 24px;
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+  gap: 12px;
+  border-top: 1px solid var(--border, #333);
 }
 </style>

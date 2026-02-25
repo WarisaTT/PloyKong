@@ -283,7 +283,7 @@ func (h *PortfolioHandler) ExportPDF(c *fiber.Ctx) error {
 func (h *PortfolioHandler) loadSections(portfolioID string) ([]models.Section, error) {
 	rows, err := h.db.Query(
 		`SELECT id, portfolio_id, type, position, data, is_visible 
-		 FROM portfolio_sections WHERE portfolio_id = ? ORDER BY position ASC`,
+		 FROM sections WHERE portfolio_id = ? ORDER BY position ASC`,
 		portfolioID,
 	)
 	if err != nil {
@@ -320,19 +320,42 @@ func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
 	if err == sql.ErrNoRows {
 		return fiber.NewError(fiber.StatusNotFound, "portfolio not found")
 	}
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "database error")
+	}
 
 	// 2. Fetch Sections
-	sections, _ := h.loadSections(id)
+	sections, err := h.loadSections(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to load sections")
+	}
 
 	// 3. Init gopdf
 	pdf := gopdf.GoPdf{}
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
 	pdf.AddPage()
 
-	// 4. Load Font
-	err = pdf.AddTTFFont("THSarabun", "assets/fonts/THSarabunNew.ttf")
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Failed to load font: "+err.Error())
+	// 4. Load Font (check multiple paths)
+	fontPaths := []string{
+		"assets/fonts/THSarabunNew.ttf",
+		"./assets/fonts/THSarabunNew.ttf",
+		"/app/assets/fonts/THSarabunNew.ttf",
+	}
+
+	fontLoaded := false
+	var lastErr error
+	for _, path := range fontPaths {
+		err = pdf.AddTTFFont("THSarabun", path)
+		if err == nil {
+			fontLoaded = true
+			break
+		}
+		lastErr = err
+	}
+
+	if !fontLoaded {
+		// Continue without custom font if not found
+		_ = lastErr
 	}
 
 	pdf.SetFont("THSarabun", "", 24)
@@ -361,15 +384,20 @@ func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
 
 			pdf.SetXY(30, yVal)
 			pdf.SetFont("THSarabun", "", 20)
-			pdf.Cell(nil, name)
+			if name != "" {
+				pdf.Cell(nil, name)
+			}
 			yVal += 20
 
 			pdf.SetXY(30, yVal)
 			pdf.SetFont("THSarabun", "", 16)
-			pdf.Cell(nil, tagline)
+			if tagline != "" {
+				pdf.Cell(nil, tagline)
+			}
 			yVal += 30
 		} else if sec.Type == "skills" {
 			pdf.SetXY(30, yVal)
+			pdf.SetFont("THSarabun", "", 14)
 			pdf.Cell(nil, "--- SKILLS ---")
 			yVal += 20
 			items, _ := dataMap["items"].([]interface{})
@@ -386,6 +414,7 @@ func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
 			yVal += 15
 		} else if sec.Type == "experience" {
 			pdf.SetXY(30, yVal)
+			pdf.SetFont("THSarabun", "", 14)
 			pdf.Cell(nil, "--- EXPERIENCE ---")
 			yVal += 20
 			items, _ := dataMap["items"].([]interface{})
@@ -412,6 +441,9 @@ func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
 
 	// 6. Output PDF
 	buf := pdf.GetBytesPdf()
+	if len(buf) == 0 {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate PDF")
+	}
 
 	c.Set("Content-Type", "application/pdf")
 	c.Set("Content-Disposition", `attachment; filename="resume.pdf"`)
