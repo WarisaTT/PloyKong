@@ -179,6 +179,13 @@ export const uploadAPI = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  file: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 // ─── Public ───────────────────────────────────────────────────────────────────
@@ -193,6 +200,8 @@ export const publicAPI = {
     api.post(`/public/p/${slug}/track`, { event_type: eventType, source }),
   chat: (slug: string, message: string, sessionId: string) =>
     api.post(`/public/p/${slug}/chat`, { message, session_id: sessionId }),
+  exportPdf: (slug: string) =>
+    api.get(`/public/p/${slug}/pdf`, { responseType: "blob" }),
 };
 
 export default api;

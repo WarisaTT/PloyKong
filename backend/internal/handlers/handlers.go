@@ -326,7 +326,7 @@ func (h *AIHandler) ImproveText(c *fiber.Ctx) error {
 		req.Context, req.Text,
 	)
 
-	result, err := h.callOpenAI(prompt, 500)
+	result, err := callFreeAI(prompt)
 	if err != nil {
 		return fiber.NewError(500, "AI service unavailable")
 	}
@@ -352,7 +352,7 @@ func (h *AIHandler) ScoreResume(c *fiber.Ctx) error {
 		Portfolio: %s`, req.TargetRole, req.PortfolioContent,
 	)
 
-	result, err := h.callOpenAI(prompt, 1000)
+	result, err := callFreeAI(prompt)
 	if err != nil {
 		return fiber.NewError(500, "AI service unavailable")
 	}
@@ -373,30 +373,26 @@ func (h *AIHandler) SuggestSkills(c *fiber.Ctx) error {
 		req.Role, req.CurrentSkills,
 	)
 
-	result, err := h.callOpenAI(prompt, 300)
+	result, err := callFreeAI(prompt)
 	if err != nil {
 		return fiber.NewError(500, "AI service unavailable")
 	}
 	return c.JSON(fiber.Map{"success": true, "data": fiber.Map{"suggested_skills": result}})
 }
 
-// callOpenAI sends a request to OpenAI Chat Completions API
-func (h *AIHandler) callOpenAI(prompt string, maxTokens int) (string, error) {
-	if h.cfg.OpenAIKey == "" {
-		return "AI feature requires OpenAI API key configuration", nil
-	}
+// callFreeAI sends a request to Pollinations (free AI)
+func callFreeAI(prompt string) (string, error) {
+	// Pollinations text generation is completely free and requires no API keys.
+	// We send a POST request with the prompt as a JSON message.
 
 	reqBody, _ := json.Marshal(map[string]interface{}{
-		"model": h.cfg.OpenAIModel,
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},
-		"max_tokens":  maxTokens,
-		"temperature": 0.7,
+		"seed": 42, // Consistent generation if desired
 	})
 
-	httpReq, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-	httpReq.Header.Set("Authorization", "Bearer "+h.cfg.OpenAIKey)
+	httpReq, _ := http.NewRequest("POST", "https://text.pollinations.ai/", bytes.NewBuffer(reqBody))
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -406,20 +402,13 @@ func (h *AIHandler) callOpenAI(prompt string, maxTokens int) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-
-	var result struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-	if err := json.Unmarshal(body, &result); err != nil || len(result.Choices) == 0 {
-		return "", fmt.Errorf("invalid OpenAI response")
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read AI response")
 	}
 
-	return result.Choices[0].Message.Content, nil
+	// Pollinations directly returns the generated text string, not a nested JSON object.
+	return string(body), nil
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -575,8 +564,11 @@ func (h *PublicHandler) AIChat(c *fiber.Ctx) error {
 		HR question: %s`, context, req.Message,
 	)
 
-	_ = prompt
-	response := "Thank you for your interest! Based on the portfolio, I can help answer your questions. (AI integration requires OpenAI API key)"
+	response, err := callFreeAI(prompt)
+	if err != nil {
+		// Fallback message if AI fails
+		response = "ขออภัยด้วยครับ ระบบประมวลผล AI กำลังขัดข้องชั่วคราว รบกวนติดต่อไปที่ข้อมูล Contact ด้านล่างนะครับ"
+	}
 
 	// Log AI response
 	h.db.Exec("INSERT INTO ai_chat_logs (portfolio_id, session_id, role, content) VALUES (?, ?, 'assistant', ?)",
@@ -599,4 +591,20 @@ func (h *PublicHandler) trackView(ip, userAgent, referer, portfolioID string) {
 		portfolioID, ipHash, userAgent, referer,
 	)
 	h.db.Exec("UPDATE portfolios SET view_count = view_count + 1 WHERE id = ?", portfolioID)
+}
+
+func (h *PublicHandler) ExportPDFBySlug(c *fiber.Ctx) error {
+	slug := c.Params("slug")
+	var portfolioID string
+	err := h.db.QueryRow("SELECT id FROM portfolios WHERE slug = ? AND deleted_at IS NULL AND is_published = TRUE", slug).Scan(&portfolioID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, "portfolio not found or not published")
+	}
+
+	// Override the context param "id" so GeneratePDF thinks it was called directly
+	c.Params("id", portfolioID)
+
+	// Create temporary portfolio handler to reuse GeneratePDF logic
+	ph := &PortfolioHandler{db: h.db}
+	return ph.GeneratePDF(c)
 }

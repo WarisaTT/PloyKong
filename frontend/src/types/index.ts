@@ -52,7 +52,8 @@ export type SectionType =
   | "ai_chat"
   | "custom_text"
   | "stats"
-  | "social";
+  | "social"
+  | "certificates";
 
 export interface Section {
   id: string;
@@ -72,6 +73,10 @@ export interface HeroData {
   avatar_url: string;
   show_hire_me: boolean;
   hire_me_link?: string;
+  show_resume?: boolean;
+  resume_url?: string;
+  show_contact?: boolean;
+  contact_link?: string;
 }
 
 export interface ExperienceItem {
@@ -82,6 +87,15 @@ export interface ExperienceItem {
   is_current: boolean;
   description: string;
   location?: string;
+  image_urls?: string[]; // newly added for flexible experience block
+}
+
+export interface CertificateItem {
+  title: string;
+  issuer: string;
+  date: string;
+  description?: string;
+  image_url?: string;
 }
 
 export interface SkillItem {
@@ -126,6 +140,17 @@ export interface ContactData {
   custom_items?: CustomContact[];
 }
 
+export interface StatItem {
+  label: string;
+  value: string;
+}
+
+export interface SocialLinkItem {
+  platform: string;
+  url: string;
+  label?: string;
+}
+
 // ─── Analytics ────────────────────────────────────────────────────────────────
 export interface AnalyticsSummary {
   total_views: number;
@@ -151,6 +176,7 @@ import {
   Type,
   BarChart2,
   Globe,
+  Award,
 } from "lucide-vue-next";
 
 // ─── Block Types (for the builder sidebar) ────────────────────────────────────
@@ -196,19 +222,25 @@ export const BLOCK_TYPES: BlockType[] = [
     type: "contact",
     icon: markRaw(Mail),
     label: "Contact",
-    description: "ช่องทางการติดต่อ",
+    description: "ข้อมูลติดต่อ",
+  },
+  {
+    type: "certificates",
+    icon: markRaw(Award),
+    label: "Certificates",
+    description: "ใบประกาศณียบัตรและรางวัล",
   },
   {
     type: "ai_chat",
     icon: markRaw(Bot),
-    label: "AI Interview Coach",
-    description: "แชทบอทสำหรับ HR",
+    label: "AI Chat",
+    description: "ระบบ AI ตอบคำถาม (ทดลอง)",
   },
   {
     type: "custom_text",
     icon: markRaw(Type),
     label: "Custom Text",
-    description: "ข้อความกำหนดเอง",
+    description: "ส่วนข้อความอิสระ",
   },
   {
     type: "stats",

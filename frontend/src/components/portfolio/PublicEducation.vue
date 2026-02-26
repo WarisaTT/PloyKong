@@ -1,19 +1,20 @@
 <template>
-  <section class="pub-exp pub-section" :class="[
+  <section class="pub-edu pub-section" :class="[
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
   ]">
     <div class="section-header-wrapper">
-      <h2 class="layered-title" data-text="Experience">Experience</h2>
+      <h2 class="layered-title" data-text="Education">Education</h2>
     </div>
     <div v-if="data.image_url" class="universal-section-img-container">
       <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
     </div>
-    <div class="experience-list">
+
+    <div class="education-list">
       <div
         v-for="(item, i) in data.items"
         :key="i"
-        class="experience-item animate-slide-in-right"
+        class="education-item animate-slide-in-right"
         :class="{ 'has-timeline': data.items.length > 1 }"
         v-intersect
         :style="{ transitionDelay: `${Number(i) * 100}ms` }"
@@ -25,32 +26,17 @@
         ></div>
         <div class="timeline-content">
           <div class="tl-header">
-            <div class="tl-position">{{ item.position }}</div>
+            <div class="tl-position">{{ item.degree }} <span v-if="item.field">in {{ item.field }}</span></div>
             <div class="tl-date">
-              {{ item.start_date }} –
-              {{ item.is_current ? "Present" : item.end_date }}
+              {{ item.start_year }} – {{ item.end_year || "Present" }}
             </div>
           </div>
           <div class="tl-company">
-            {{ item.company }}
-            <span v-if="item.location" class="tl-loc"
-              >· {{ item.location }}</span
+            {{ item.school }}
+            <span v-if="item.gpa" class="tl-loc"
+              >· GPA: {{ item.gpa }}</span
             >
           </div>
-          <div class="tl-desc">{{ item.description }}</div>
-          
-          <!-- Experience Image Gallery (New) -->
-          <div v-if="item.image_urls && item.image_urls.length > 0" class="tl-gallery">
-            <img 
-              v-for="(img, imgIdx) in item.image_urls" 
-              :key="imgIdx" 
-              :src="img" 
-              class="tl-gallery-img" 
-              alt="Experience photo"
-              loading="lazy"
-            />
-          </div>
-          
         </div>
       </div>
     </div>
@@ -59,23 +45,25 @@
     </div>
   </section>
 </template>
+
 <script setup lang="ts">
-import { Link2 } from "lucide-vue-next";
 defineProps<{ data: any }>();
 </script>
+
 <style scoped>
 .pub-section.hide-divider { border-top: none !important; }
 .pub-section.hide-title .layered-title { display: none !important; }
 .pub-section {
-
   padding: 40px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--section-border);
 }
-:global(.theme-light) .pub-section.hide-divider { border-top: none !important; }
-.pub-section.hide-title .layered-title { display: none !important; }
-.pub-section {
 
-  border-top-color: rgba(0, 0, 0, 0.06);
+:global(.theme-dark) {
+  --section-border: rgba(255, 255, 255, 0.06);
+}
+
+:global(.theme-light) {
+  --section-border: rgba(0, 0, 0, 0.06);
 }
 
 .universal-section-img-container {
@@ -96,29 +84,29 @@ defineProps<{ data: any }>();
   text-align: left;
 }
 
-.layout-left .experience-list {
+.layout-left .education-list {
   max-width: 100%;
   margin: 0;
 }
 
-.experience-list {
+.education-list {
   display: flex;
   flex-direction: column;
   gap: 0;
   max-width: 600px;
   margin: 0 auto;
 }
-.experience-item {
+.education-item {
   position: relative;
   padding-bottom: 32px;
 }
-.experience-item.has-timeline {
-  padding-left: 32px; /* Increased padding from line */
+.education-item.has-timeline {
+  padding-left: 32px;
 }
 .timeline-dot {
   position: absolute;
   left: 0px;
-  top: 8px; /* Adjusted to align better with first line of text */
+  top: 8px;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -127,7 +115,7 @@ defineProps<{ data: any }>();
 }
 .timeline-line {
   position: absolute;
-  left: 6px; /* Centered relative to the 14px dot */
+  left: 6px;
   top: 24px;
   bottom: 0;
   width: 2px;
@@ -137,7 +125,6 @@ defineProps<{ data: any }>();
   --line-color: rgba(0, 0, 0, 0.5);
 }
 
-
 :global(.theme-dark) .timeline-line {
   --line-color: rgba(255, 255, 255, 0.5);
 }
@@ -145,12 +132,12 @@ defineProps<{ data: any }>();
 .tl-header {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* align items to the start */
+  align-items: flex-start;
   gap: 4px;
   margin-bottom: 4px;
 }
 .tl-position {
-  font-size: 16px; /* slightly larger */
+  font-size: 16px;
   font-weight: 700;
   color: var(--title-color, var(--text));
 }
@@ -158,50 +145,21 @@ defineProps<{ data: any }>();
   font-size: 13px;
   color: var(--primary);
   font-weight: 600;
-  white-space: nowrap; /* keep date on one line */
+  white-space: nowrap;
 }
 .tl-company {
-  font-size: 13px;
-  color: var(--muted, #94a3b8);
+  font-size: 14px;
+  color: var(--text);
   margin-bottom: 8px;
 }
 .tl-loc {
-  color: rgba(148, 163, 184, 0.6);
-}
-.tl-desc {
-  font-size: 14px;
-  line-height: 1.6;
   color: var(--muted);
-  white-space: pre-wrap;
 }
 
-/* New Gallery Styles */
-.tl-gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
-}
-.layout-centered .tl-gallery {
-  justify-content: center;
-}
-.tl-gallery-img {
-  width: 120px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.tl-gallery-img:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 2;
-  position: relative;
-}
-
-.icon-inline {
-  vertical-align: text-bottom;
-  margin-right: 6px;
+.generic-hint {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  opacity: 0.7;
 }
 </style>

@@ -141,6 +141,10 @@ import PublicProjects from "@/components/portfolio/PublicProjects.vue";
 import PublicExperience from "@/components/portfolio/PublicExperience.vue";
 import PublicContact from "@/components/portfolio/PublicContact.vue";
 import PublicCustomText from "@/components/portfolio/PublicCustomText.vue";
+import PublicCertificates from "@/components/portfolio/PublicCertificates.vue";
+import PublicEducation from "@/components/portfolio/PublicEducation.vue";
+import PublicStats from "@/components/portfolio/PublicStats.vue";
+import PublicSocial from "@/components/portfolio/PublicSocial.vue";
 
 const route = useRoute();
 const slug = computed(() => route.params.slug as string);
@@ -210,6 +214,10 @@ function getSectionComponent(type: string) {
     experience: PublicExperience,
     contact: PublicContact,
     custom_text: PublicCustomText,
+    certificates: PublicCertificates,
+    education: PublicEducation,
+    stats: PublicStats,
+    social: PublicSocial,
   };
   return map[type] || PublicCustomText;
 }
@@ -446,12 +454,20 @@ onMounted(() => loadPortfolio());
   font-size: 14px;
   font-weight: 700;
   display: block;
-  color: rgba(0, 0, 0, 1);
+  color: rgba(var(--text-rgb), 1);
 }
 .chat-sub {
   font-size: 11px;
-  color: rgba(0, 0, 0, 1);
+  color: rgba(var(--text-rgb), 1);
 }
+
+:global(.theme-dark) .chat-sub {
+  --text-rgb: 255, 255, 255;
+}
+
+:global(.theme-light) .chat-sub {
+  --text-rgb: 0, 0, 0;
+} 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -524,6 +540,11 @@ onMounted(() => loadPortfolio());
 }
 .pk-watermark strong {
   color: var(--neon-purple);
+}
+
+/* Hide Builder Placeholder hints on Public View */
+.public-portfolio :deep(.generic-hint) {
+  display: none !important;
 }
 
 .icon-inline {

@@ -1,6 +1,8 @@
 <!-- PublicHero.vue - renders the hero section on the public portfolio page -->
 <template>
-  <section class="pub-hero" :class="'layout-' + (theme?.layout || 'centered')">
+  <section class="pub-hero" :class="'layout-' + (data.layout || 'centered')">
+    <div class="pub-hero-inner">
+    <img v-if="data.image_url" :src="data.image_url" class="universal-section-img" alt="Cover" />
     <div class="hero-avatar-wrap">
       <img
         v-if="data.avatar_url"
@@ -33,12 +35,13 @@
       </p>
 
       <div
-        v-if="data.show_hire_me"
+        v-if="data.show_hire_me || data.show_resume"
         class="hero-cta animate-scale-up"
         v-intersect
         style="transition-delay: 300ms"
       >
         <a
+          v-if="data.show_hire_me"
           :href="data.hire_me_link || 'mailto:'"
           class="hero-btn primary"
           @click="trackHire"
@@ -47,18 +50,25 @@
           <span>Hire Me</span>
         </a>
 
+        <a v-if="data.show_resume && data.resume_url" :href="data.resume_url" target="_blank" class="hero-btn secondary">
+          <FileText :size="18" />
+          <span>Resume/CV</span>
+        </a>
+
         <a href="#contact" class="hero-btn secondary">
           <Mail :size="18" />
           <span>Contact</span>
         </a>
       </div>
+      </div>
     </div>
+    
   </section>
 </template>
 <script setup lang="ts">
 import { publicAPI } from "@/api";
 import { useRoute } from "vue-router";
-import { Send, Mail } from "lucide-vue-next";
+import { Send, Mail, FileText } from "lucide-vue-next";
 const route = useRoute();
 defineProps<{ data: any; theme?: any; portfolio?: any }>();
 function trackHire() {
@@ -69,20 +79,27 @@ function trackHire() {
 /* =========================
    HERO LAYOUT
 ========================= */
+.universal-section-img {
+  width: 100%;
+  max-width: 800px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 16px;
+  margin-bottom: 40px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
 .pub-hero {
   position: relative;
 
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center; /* 👈 จัดกลางแนวตั้งจริง */
+  justify-content: center; /* จัดกลางแนวนอน */
 
-  text-align: center;
-
-  min-height: 50vh; /* 👈 ให้สูงเกือบเต็มจอ */
-  padding: 80px 20px 60px; /* 👈 ลดล่างลง */
+  min-height: 50vh;
+  padding: 40px 0;
 
   overflow: hidden;
+
   background:
     radial-gradient(circle at 20% 30%, var(--primary-glow), transparent 55%),
     radial-gradient(circle at 80% 70%, var(--primary-glow), transparent 55%);
@@ -93,6 +110,16 @@ function trackHire() {
   content: "";
   position: absolute;
   inset: 0;
+}
+
+.pub-hero-inner {
+  width: 100%;
+  padding: 0 24px;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 /* =========================
@@ -118,9 +145,12 @@ function trackHire() {
   border: 4px solid var(--avatar-border, transparent);
 }
 
-:global(.theme-light) .hero-img {
-  box-shadow: 0 25px 50px color-mix(in srgb, var(--primary) 40%, transparent);
-}
+/* :global(.theme-light) .hero-img,
+:global(.theme-light) .hero-avatar-fallback
+{
+  box-shadow: 0 25px 70px var(--primary-glow);
+  border: 4px solid var(--avatar-border, transparent)
+} */
 
 .hero-avatar-fallback {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -236,15 +266,15 @@ function trackHire() {
 
 /* Light mode adjust */
 :global(.theme-light) .hero-btn.secondary {
-  border: 2px solid var(--primary);
-  color: var(--primary);
+  border: 2px solid var(--secondary);
+  color: var(--secondary);
   font-weight: 700;
 }
 
 :global(.theme-light) .hero-btn.secondary:hover {
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
-  border-color: color-mix(in srgb, var(--primary) 80%, black);
-  color: color-mix(in srgb, var(--primary) 80%, black);
+  background: color-mix(in srgb, var(--secondary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--secondary) 80%, black);
+  color: color-mix(in srgb, var(--secondary) 80%, black);
 }
 
 :global(.theme-light) .hero-btn.primary {
@@ -252,7 +282,7 @@ function trackHire() {
 }
 
 :global(.theme-light) .hero-btn.primary:hover {
-  box-shadow: 0 15px 35px color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: 0 15px 35px color-mix(in srgb, var(--primary) 100%, transparent);
 }
 
 /* =========================
@@ -260,7 +290,7 @@ function trackHire() {
 ========================= */
 
 /* LEFT ALIGNED */
-.pub-hero.layout-left {
+.pub-hero.layout-left .pub-hero-inner {
   align-items: flex-start;
   text-align: left;
 }
@@ -274,21 +304,25 @@ function trackHire() {
 }
 
 /* SPLIT / TWO-COLUMN */
-.pub-hero.layout-split {
+.pub-hero.layout-split .pub-hero-inner {
   flex-direction: row-reverse;
   justify-content: space-between;
   text-align: left;
   gap: 60px;
   align-items: center;
-  padding: 80px 40px;
 }
 
 .pub-hero.layout-split .hero-text {
   flex: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .pub-hero.layout-split .hero-tagline {
   margin: 0 0 32px 0;
+  max-width: 100%;
 }
 
 .pub-hero.layout-split .hero-cta {
@@ -296,10 +330,14 @@ function trackHire() {
 }
 
 @media (max-width: 768px) {
-  .pub-hero.layout-split {
+  .pub-hero.layout-split .pub-hero-inner {
     flex-direction: column;
     text-align: center;
     gap: 30px;
+  }
+  .pub-hero.layout-split .hero-text {
+    align-items: center;
+    text-align: center;
   }
   .pub-hero.layout-split .hero-tagline {
     margin: 0 auto 32px;

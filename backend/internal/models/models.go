@@ -96,16 +96,17 @@ func (p *Portfolio) ScanTheme(raw []byte) error {
 type SectionType string
 
 const (
-	SectionHero       SectionType = "hero"
-	SectionExperience SectionType = "experience"
-	SectionSkills     SectionType = "skills"
-	SectionProjects   SectionType = "projects"
-	SectionEducation  SectionType = "education"
-	SectionContact    SectionType = "contact"
-	SectionAIChat     SectionType = "ai_chat"
-	SectionCustomText SectionType = "custom_text"
-	SectionStats      SectionType = "stats"
-	SectionSocial     SectionType = "social"
+	SectionHero         SectionType = "hero"
+	SectionExperience   SectionType = "experience"
+	SectionSkills       SectionType = "skills"
+	SectionProjects     SectionType = "projects"
+	SectionEducation    SectionType = "education"
+	SectionContact      SectionType = "contact"
+	SectionAIChat       SectionType = "ai_chat"
+	SectionCustomText   SectionType = "custom_text"
+	SectionStats        SectionType = "stats"
+	SectionSocial       SectionType = "social"
+	SectionCertificates SectionType = "certificates"
 )
 
 type Section struct {
@@ -155,7 +156,8 @@ type SkillItem struct {
 }
 
 type SkillsData struct {
-	Items []SkillItem `json:"items"`
+	HidePercentage bool        `json:"hide_percentage"`
+	Items          []SkillItem `json:"items"`
 }
 
 // ─── Projects Section Data ────────────────────────────────────────────────────

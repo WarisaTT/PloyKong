@@ -81,21 +81,21 @@
           label="Total Views"
           :icon="TrendingUp"
           :value="totalViews"
-          change="+12%"
+          :change="todayViews > 0 ? `+${todayViews} วันนี้` : '0 วันนี้'"
           color="indigo"
         />
         <StatCard
           label="PDF Downloads"
           :icon="FileDown"
           :value="totalPDF"
-          change="+8%"
+          change=""
           color="cyan"
         />
         <StatCard
           label="Hire Me Clicks"
           :icon="Briefcase"
           :value="totalHire"
-          change="+3 วันนี้"
+          change=""
           color="pink"
         />
         <StatCard
@@ -153,6 +153,7 @@ import { RouterLink, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { usePortfolioStore } from "@/stores/portfolio";
 import { useThemeStore } from "@/stores/theme";
+import { analyticsAPI } from "@/api";
 import StatCard from "@/components/dashboard/StatCard.vue";
 import PortfolioListItem from "@/components/dashboard/PortfolioListItem.vue";
 import {
@@ -177,6 +178,7 @@ const themeStore = useThemeStore();
 const router = useRouter();
 
 const totalViews = ref(0);
+const todayViews = ref(0);
 const totalPDF = ref(0);
 const totalHire = ref(0);
 
@@ -190,10 +192,26 @@ const activeCount = computed(
 
 onMounted(async () => {
   await portfolioStore.fetchPortfolios();
-  // Sum stats from all portfolios
+  // Sum basic stats
   portfolioStore.portfolios.forEach((p) => {
     totalViews.value += p.view_count || 0;
   });
+
+  // Fetch detailed analytics (PDFs, Hire Me)
+  await Promise.allSettled(
+    portfolioStore.portfolios.map(async (p) => {
+      try {
+        const res = await analyticsAPI.summary(p.id);
+        if (res.data?.success && res.data?.data) {
+          totalPDF.value += res.data.data.pdf_downloads || 0;
+          totalHire.value += res.data.data.hire_clicks || 0;
+          todayViews.value += res.data.data.today_views || 0;
+        }
+      } catch (e) {
+        console.error("Failed to load analytics for", p.id);
+      }
+    }),
+  );
 });
 
 async function deletePortfolio(id: string) {

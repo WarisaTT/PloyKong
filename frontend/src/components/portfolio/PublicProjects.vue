@@ -1,7 +1,13 @@
 <template>
-  <section class="pub-projects pub-section">
+  <section class="pub-projects pub-section" :class="[
+    'layout-' + (data.layout || 'centered'),
+    { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
+  ]">
     <div class="section-header-wrapper">
       <h2 class="layered-title" data-text="Projects">Projects</h2>
+    </div>
+    <div v-if="data.image_url" class="universal-section-img-container">
+      <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
     </div>
     <div class="proj-grid">
       <div
@@ -44,6 +50,10 @@
         </div>
       </div>
     </div>
+
+    <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
+      <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+    </div>
   </section>
 </template>
 <script setup lang="ts">
@@ -51,16 +61,58 @@ import { Rocket, Link as LinkIcon, Github } from "lucide-vue-next";
 defineProps<{ data: any }>();
 </script>
 <style scoped>
+.pub-section.hide-divider { border-top: none !important; }
+.pub-section.hide-title .layered-title { display: none !important; }
 .pub-section {
-  padding: 48px 0;
+
+  padding: 40px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
+.universal-section-img-container {
+  margin-bottom: 32px;
+  text-align: center;
+}
+.universal-section-img {
+  width: 100%;
+  max-width: 800px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Layout alignment */
+.layout-left .section-header-wrapper {
+  text-align: left;
+}
+.layout-left .proj-grid {
+  justify-content: flex-start;
+}
+
+.layout-split .proj-card,
+.layout-left .proj-card {
+  width: calc(50% - 10px);
+  max-width: 100%;
+  flex-grow: 1;
+}
+
+@media (max-width: 600px) {
+  .layout-split .proj-card,
+  .layout-left .proj-card {
+    width: 100%;
+  }
+}
+
 .proj-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 20px;
 }
 .proj-card {
+  width: calc(33.333% - 14px);
+  min-width: 260px;
+  max-width: 380px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
@@ -89,6 +141,12 @@ defineProps<{ data: any }>();
 .proj-body {
   padding: 18px;
 }
+.layout-centered .proj-body {
+  text-align: center;
+}
+.layout-split .proj-body {
+  text-align: left;
+}
 .proj-title {
   font-size: 15px;
   font-weight: 700;
@@ -106,6 +164,12 @@ defineProps<{ data: any }>();
   gap: 6px;
   margin-bottom: 12px;
 }
+.layout-centered .proj-tags {
+  justify-content: center;
+}
+.layout-split .proj-tags {
+  justify-content: flex-start;
+}
 .proj-tag {
   font-size: 11px;
   padding: 3px 10px;
@@ -117,6 +181,12 @@ defineProps<{ data: any }>();
 .proj-links {
   display: flex;
   gap: 10px;
+}
+.layout-centered .proj-links {
+  justify-content: center;
+}
+.layout-split .proj-links {
+  justify-content: flex-start;
 }
 .proj-link {
   font-size: 12px;
@@ -137,5 +207,12 @@ defineProps<{ data: any }>();
 }
 .icon-sm {
   vertical-align: -2px;
+}
+
+.generic-hint {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  opacity: 0.7;
 }
 </style>

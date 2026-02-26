@@ -95,12 +95,11 @@ func main() {
 	portfolios.Get("/", portfolioHandler.ListMyPortfolios)
 	portfolios.Post("/", portfolioHandler.Create)
 	portfolios.Get("/:id", portfolioHandler.GetByID)
-	portfolios.Get("/:id/pdf", portfolioHandler.GeneratePDF)
 	portfolios.Patch("/:id", portfolioHandler.Update)
 	portfolios.Delete("/:id", portfolioHandler.Delete)
 	portfolios.Post("/:id/publish", portfolioHandler.Publish)
 	portfolios.Post("/:id/unpublish", portfolioHandler.Unpublish)
-	portfolios.Get("/:id/export-pdf", portfolioHandler.ExportPDF)
+	portfolios.Get("/:id/pdf", portfolioHandler.GeneratePDF)
 
 	// Sections (protected)
 	sectionHandler := handlers.NewSectionHandler(db)
@@ -136,6 +135,7 @@ func main() {
 	public.Get("/p/:slug", publicHandler.ViewPortfolio)
 	public.Post("/p/:slug/track", publicHandler.TrackEvent)
 	public.Post("/p/:slug/chat", publicHandler.AIChat)
+	public.Get("/p/:slug/pdf", publicHandler.ExportPDFBySlug)
 
 	// Static uploads
 	app.Static("/uploads", "./uploads")

@@ -52,7 +52,7 @@ body.theme-light,
 
   --sidebar-bg: linear-gradient(to bottom, #f3e8ff, #e9d5ff);
 
-  --border: rgba(88, 28, 135, 0.08);
+  --border: rgba(15, 23, 42, 0.14);
 
   --indigo: #4f46e5;
   --purple: #9333ea;
@@ -83,7 +83,7 @@ body.theme-light,
 
     --sidebar-bg: linear-gradient(to bottom, #f3e8ff, #e9d5ff);
 
-    --border: rgba(88, 28, 135, 0.08);
+    --border: rgba(15, 23, 42, 0.14);
 
     --indigo: #4f46e5;
     --purple: #9333ea;
@@ -318,8 +318,61 @@ h6 {
 /* ───────────────────────────────────────────────────────────── */
 .section-header-wrapper {
   margin-bottom: 50px;
-  text-align: center;
   position: relative;
+}
+
+/* Toggle visibility */
+.hide-title .section-header-wrapper {
+  display: none !important;
+}
+
+/* Global Layout Modifiers for Sections */
+.layout-centered {
+  text-align: center;
+}
+
+.layout-centered .section-header-wrapper {
+  text-align: center;
+}
+
+.layout-left {
+  text-align: left;
+}
+
+.layout-left .section-header-wrapper {
+  align-items: left;
+}
+
+.layout-split {
+  display: flex !important;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 40px;
+  text-align: left;
+}
+
+.layout-split .section-header-wrapper {
+  flex: 0 0 300px;
+  /* Fixed width for title side */
+  text-align: left;
+  margin-bottom: 0;
+}
+
+.layout-split>div:not(.section-header-wrapper) {
+  flex: 1;
+  /* Content takes remainder */
+}
+
+/* Handle Mobile Split */
+@media (max-width: 768px) {
+  .layout-split {
+    flex-direction: column;
+  }
+
+  .layout-split .section-header-wrapper {
+    flex: 1;
+    margin-bottom: 30px;
+  }
 }
 
 .layered-title {

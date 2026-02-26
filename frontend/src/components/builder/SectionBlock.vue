@@ -46,27 +46,49 @@
     <!-- Section Preview -->
     <div
       class="section-preview"
-      :class="themeClass"
+      :class="[themeClass]"
       :style="[themeVars || {}, { pointerEvents: 'none' }]"
     >
-      <PublicHero v-if="section.type === 'hero'" :data="section.data" />
-      <PublicSkills
-        v-else-if="section.type === 'skills'"
-        :data="section.data"
-      />
-      <PublicProjects
-        v-else-if="section.type === 'projects'"
-        :data="section.data"
-      />
-      <PublicExperience
-        v-else-if="section.type === 'experience'"
-        :data="section.data"
-      />
-      <PublicContact
-        v-else-if="section.type === 'contact'"
-        :data="section.data"
-      />
-      <GenericPreview v-else :section="section" />
+      <div :class="{ 'pub-container': section.type !== 'hero' }">
+        <PublicHero v-if="section.type === 'hero'" :data="section.data" />
+        <PublicSkills
+          v-else-if="section.type === 'skills'"
+          :data="section.data"
+        />
+        <PublicProjects
+          v-else-if="section.type === 'projects'"
+          :data="section.data"
+        />
+        <PublicExperience
+          v-else-if="section.type === 'experience'"
+          :data="section.data"
+        />
+        <PublicContact
+          v-else-if="section.type === 'contact'"
+          :data="section.data"
+        />
+        <PublicCustomText
+          v-else-if="section.type === 'custom_text'"
+          :data="section.data"
+        />
+        <PublicEducation
+          v-else-if="section.type === 'education'"
+          :data="section.data"
+        />
+        <PublicStats
+          v-else-if="section.type === 'stats'"
+          :data="section.data"
+        />
+        <PublicSocial
+          v-else-if="section.type === 'social'"
+          :data="section.data"
+        />
+        <PublicCertificates
+          v-else-if="section.type === 'certificates'"
+          :data="section.data"
+        />
+        <GenericPreview v-else :section="section" />
+      </div>
     </div>
 
     <!-- Selected Indicator -->
@@ -94,6 +116,11 @@ import PublicSkills from "../portfolio/PublicSkills.vue";
 import PublicProjects from "../portfolio/PublicProjects.vue";
 import PublicExperience from "../portfolio/PublicExperience.vue";
 import PublicContact from "../portfolio/PublicContact.vue";
+import PublicCustomText from "../portfolio/PublicCustomText.vue";
+import PublicEducation from "../portfolio/PublicEducation.vue";
+import PublicStats from "../portfolio/PublicStats.vue";
+import PublicSocial from "../portfolio/PublicSocial.vue";
+import PublicCertificates from "../portfolio/PublicCertificates.vue";
 import GenericPreview from "./previews/GenericPreview.vue";
 
 const props = defineProps<{
@@ -249,5 +276,11 @@ async function confirmDelete() {
   font-size: 11px;
   color: var(--neon-purple);
   text-align: center;
+}
+
+.pub-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
 }
 </style>

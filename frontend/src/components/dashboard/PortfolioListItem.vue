@@ -103,7 +103,7 @@ async function downloadPdf() {
   isDownloading.value = true;
   try {
     const response = await portfolioAPI.exportPdf(props.portfolio.id);
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const url = window.URL.createObjectURL(response.data as Blob);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", `${props.portfolio.slug}-resume.pdf`);

@@ -1,7 +1,10 @@
 <template>
-  <section id="contact" class="pub-contact pub-section">
+  <section id="contact" class="pub-contact pub-section" :class="'layout-' + (data.layout || 'centered')">
     <div class="section-header-wrapper">
       <h2 class="layered-title" data-text="Contact">Contact</h2>
+    </div>
+    <div v-if="data.image_url" class="universal-section-img-container">
+      <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
     </div>
     <div class="contact-grid">
       <a
@@ -115,27 +118,62 @@ function getIcon(platform: string) {
 }
 </script>
 <style scoped>
+.pub-section.hide-divider { border-top: none !important; }
+.pub-section.hide-title .layered-title { display: none !important; }
 .pub-section {
-  padding: 80px 0;
+
+  padding: 40px 0;
 }
 
 /* Dark theme */
-:global(.theme-dark) .pub-section {
+:global(.theme-dark) .pub-section.hide-divider { border-top: none !important; }
+.pub-section.hide-title .layered-title { display: none !important; }
+.pub-section {
+
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Light theme */
-:global(.theme-light) .pub-section {
+:global(.theme-light) .pub-section.hide-divider { border-top: none !important; }
+.pub-section.hide-title .layered-title { display: none !important; }
+.pub-section {
+
   border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
+.universal-section-img-container {
+  margin-bottom: 32px;
+  text-align: center;
+}
+.universal-section-img {
+  width: 100%;
+  max-width: 800px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Layout alignment */
+.layout-left .section-header-wrapper {
+  text-align: left;
+}
+.layout-left .contact-grid {
+  justify-content: flex-start;
+}
+
 .contact-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 14px;
 }
 
 .contact-card {
+  width: calc(33.333% - 10px);
+  min-width: 180px;
+  max-width: 280px;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

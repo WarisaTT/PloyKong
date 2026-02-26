@@ -32,15 +32,6 @@
           Preview
         </button>
         <button
-          class="btn btn-secondary btn-sm btn-icon-text"
-          :disabled="!store.activePortfolio?.id || isExporting"
-          title="Export as PDF"
-          @click="exportPDF"
-        >
-          <Download :size="14" />
-          {{ isExporting ? 'Exporting...' : 'Export' }}
-        </button>
-        <button
           class="btn btn-sm btn-icon-text publish-btn"
           :class="
             store.activePortfolio?.is_published ? 'btn-danger' : 'btn-primary'
@@ -55,9 +46,15 @@
     </header>
 
     <!-- ─── Main Builder Area ──────────────────────────────────────────── -->
-    <div class="builder-main">
+    <div
+      class="builder-main"
+      :class="{
+        'left-collapsed': isLeftCollapsed,
+        'right-collapsed': isRightCollapsed,
+      }"
+    >
       <!-- Left: Block Palette -->
-      <aside class="block-palette">
+      <aside class="block-palette" :class="{ collapsed: isLeftCollapsed }">
         <div class="palette-header">
           <span class="palette-title"
             ><Blocks :size="14" class="icon-inline" /> Blocks</span
@@ -83,6 +80,24 @@
 
       <!-- Center: Canvas -->
       <main class="builder-canvas" ref="canvasRef">
+        <!-- Floating Sidebar Toggles -->
+        <button
+          class="sidebar-toggle left-toggle"
+          @click="isLeftCollapsed = !isLeftCollapsed"
+          :title="isLeftCollapsed ? 'Expand Blocks' : 'Collapse Blocks'"
+        >
+          <ChevronRight v-if="isLeftCollapsed" :size="16" />
+          <ChevronLeft v-else :size="16" />
+        </button>
+
+        <button
+          class="sidebar-toggle right-toggle"
+          @click="isRightCollapsed = !isRightCollapsed"
+          :title="isRightCollapsed ? 'Expand Properties' : 'Collapse Properties'"
+        >
+          <ChevronLeft v-if="isRightCollapsed" :size="16" />
+          <ChevronRight v-else :size="16" />
+        </button>
         <div v-if="store.loading" class="canvas-loading">
           <div
             class="skeleton"
@@ -131,7 +146,7 @@
       </main>
 
       <!-- Right: Properties Panel -->
-      <aside class="props-panel">
+      <aside class="props-panel" :class="{ collapsed: isRightCollapsed }">
         <div class="props-header">
           <span class="props-title"
             ><Palette :size="14" class="icon-inline" /> Properties</span
@@ -250,19 +265,6 @@
         </div>
 
         <div class="props-section">
-          <div class="props-label">Layout</div>
-          <select
-            class="form-input form-select"
-            v-model="theme.layout"
-            @change="updateTheme({ layout: theme.layout })"
-          >
-            <option value="centered">Centered</option>
-            <option value="left">Left Aligned</option>
-            <option value="split">Split</option>
-          </select>
-        </div>
-
-        <div class="props-section">
           <div class="props-label">Portfolio URL</div>
           <div class="url-display">
             <span class="url-prefix">pk.io/</span>
@@ -332,7 +334,9 @@ import {
   Sparkles,
   ArrowLeft,
   Play,
-  Download
+  Download,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-vue-next'
 import SectionBlock from '@/components/builder/SectionBlock.vue'
 import SectionEditor from '@/components/builder/SectionEditor.vue'
@@ -347,7 +351,9 @@ const aiResult = ref<string | null>(null)
 const canvasRef = ref<HTMLElement | null>(null)
 const listRef = ref<any>(null)
 const highlightedBlocks = ref<Set<string>>(new Set())
-const isExporting = ref(false)
+
+const isLeftCollapsed = ref(false)
+const isRightCollapsed = ref(false)
 
 const COLORS = [
   { name: 'Indigo', value: '#4F46E5' },
@@ -514,30 +520,6 @@ function previewPortfolio() {
   if (slug) window.open(`/p/${slug}`, '_blank')
 }
 
-async function exportPDF() {
-  if (!store.activePortfolio?.id) return
-
-  try {
-    isExporting.value = true
-    const response = await portfolioAPI.exportPdf(store.activePortfolio.id)
-
-    // Create a blob URL and trigger download
-    const blob = new Blob([response.data], { type: 'application/pdf' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${store.activePortfolio.slug || 'portfolio'}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error('Failed to export PDF:', error)
-  } finally {
-    isExporting.value = false
-  }
-}
-
 // Debounce the backend API call to save bandwidth
 const debouncedSave = debounce(async (id: string, data: any) => {
   await store.updateSection(id, data)
@@ -667,18 +649,25 @@ async function aiImproveContent() {
 
 /* Main 3-column layout */
 .builder-main {
-  display: grid;
-  grid-template-columns: 240px 1fr 260px;
+  display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
 /* Block Palette */
 .block-palette {
+  width: 240px;
+  flex-shrink: 0;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   overflow-y: auto;
   padding: 16px 12px;
+  transition: transform 0.3s ease, margin 0.3s ease;
+}
+.block-palette.collapsed {
+  transform: translateX(-100%);
+  margin-right: -240px; /* Pull the canvas over */
 }
 
 .palette-header {
@@ -749,10 +738,43 @@ async function aiImproveContent() {
 
 /* Canvas */
 .builder-canvas {
+  flex: 1;
+  position: relative;
   overflow-y: auto;
   padding: 24px;
   background: var(--bg);
+  transition: all 0.3s ease;
 }
+
+.sidebar-toggle {
+  position: absolute;
+  top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+.sidebar-toggle:hover {
+  background: var(--bg);
+  color: var(--text);
+  transform: scale(1.1);
+}
+.left-toggle {
+  left: 16px;
+}
+.right-toggle {
+  right: 16px;
+}
+
 .canvas-empty {
   display: flex;
   flex-direction: column;
@@ -794,10 +816,17 @@ async function aiImproveContent() {
 
 /* Props Panel */
 .props-panel {
+  width: 260px;
+  flex-shrink: 0;
   background: var(--sidebar-bg);
   border-left: 1px solid var(--border);
   overflow-y: auto;
   padding: 16px;
+  transition: transform 0.3s ease, margin 0.3s ease;
+}
+.props-panel.collapsed {
+  transform: translateX(100%);
+  margin-left: -260px; /* Pull the canvas over */
 }
 .props-header {
   margin-bottom: 16px;
@@ -877,7 +906,7 @@ async function aiImproveContent() {
 }
 
 .section-editor {
-  margin-bottom: 20px;
+  margin-bottom: 3px;
 }
 
 .editor-divider {
@@ -897,6 +926,7 @@ async function aiImproveContent() {
 }
 
 .ai-panel {
+  margin-top: 20px;
   background: var(--primary);
   border: 1px solid var(--border);
   border-radius: 12px;

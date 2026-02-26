@@ -20,11 +20,11 @@
               :rows="rows || 8"
               :placeholder="placeholder"
               style="resize: vertical; font-size: 16px; padding: 16px; width: 100%;"
+              @input="emit('update:modelValue', tempValue)"
             ></textarea>
           </div>
           <div class="raw-modal-footer">
-            <button type="button" class="btn btn-secondary" @click.prevent="close">Cancel</button>
-            <button type="button" class="btn btn-primary" @click.prevent="save">Save Changes</button>
+            <button type="button" class="btn btn-primary" style="width: 100%;" @click.prevent="save">ปิดหน้าต่าง / ทราบแล้ว</button>
           </div>
         </div>
       </div>
