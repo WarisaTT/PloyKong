@@ -10,6 +10,9 @@
     "type-check": "vue-tsc --noEmit",
     "format": "prettier --write ."
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@hello-pangea/dnd": "^16.6.0",
     "@types/lodash": "^4.17.24",
