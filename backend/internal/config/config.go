@@ -43,7 +43,7 @@ func Load() *Config {
 	return &Config{
 		// Server
 		Port:           getEnv("PORT", "3000"),
-		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "http://localhost:5173,https://app.ploykong.com"),
+		AllowedOrigins: getEnv("ALLOWED_ORIGINS", "http://localhost:5173,https://ploy-kong.vercel.app"),
 		Env:            getEnv("ENV", "development"),
 
 		// Database
