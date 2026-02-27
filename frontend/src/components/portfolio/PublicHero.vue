@@ -50,10 +50,11 @@
           <span>Hire Me</span>
         </a>
 
-        <a v-if="data.show_resume && data.resume_url" :href="data.resume_url" target="_blank" class="hero-btn secondary">
-          <FileText :size="18" />
-          <span>Resume/CV</span>
-        </a>
+        <button v-if="data.show_resume" @click="downloadResume" :disabled="downloadingResume" class="hero-btn secondary" style="border: none; cursor: pointer; font-family: inherit; font-size: inherit;">
+          <Loader2 v-if="downloadingResume" :size="18" class="spin" />
+          <FileText v-else :size="18" />
+          <span>{{ downloadingResume ? 'Generating...' : 'Resume/CV' }}</span>
+        </button>
 
         <a href="#contact" class="hero-btn secondary">
           <Mail :size="18" />
@@ -66,13 +67,44 @@
   </section>
 </template>
 <script setup lang="ts">
+import { ref } from "vue";
 import { publicAPI } from "@/api";
 import { useRoute } from "vue-router";
-import { Send, Mail, FileText } from "lucide-vue-next";
+import { Send, Mail, FileText, Loader2 } from "lucide-vue-next";
+import Swal from "sweetalert2";
+
 const route = useRoute();
 defineProps<{ data: any; theme?: any; portfolio?: any }>();
 function trackHire() {
   publicAPI.track(route.params.slug as string, "hire_click");
+}
+
+const downloadingResume = ref(false);
+
+async function downloadResume() {
+  const slug = route.params.slug as string;
+  if (!slug) return;
+  
+  downloadingResume.value = true;
+  try {
+    // Optionally track the download event specifically here or backend
+    const res = await publicAPI.exportPdf(slug);
+    
+    // Create blob link to download
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Resume.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Failed to download resume:", error);
+    Swal.fire("Error", "ไม่สามารถดาวน์โหลด Resume ได้ในขณะนี้", "error");
+  } finally {
+    downloadingResume.value = false;
+  }
 }
 </script>
 <style scoped>

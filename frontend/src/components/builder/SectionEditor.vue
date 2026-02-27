@@ -156,14 +156,7 @@
           {{ form.show_resume ? "ON" : "OFF" }}
         </button>
       </div>
-      <div v-if="form.show_resume" class="editor-field" style="margin-top: -4px;">
-        <input
-          v-model="form.resume_url"
-          class="form-input"
-          placeholder="URL to your Resume/CV (https://...)"
-          @input="emitUpdate()"
-        />
-      </div>
+
       <button class="btn btn-secondary btn-sm ai-btn" @click="improveTagline" style="margin-top: 12px;">
         <Sparkles :size="14" /> AI Improve Tagline
       </button>
