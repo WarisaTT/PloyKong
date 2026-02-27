@@ -465,10 +465,9 @@ func (c *cv) tagPill(x, y float64, tag string) float64 {
 	return x + tw + 5
 }
 
-
 func (c *cv) skillPill(x, y float64, tag string) float64 {
 	tw := c.measureW("THSarabun", 8, tag) + 10
-	c.rectS(x, y, tw, 14, cAccentL, cAccentL, 0.5)   // Increased height from 13 to 17
+	c.rectS(x, y, tw, 14, cAccentL, cAccentL, 0.5)  // Increased height from 13 to 17
 	c.text(x+5, y+1, cGray600, "THSarabun", 8, tag) // Shifted down from y+2 to y+4
 	return x + tw + 5
 }
@@ -559,14 +558,13 @@ func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
 		}
 	}()
 
-	claims := middleware.GetUserClaims(c)
 	id := c.Params("id")
 
 	// 1. Fetch portfolio ───────────────────────────────────────────────────────
 	var port models.Portfolio
 	err := h.db.QueryRow(
-		`SELECT id, title FROM portfolios WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
-		id, claims.UserID,
+		`SELECT id, title FROM portfolios WHERE id = ? AND deleted_at IS NULL`,
+		id,
 	).Scan(&port.ID, &port.Title)
 	if err == sql.ErrNoRows {
 		return fiber.NewError(fiber.StatusNotFound, "portfolio not found")
