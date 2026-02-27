@@ -141,9 +141,14 @@ func main() {
 	app.Static("/uploads", "./uploads")
 
 	port := os.Getenv("PORT")
-	if port == "" {
+
+	// If running on Vercel, we force port 3000 (standard Vercel port forwarding)
+	if os.Getenv("VERCEL") == "1" || os.Getenv("ENV") == "production" {
 		port = "3000"
+	} else if port == "" {
+		port = "8082" // Local development default
 	}
+
 	log.Printf("🚀 PloyKong API running on :%s", port)
 	log.Fatal(app.Listen(":" + port))
 }
