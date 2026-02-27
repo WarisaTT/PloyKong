@@ -135,7 +135,7 @@ func main() {
 	public.Post("/p/:slug/track", publicHandler.TrackEvent)
 	public.Post("/p/:slug/chat", publicHandler.AIChat)
 	public.Get("/p/:slug/pdf", publicHandler.ExportPDFBySlug)
-	public.Get("/id/:id/pdf", portfolioHandler.GeneratePDF)
+	public.Get("/p/:id/pdf", portfolioHandler.GeneratePDF)
 
 	// Static uploads
 	app.Static("/uploads", "./uploads")

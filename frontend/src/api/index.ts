@@ -131,7 +131,6 @@ export const portfolioAPI = {
   getById: (id: string) => api.get(`/portfolios/${id}`),
   update: (id: string, data: any) => api.patch(`/portfolios/${id}`, data),
   delete: (id: string) => api.delete(`/portfolios/${id}`),
-  exportPdf: (id: string) => api.get(`/public/id/${id}/pdf`, { responseType: "blob" }),
   publish: (id: string) => api.post(`/portfolios/${id}/publish`),
   unpublish: (id: string) => api.post(`/portfolios/${id}/unpublish`),
 };
@@ -201,7 +200,7 @@ export const publicAPI = {
   chat: (slug: string, message: string, sessionId: string) =>
     api.post(`/public/p/${slug}/chat`, { message, session_id: sessionId }),
   exportPdf: (slug: string) =>
-    api.get(`/public/p/${slug}/pdf`, { responseType: "blob" }),
+    api.get(`/public/p/${slug}/pdf`, { responseType: "blob" })
 };
 
 export default api;
