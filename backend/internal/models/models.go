@@ -51,10 +51,13 @@ type ThemeConfig struct {
 	Mode           string `json:"mode"` // dark | light
 	PrimaryColor   string `json:"primary_color"`
 	SecondaryColor string `json:"secondary_color,omitempty"`
+	Palette        string `json:"palette,omitempty"`
+	Template       string `json:"template,omitempty"`
 	BgColor        string `json:"bg_color,omitempty"`
 	BorderColor    string `json:"border_color,omitempty"`
 	Font           string `json:"font"`
 	Layout         string `json:"layout"` // centered | left | split
+	ShowDivider    bool   `json:"show_divider"`
 }
 
 type Portfolio struct {
@@ -116,6 +119,7 @@ type Section struct {
 	Position    int             `json:"position"`
 	Data        json.RawMessage `json:"data"` // flexible JSON
 	IsVisible   bool            `json:"is_visible"`
+	ColumnSpan  string          `json:"column_span"` // "full" | "half"
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }

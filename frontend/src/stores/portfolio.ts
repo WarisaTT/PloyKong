@@ -94,6 +94,18 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     activePortfolio.value.is_published = false;
   }
 
+  async function duplicatePortfolio(id: string) {
+    loading.value = true;
+    try {
+      await portfolioAPI.duplicate(id);
+      await fetchPortfolios(); // Refresh list to show the copied portfolio
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Failed to duplicate portfolio";
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function deletePortfolio(id: string) {
     await portfolioAPI.delete(id);
     portfolios.value = portfolios.value.filter((p) => p.id !== id);
@@ -146,6 +158,19 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     sections.value = sections.value.filter((s) => s.id !== sectionId);
   }
 
+  async function duplicateSection(sectionId: string) {
+    if (!activePortfolio.value) return;
+    loading.value = true;
+    try {
+      await sectionAPI.duplicate(sectionId);
+      await loadPortfolio(activePortfolio.value.id); // Reload to reflect shifted positions and new section
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Failed to duplicate section";
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function reorderSections(newOrder: Section[]) {
     if (!activePortfolio.value) return;
     sections.value = newOrder.map((s, i) => ({ ...s, position: i }));
@@ -161,6 +186,14 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     if (!section || !activePortfolio.value) return;
     section.is_visible = !section.is_visible;
     sectionAPI.update(sectionId, { is_visible: section.is_visible });
+  }
+
+  function toggleSectionColumnSpan(sectionId: string) {
+    const section = sections.value.find((s) => s.id === sectionId);
+    if (!section || !activePortfolio.value) return;
+    const next = (section.column_span || 'full') === 'full' ? 'half' : 'full';
+    section.column_span = next;
+    sectionAPI.update(sectionId, { column_span: next });
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -202,11 +235,14 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     savePortfolio,
     publishPortfolio,
     unpublishPortfolio,
+    duplicatePortfolio,
     deletePortfolio,
     addSection,
     updateSection,
+    duplicateSection,
     deleteSection,
     reorderSections,
     toggleSectionVisibility,
+    toggleSectionColumnSpan,
   };
 });

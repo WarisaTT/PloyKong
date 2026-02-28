@@ -2,7 +2,7 @@
   <section class="pub-skills pub-section" :class="[
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
-  ]">
+  ]" :style="data.section_bg_color ? { background: data.section_bg_color + ' !important' } : {}">
     <div class="section-header-wrapper">
       <h2 class="layered-title" data-text="Skills">Skills</h2>
     </div>
@@ -89,6 +89,13 @@ const groupedSkills = computed(() => {
 .layout-split .skills-grid {
   justify-content: flex-start;
 }
+.layout-split .skill-header{
+  display: flex ! ;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-evenly;
+}
+
 .layout-centered .group-title {
   text-align: center;
 }
@@ -124,11 +131,6 @@ const groupedSkills = computed(() => {
   font-size: 14px;
   font-weight: 600;
 }
-.skill-name {
-  font-size: 14px;
-  font-weight: 600;
-}
-
 .skills-group {
   margin-bottom: 32px;
 }
@@ -164,7 +166,6 @@ const groupedSkills = computed(() => {
 }
 .skill-tag:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px var(--primary-glow);
 }
 .skill-tag .skill-header {
   margin-bottom: 0;

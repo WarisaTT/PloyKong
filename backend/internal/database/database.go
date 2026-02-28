@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	"ploykong-api/internal/config"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // Connect establishes MySQL connection with connection pooling
@@ -96,6 +97,8 @@ func Migrate(db *sql.DB) error {
 			INDEX idx_portfolio_pos (portfolio_id, position)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
+		// (Column span migration logic will run programmatically below to support older MySQL 8 versions)
+
 		// ─── Analytics ────────────────────────────────────────────────────
 		`CREATE TABLE IF NOT EXISTS analytics (
 			id           BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -140,6 +143,25 @@ func Migrate(db *sql.DB) error {
 	for _, q := range queries {
 		if _, err := db.Exec(q); err != nil {
 			return fmt.Errorf("migration failed: %w\nQuery: %s", err, q[:50])
+		}
+	}
+
+	// ─── Programmatic Migrations for older MySQL (< 8.0.29) ─────────
+	var colCount int
+	err := db.QueryRow(`
+		SELECT COUNT(*) 
+		FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_SCHEMA = DATABASE() 
+		  AND TABLE_NAME = 'sections' 
+		  AND COLUMN_NAME = 'column_span'
+	`).Scan(&colCount)
+	if err != nil {
+		return fmt.Errorf("failed to check column_span existence: %w", err)
+	}
+
+	if colCount == 0 {
+		if _, err := db.Exec(`ALTER TABLE sections ADD COLUMN column_span VARCHAR(10) NOT NULL DEFAULT 'full'`); err != nil {
+			return fmt.Errorf("failed to add column_span: %w", err)
 		}
 	}
 

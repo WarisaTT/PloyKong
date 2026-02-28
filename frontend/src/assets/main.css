@@ -3,6 +3,7 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+@import "./template-styles.css";
 
 /* ───────────────────────────────────────────────────────────── */
 /* DARK THEME (Default) */
@@ -24,7 +25,7 @@ body.theme-dark,
   --neon-cyan: #22d3ee;
   --neon-purple: #c084fc;
 
-  --text: #e2e8f0;
+  --text: #e2e8f0 !important;
   --muted: #94a3b8;
 
   --success: #10b981;
@@ -59,7 +60,7 @@ body.theme-light,
   --pink: #db2777;
   --cyan: #0891b2;
 
-  --text: #1e1b4b;
+  --text: #1e1b4b !important;
   --muted: #6b7280;
 
   --success: #059669;
@@ -347,13 +348,11 @@ h6 {
   display: flex !important;
   flex-direction: row;
   align-items: flex-start;
-  gap: 40px;
   text-align: left;
 }
 
 .layout-split .section-header-wrapper {
-  flex: 0 0 300px;
-  /* Fixed width for title side */
+  flex: 0 0 calc(25% + 60px);
   text-align: left;
   margin-bottom: 0;
 }
@@ -644,4 +643,30 @@ h6 {
 
 .block-highlight {
   animation: blockFlash 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* --- Half-Split Fixes --- */
+.is-half-split .experience-list,
+.is-half-split .skills-grid,
+.is-half-split .social-grid,
+.is-half-split .stats-grid,
+.is-half-split .cert-grid,
+.is-half-split .custom-content,
+.is-half-split .generic-content,
+.is-half-split .contact-grid,
+.is-half-split .proj-grid {
+  max-width: 100% !important;
+  width: 100% !important;
+  align-items: stretch !important;
+}
+
+.is-half-split .experience-item,
+.is-half-split .skill-item,
+.is-half-split .proj-card,
+.is-half-split .contact-card {
+  width: 100% !important;
+}
+
+.is-half-split .section-header-wrapper {
+  max-width: 100% !important;
 }

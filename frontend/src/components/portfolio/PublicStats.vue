@@ -2,7 +2,7 @@
   <section class="pub-stats pub-section" :class="[
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
-  ]">
+  ]" :style="data.section_bg_color ? { background: data.section_bg_color } : {}">
     <div class="section-header-wrapper">
       <h2 class="layered-title" data-text="Stats">Stats & Numbers</h2>
     </div>

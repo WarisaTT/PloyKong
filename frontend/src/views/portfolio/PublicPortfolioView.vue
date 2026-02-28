@@ -1,5 +1,5 @@
 <template>
-  <div class="public-portfolio" :class="[themeClass, layoutClass]" :style="themeVars">
+  <div class="public-portfolio" :class="[themeClass, templateClass]" :style="themeVars">
     <!-- Loading -->
     <div v-if="loading" class="pub-loading">
       <div class="pub-spinner"></div>
@@ -53,19 +53,29 @@
     <div v-else-if="portfolio">
       <!-- SEO Meta (set via document.title) -->
 
-      <!-- Render each section -->
-      <div class="sections-container">
-        <template v-for="section in visibleSections" :key="section.id">
-          <div :class="{ 'pub-container': section.type !== 'hero' }">
-            <component
-              :is="getSectionComponent(section.type)"
-              :data="section.data"
-              :theme="portfolio.theme"
-              :portfolio="portfolio"
-            />
-          </div>
-        </template>
-      </div>
+      <!-- Render sections: Grid layout for half-width sections side by side -->
+      <TransitionGroup tag="div" name="section-list" class="sections-grid" :class="{ 'has-divider': portfolio.theme.show_divider }">
+        <div
+          v-for="section in gridSections"
+          :key="section.id"
+          :data-section-type="section.type"
+          class="section-wrapper"
+          :class="{ 
+            'span-half': section.column_span === 'half', 
+            'span-full': section.column_span !== 'half', 
+            'is-right': section.isRight,
+            'pub-container': section.type !== 'hero' && section.column_span !== 'half'
+          }"
+        >
+          <component
+            :is="getSectionComponent(section.type)"
+            :data="section.data"
+            :theme="portfolio.theme"
+            :portfolio="portfolio"
+            :class="{ 'is-half-split': section.column_span === 'half' }"
+          />
+        </div>
+      </TransitionGroup>
 
       <!-- AI Chat FAB -->
       <div v-if="hasAIChat" class="chat-fab" @click="chatOpen = !chatOpen">
@@ -134,6 +144,14 @@ import { publicAPI } from "@/api";
 import type { Portfolio } from "@/types";
 import { Lock, Search, Bot, X, Loader2, Zap } from "lucide-vue-next";
 
+function hexToRgb(hex: string) {
+  if (!hex) return "0, 0, 0";
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
 // Public section renderers
 import PublicHero from "@/components/portfolio/PublicHero.vue";
 import PublicSkills from "@/components/portfolio/PublicSkills.vue";
@@ -174,7 +192,11 @@ const themeClass = computed(() => {
   return `theme-${mode}`;
 });
 
-const layoutClass = computed(() => `layout-${portfolio.value?.theme?.layout || 'centered'}`);
+
+const templateClass = computed(() => {
+  const t = portfolio.value?.theme?.template || 'classic';
+  return `tpl-${t}`;
+});
 
 const themeVars = computed(() => {
   const primary = portfolio.value?.theme?.primary_color || "#4F46E5";
@@ -191,7 +213,13 @@ const themeVars = computed(() => {
   };
   const bg = portfolio.value?.theme?.bg_color;
   const border = portfolio.value?.theme?.border_color;
-  if (bg && bg !== "#000000") vars["--bg"] = bg;
+  if (bg && bg !== "#000000") {
+    vars["--bg"] = bg;
+    vars["--bg-rgb"] = hexToRgb(bg);
+  } else {
+    // Default fallback to black or whatever main.css defines
+    vars["--bg-rgb"] = "5, 8, 20";
+  }
   if (border && border !== "#000000") vars["--avatar-border"] = border;
   return vars;
 });
@@ -201,6 +229,24 @@ const visibleSections = computed(() =>
     .filter((s) => s.is_visible)
     .sort((a, b) => a.position - b.position),
 );
+
+// Flattened sections for CSS Grid, calculating left/right placement for the divider
+const gridSections = computed(() => {
+  const result: (typeof visibleSections.value[0] & { isRight?: boolean })[] = [];
+  const sections = visibleSections.value;
+  let col = 0; // 0 for left, 1 for right
+  
+  for (const s of sections) {
+    if (s.column_span === 'half') {
+      result.push({ ...s, isRight: col === 1 });
+      col = (col + 1) % 2;
+    } else {
+      result.push({ ...s, isRight: false });
+      col = 0; // Reset column tracker after a full-width block
+    }
+  }
+  return result;
+});
 
 const hasAIChat = computed(() =>
   visibleSections.value.some((s) => s.type === "ai_chat"),
@@ -290,10 +336,7 @@ onMounted(() => loadPortfolio());
   min-height: 100vh;
   position: relative;
   color: var(--text);
-  background: var(--bg);
-}
-.public-portfolio.theme-light {
-  background: linear-gradient(to bottom right, #faf7ff, #f3e8ff);
+  background: var(--bg) !important; /* Ensure custom bg is always applied */
 }
 
 /* Loading */
@@ -326,7 +369,7 @@ onMounted(() => loadPortfolio());
 :global(.theme-light) .pub-password-wall,
 :global(.theme-light) .pub-404,
 :global(.theme-light) .pub-loading {
-  background: linear-gradient(to bottom right, #faf7ff, #f3e8ff);
+  background: var(--bg) !important;
 }
 .pub-loading {
   gap: 16px;
@@ -392,13 +435,67 @@ onMounted(() => loadPortfolio());
 }
 
 /* Sections */
-.sections-container {
-  padding-bottom: 80px;
+/* --- CSS Grid Layout --- */
+.sections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px; /* Adjust gap to bring side-by-side items decently close */
+  width: 100%;
+  max-width: 100%;
+  padding-bottom: 24px;
+  align-items: stretch; /* MAKE SIDE-BY-SIDE EQUAL HEIGHT */
 }
-.pub-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 24px;
+.section-wrapper.span-full {
+  grid-column: 1 / -1;
+}
+.section-wrapper.span-half {
+  grid-column: span 1;
+  padding: 0 !important; /* Remove excessive bloat */
+}
+
+/* Animations */
+.section-list-move,
+.section-list-enter-active,
+.section-list-leave-active {
+  transition: all 0.4s ease;
+}
+.section-list-enter-from,
+.section-list-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.section-list-leave-active {
+  position: absolute;
+  width: 100%; /* adjust if needed for container offset */
+}
+
+/* Divider Implementation */
+.sections-grid.has-divider .section-wrapper.span-half.is-right {
+  position: relative;
+}
+.sections-grid.has-divider .section-wrapper.span-half.is-right::before {
+  content: "";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: -20px; /* Offset to exactly half of the 40px grid gap */
+  width: 1px;
+  background-color: var(--border);
+}
+
+@media (max-width: 640px) {
+  .sections-grid {
+    grid-template-columns: 1fr;
+  }
+  .section-wrapper.span-half {
+    grid-column: 1 / -1;
+  }
+  .sections-grid.has-divider .section-wrapper.span-half.is-right {
+    padding-left: 0;
+  }
+  .sections-grid.has-divider .section-wrapper.span-half.is-right::before {
+    display: none;
+  }
 }
 
 /* AI Chat FAB */
@@ -446,6 +543,7 @@ onMounted(() => loadPortfolio());
 :global(.theme-light) .chat-panel {
   box-shadow: 0 24px 60px rgba(255, 255, 255, 0.98);
 }
+
 .chat-header {
   padding: 16px;
   border-bottom: 1px solid var(--border);
@@ -484,7 +582,7 @@ onMounted(() => loadPortfolio());
   justify-content: flex-end;
 }
 .chat-bubble {
-  max-width: 80%;
+  max-width: 100%;
   padding: 9px 14px;
   border-radius: 14px;
   font-size: 13px;
@@ -528,20 +626,26 @@ onMounted(() => loadPortfolio());
 /* Watermark */
 .pk-watermark {
   text-align: center;
-  padding: 24px;
+  padding: 8px 24px 24px 24px;
 }
 .pk-watermark a {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--watercolor);
   text-decoration: none;
 }
 .pk-watermark a:hover {
-  color: var(--neon-purple);
+  color: var(--primary);
 }
 .pk-watermark strong {
-  color: var(--neon-purple);
+  color: var(--primary);
+}
+.pk-watermark a .theme-light {
+  --watercolor: #575757;
 }
 
+:global(.theme-dark) .pk-watermark a {
+  --watercolor: #7b7a7a;
+}
 /* Hide Builder Placeholder hints on Public View */
 .public-portfolio :deep(.generic-hint) {
   display: none !important;

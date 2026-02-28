@@ -21,6 +21,16 @@
           <ArrowUp :size="14" />
         </button>
 
+        <!-- Toggle List/Grid Column Span -->
+        <button
+          class="icon-btn"
+          :title="section.column_span === 'half' ? 'Make Full Width' : 'Make Half Width'"
+          @click="$emit('toggle-column-span')"
+        >
+          <Columns v-if="section.column_span === 'half'" :size="14" />
+          <Square v-else :size="14" />
+        </button>
+
         <!-- Move Down -->
         <button class="icon-btn" title="Move Down" @click="$emit('move-down')">
           <ArrowDown :size="14" />
@@ -36,6 +46,11 @@
           <EyeOff v-else :size="14" />
         </button>
 
+        <!-- Duplicate -->
+        <button class="icon-btn" title="Duplicate" @click="$emit('duplicate')">
+          <Copy :size="14" />
+        </button>
+
         <!-- Delete -->
         <button class="icon-btn danger" title="Delete" @click="confirmDelete">
           <Trash2 :size="14" />
@@ -46,10 +61,10 @@
     <!-- Section Preview -->
     <div
       class="section-preview"
-      :class="[themeClass]"
+      :class="[themeClass, templateClass, { 'is-half-split': isHalfSplit }]"
       :style="[themeVars || {}, { pointerEvents: 'none' }]"
     >
-      <div :class="{ 'pub-container': section.type !== 'hero' }">
+      <div :class="{ 'pub-container': section.type !== 'hero' && !isHalfSplit }">
         <PublicHero v-if="section.type === 'hero'" :data="section.data" />
         <PublicSkills
           v-else-if="section.type === 'skills'"
@@ -109,6 +124,19 @@ import {
   ArrowUp,
   ArrowDown,
   Trash2,
+  Rows,
+  Wrench,
+  Trophy,
+  Briefcase,
+  Mail,
+  User,
+  GraduationCap,
+  Sparkles,
+  Link,
+  Award,
+  Columns,
+  Square,
+  Copy,
 } from "lucide-vue-next";
 import Swal from "sweetalert2";
 import PublicHero from "../portfolio/PublicHero.vue";
@@ -126,17 +154,21 @@ import GenericPreview from "./previews/GenericPreview.vue";
 const props = defineProps<{
   section: Section;
   isSelected: boolean;
+  isHalfSplit?: boolean;
   themeClass?: string;
+  templateClass?: string;
   themeVars?: Record<string, string>;
 }>();
 
-const emit = defineEmits<{
-  select: [];
-  delete: [];
-  "toggle-visibility": [];
-  "move-up": [];
-  "move-down": [];
-}>();
+const emit = defineEmits([
+  "select",
+  "delete",
+  "toggle-visibility",
+  "toggle-column-span",
+  "move-up",
+  "move-down",
+  "duplicate",
+]);
 
 const blockMeta = computed(() =>
   BLOCK_TYPES.find((b) => b.type === props.section.type),
@@ -161,22 +193,53 @@ async function confirmDelete() {
 
 <style scoped>
 .section-block {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
+  position: relative;
+  transition: all 0.2s ease;
   cursor: pointer;
-  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .section-block:hover {
-  border-color: rgba(79, 70, 229, 0.4);
+  border-color: var(--borderPurple);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.section-block.theme-dark:hover {
+  --borderPurple: rgba(79, 70, 229, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.section-block.theme-light:hover {
+  --borderPurple: rgba(79, 70, 229, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .section-block.selected {
-  border-color: var(--purple);
+  border-color: var(--borderPurple);
   box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
 }
+
+.section-block.theme-dark.selected {
+  --borderPurple: rgba(79, 70, 229, 0.4);
+  box-shadow: 0 0 0 2px rgba(132, 0, 255, 0.2);
+}
+
+.section-block.theme-light.selected {
+  --borderPurple2: rgba(171, 155, 177, 0.4);
+  box-shadow: 0 0 0 5px rgba(15, 13, 16, 0.7);
+}
+
 
 .section-block.hidden {
   opacity: 0.5;
@@ -260,6 +323,7 @@ async function confirmDelete() {
 }
 
 .section-preview {
+  flex: 1;
   background: var(--bg);
   border-radius: 0 0 11px 11px;
   color: var(--text);

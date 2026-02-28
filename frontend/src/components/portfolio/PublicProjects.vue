@@ -2,7 +2,7 @@
   <section class="pub-projects pub-section" :class="[
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
-  ]">
+  ]" :style="data.section_bg_color ? { background: data.section_bg_color + ' !important' } : {}">
     <div class="section-header-wrapper">
       <h2 class="layered-title" data-text="Projects">Projects</h2>
     </div>
@@ -64,8 +64,7 @@ defineProps<{ data: any }>();
 .pub-section.hide-divider { border-top: none !important; }
 .pub-section.hide-title .layered-title { display: none !important; }
 .pub-section {
-
-  padding: 40px 0;
+  padding: 20px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 .universal-section-img-container {
@@ -87,13 +86,6 @@ defineProps<{ data: any }>();
 }
 .layout-left .proj-grid {
   justify-content: flex-start;
-}
-
-.layout-split .proj-card,
-.layout-left .proj-card {
-  width: calc(50% - 10px);
-  max-width: 100%;
-  flex-grow: 1;
 }
 
 @media (max-width: 600px) {
@@ -141,6 +133,7 @@ defineProps<{ data: any }>();
 .proj-body {
   padding: 18px;
 }
+
 .layout-centered .proj-body {
   text-align: center;
 }
@@ -170,6 +163,7 @@ defineProps<{ data: any }>();
 .layout-split .proj-tags {
   justify-content: flex-start;
 }
+
 .proj-tag {
   font-size: 11px;
   padding: 3px 10px;
@@ -190,7 +184,7 @@ defineProps<{ data: any }>();
 }
 .proj-link {
   font-size: 12px;
-  color: var(--neon-cyan, #22d3ee);
+  color: var(--neon-cyan, --primary-glow);
   text-decoration: none;
   font-weight: 600;
   display: inline-flex;

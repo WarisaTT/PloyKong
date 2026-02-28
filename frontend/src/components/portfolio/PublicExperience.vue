@@ -2,7 +2,7 @@
   <section class="pub-exp pub-section" :class="[
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
-  ]">
+  ]" :style="data.section_bg_color ? { background: data.section_bg_color + ' !important' } : {}">
     <div class="section-header-wrapper">
       <h2 class="layered-title" data-text="Experience">Experience</h2>
     </div>

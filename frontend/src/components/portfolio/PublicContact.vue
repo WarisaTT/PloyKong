@@ -137,7 +137,6 @@ function getIcon(platform: string) {
 :global(.theme-light) .pub-section.hide-divider { border-top: none !important; }
 .pub-section.hide-title .layered-title { display: none !important; }
 .pub-section {
-
   border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
@@ -163,18 +162,15 @@ function getIcon(platform: string) {
 }
 
 .contact-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  justify-content: center;  
 }
 
 .contact-card {
-  width: calc(33.333% - 10px);
-  min-width: 180px;
-  max-width: 280px;
-  flex-grow: 1;
   display: flex;
+  flex-wrap: wrap;
   flex-direction: column;
   align-items: center;
   gap: 6px;

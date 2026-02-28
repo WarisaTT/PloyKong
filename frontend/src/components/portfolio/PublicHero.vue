@@ -42,7 +42,7 @@
       >
         <a
           v-if="data.show_hire_me"
-          :href="data.hire_me_link || 'mailto:'"
+          href="#contact"
           class="hero-btn primary"
           @click="trackHire"
         >
@@ -50,16 +50,11 @@
           <span>Hire Me</span>
         </a>
 
-        <button v-if="data.show_resume" @click="downloadResume" :disabled="downloadingResume" class="hero-btn secondary" style="border: none; cursor: pointer; font-family: inherit; font-size: inherit;">
+        <button v-if="data.show_resume" @click="downloadResume" :disabled="downloadingResume" class="hero-btn secondary">
           <Loader2 v-if="downloadingResume" :size="18" class="spin" />
           <FileText v-else :size="18" />
           <span>{{ downloadingResume ? 'Generating...' : 'Resume/CV' }}</span>
         </button>
-
-        <a href="#contact" class="hero-btn secondary">
-          <Mail :size="18" />
-          <span>Contact</span>
-        </a>
       </div>
       </div>
     </div>

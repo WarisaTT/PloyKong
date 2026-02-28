@@ -131,8 +131,10 @@ export const portfolioAPI = {
   getById: (id: string) => api.get(`/portfolios/${id}`),
   update: (id: string, data: any) => api.patch(`/portfolios/${id}`, data),
   delete: (id: string) => api.delete(`/portfolios/${id}`),
+  exportPdf: (id: string) => api.get(`/public/id/${id}/pdf`, { responseType: "blob" }),
   publish: (id: string) => api.post(`/portfolios/${id}/publish`),
   unpublish: (id: string) => api.post(`/portfolios/${id}/unpublish`),
+  duplicate: (id: string) => api.post(`/portfolios/${id}/duplicate`),
 };
 
 // ─── Section ──────────────────────────────────────────────────────────────────
@@ -142,6 +144,7 @@ export const sectionAPI = {
     api.post(`/portfolios/${portfolioId}/sections`, data),
   update: (id: string, data: any) => api.patch(`/sections/${id}`, data),
   delete: (id: string) => api.delete(`/sections/${id}`),
+  duplicate: (id: string) => api.post(`/sections/${id}/duplicate`),
   reorder: (order: { id: string; position: number }[]) =>
     api.post("/sections/reorder", { order }),
 };

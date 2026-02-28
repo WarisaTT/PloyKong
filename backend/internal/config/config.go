@@ -21,17 +21,18 @@ type Config struct {
 	DBName     string
 
 	// JWT
-	JWTSecret          string
-	JWTAccessExpiry    string
-	JWTRefreshExpiry   string
+	JWTSecret        string
+	JWTAccessExpiry  string
+	JWTRefreshExpiry string
 
 	// OpenAI
 	OpenAIKey   string
 	OpenAIModel string
 
 	// Storage
-	UploadDir  string
-	MaxUploadMB int64
+	UploadDir     string
+	MaxUploadMB   int64
+	CloudinaryURL string
 }
 
 func Load() *Config {
@@ -63,8 +64,9 @@ func Load() *Config {
 		OpenAIModel: getEnv("OPENAI_MODEL", "gpt-4o-mini"),
 
 		// Storage
-		UploadDir:   getEnv("UPLOAD_DIR", "./uploads"),
-		MaxUploadMB: 10,
+		UploadDir:     getEnv("UPLOAD_DIR", "./uploads"),
+		MaxUploadMB:   10,
+		CloudinaryURL: getEnv("CLOUDINARY_URL", ""),
 	}
 }
 

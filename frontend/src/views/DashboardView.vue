@@ -134,14 +134,15 @@
           </p>
         </div>
 
-        <div v-else class="portfolio-list">
+        <TransitionGroup tag="div" name="list" v-else class="portfolio-list">
           <PortfolioListItem
             v-for="portfolio in portfolioStore.portfolios"
             :key="portfolio.id"
             :portfolio="portfolio"
             @delete="deletePortfolio(portfolio.id)"
+            @duplicate="duplicatePortfolio(portfolio.id)"
           />
-        </div>
+        </TransitionGroup>
       </section>
     </main>
   </div>
@@ -171,6 +172,7 @@ import {
   Layers,
 } from "lucide-vue-next";
 import Swal from "sweetalert2";
+import { showSuccess, showError } from "@/utils/alert";
 
 const authStore = useAuthStore();
 const portfolioStore = usePortfolioStore();
@@ -225,6 +227,15 @@ async function deletePortfolio(id: string) {
   });
   if (isConfirmed) {
     await portfolioStore.deletePortfolio(id);
+  }
+}
+
+async function duplicatePortfolio(id: string) {
+  try {
+    await portfolioStore.duplicatePortfolio(id);
+    showSuccess("Portfolio duplicated successfully!");
+  } catch (e: any) {
+    showError("Failed to duplicate portfolio");
   }
 }
 
@@ -447,6 +458,22 @@ async function handleLogout() {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* List Transitions */
+.list-move,
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.4s ease;
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+.list-leave-active {
+  position: absolute;
+  width: calc(100% - 32px); /* keep width stable while absolute */
 }
 
 .icon-inline {

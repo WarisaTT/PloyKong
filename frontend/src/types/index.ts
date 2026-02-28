@@ -14,10 +14,13 @@ export interface ThemeConfig {
   mode: "dark" | "light" | "system";
   primary_color: string;
   secondary_color?: string;
+  palette?: string;
+  template?: string;
   bg_color?: string;
   border_color?: string;
   font: string;
   layout: "centered" | "left" | "split";
+  show_divider?: boolean;
 }
 
 // ─── Portfolio ────────────────────────────────────────────────────────────────
@@ -62,6 +65,7 @@ export interface Section {
   position: number;
   data: any;
   is_visible: boolean;
+  column_span?: 'full' | 'half'; // half = 1/2 width, sits side-by-side with next half section
   created_at?: string;
 }
 

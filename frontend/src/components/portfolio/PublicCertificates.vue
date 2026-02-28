@@ -1,5 +1,5 @@
 <template>
-  <section class="pub-certs pub-section" :class="'layout-' + (data.layout || 'centered')">
+  <section class="pub-certs pub-section" :class="'layout-' + (data.layout || 'centered')" :style="data.section_bg_color ? { background: data.section_bg_color } : {}">
     <div class="section-header-wrapper">
       <h2 class="layered-title" data-text="Certificates">Certificates & Awards</h2>
     </div>

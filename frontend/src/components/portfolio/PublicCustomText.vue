@@ -2,7 +2,7 @@
   <section class="pub-custom pub-section" :class="[
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
-  ]">
+  ]" :style="data.section_bg_color ? { background: data.section_bg_color + ' !important' } : {}">
     <div v-if="data.title" class="section-header-wrapper">
       <h2 class="layered-title" :data-text="data.title">{{ data.title }}</h2>
     </div>

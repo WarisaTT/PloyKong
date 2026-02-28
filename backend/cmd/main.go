@@ -99,6 +99,7 @@ func main() {
 	portfolios.Delete("/:id", portfolioHandler.Delete)
 	portfolios.Post("/:id/publish", portfolioHandler.Publish)
 	portfolios.Post("/:id/unpublish", portfolioHandler.Unpublish)
+	portfolios.Post("/:id/duplicate", portfolioHandler.Duplicate)
 
 	// Sections (protected)
 	sectionHandler := handlers.NewSectionHandler(db)
@@ -109,6 +110,7 @@ func main() {
 	globalSections := api.Group("/sections", middleware.Protected(cfg))
 	globalSections.Patch("/:id", sectionHandler.Update)
 	globalSections.Delete("/:id", sectionHandler.Delete)
+	globalSections.Post("/:id/duplicate", sectionHandler.Duplicate)
 	globalSections.Post("/reorder", sectionHandler.Reorder)
 
 	// Analytics (protected)
@@ -126,7 +128,8 @@ func main() {
 	ai.Post("/suggest-skills", aiHandler.SuggestSkills)
 
 	// Upload (protected)
-	api.Post("/upload", middleware.Protected(cfg), handlers.UploadImage)
+	uploadHandler := handlers.NewUploadHandler(cfg)
+	api.Post("/upload", middleware.Protected(cfg), uploadHandler.UploadImage)
 
 	// Public (no auth)
 	publicHandler := handlers.NewPublicHandler(db)
@@ -135,7 +138,7 @@ func main() {
 	public.Post("/p/:slug/track", publicHandler.TrackEvent)
 	public.Post("/p/:slug/chat", publicHandler.AIChat)
 	public.Get("/p/:slug/pdf", publicHandler.ExportPDFBySlug)
-	public.Get("/p/:id/pdf", portfolioHandler.GeneratePDF)
+	public.Get("/id/:id/pdf", portfolioHandler.GeneratePDF)
 
 	// Static uploads
 	app.Static("/uploads", "./uploads")

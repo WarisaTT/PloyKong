@@ -273,7 +273,7 @@ func (h *PortfolioHandler) Unpublish(c *fiber.Ctx) error {
 
 func (h *PortfolioHandler) loadSections(portfolioID string) ([]models.Section, error) {
 	rows, err := h.db.Query(
-		`SELECT id, portfolio_id, type, position, data, is_visible 
+		`SELECT id, portfolio_id, type, position, data, is_visible, COALESCE(column_span, 'full')
 		 FROM sections WHERE portfolio_id = ? ORDER BY position ASC`,
 		portfolioID,
 	)
@@ -286,10 +286,13 @@ func (h *PortfolioHandler) loadSections(portfolioID string) ([]models.Section, e
 	for rows.Next() {
 		var s models.Section
 		var dataRaw []byte
-		if err := rows.Scan(&s.ID, &s.PortfolioID, &s.Type, &s.Position, &dataRaw, &s.IsVisible); err != nil {
+		if err := rows.Scan(&s.ID, &s.PortfolioID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.ColumnSpan); err != nil {
 			continue
 		}
 		s.Data = json.RawMessage(dataRaw)
+		if s.ColumnSpan == "" {
+			s.ColumnSpan = "full"
+		}
 		sections = append(sections, s)
 	}
 	return sections, nil
@@ -550,6 +553,11 @@ func firstOf(ss ...string) string {
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
+	id := c.Params("id")
+	return h.GeneratePDFWithID(c, id)
+}
+
+func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("🔥 PANIC in GeneratePDF: %v\n%s", r, debug.Stack())
@@ -557,8 +565,6 @@ func (h *PortfolioHandler) GeneratePDF(c *fiber.Ctx) error {
 			c.Status(500).JSON(fiber.Map{"error": fmt.Sprintf("panic: %v", r)})
 		}
 	}()
-
-	id := c.Params("id")
 
 	// 1. Fetch portfolio ───────────────────────────────────────────────────────
 	var port models.Portfolio
@@ -987,4 +993,137 @@ func (h *PortfolioHandler) createStarterSections(portfolioID string) {
 			ulid.Make().String(), portfolioID, s.sType, s.pos, string(dataJSON),
 		)
 	}
+}
+
+// ─── Duplicate Portfolio ──────────────────────────────────────────────────────
+
+func (h *PortfolioHandler) Duplicate(c *fiber.Ctx) error {
+	claims := middleware.GetUserClaims(c)
+	originalID := c.Params("id")
+
+	// 1. Fetch original portfolio
+	var p models.Portfolio
+	var themeRaw []byte
+	var descNull, seoTitleNull, seoDescNull sql.NullString
+
+	err := h.db.QueryRow(
+		`SELECT id, user_id, slug, title, description, theme, seo_title, seo_desc,
+				is_published, password_hash, expires_at
+		 FROM portfolios WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		originalID, claims.UserID,
+	).Scan(
+		&p.ID, &p.UserID, &p.Slug, &p.Title, &descNull, &themeRaw,
+		&seoTitleNull, &seoDescNull, &p.IsPublished, &p.PasswordHash, &p.ExpiresAt,
+	)
+	if err == sql.ErrNoRows {
+		return fiber.NewError(fiber.StatusNotFound, "portfolio not found")
+	} else if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to get portfolio")
+	}
+
+	if err := p.ScanTheme(themeRaw); err != nil {
+		p.Theme = &models.ThemeConfig{Mode: "dark", PrimaryColor: "#4F46E5", Font: "Syne", Layout: "centered"}
+	}
+
+	if descNull.Valid {
+		p.Description = descNull
+	}
+	if seoTitleNull.Valid {
+		p.SEOTitle = seoTitleNull
+	}
+	if seoDescNull.Valid {
+		p.SEODesc = seoDescNull
+	}
+
+	// 2. Generate new Portfolio
+	newID := ulid.Make().String()
+	randomSuffix := ulid.Make().String()[16:20] // pseudo-random string portion
+	newSlug := fmt.Sprintf("%s-copy-%s", p.Slug, strings.ToLower(randomSuffix))
+	newTitle := p.Title + " (Copy)"
+
+	themeJSON, _ := json.Marshal(p.Theme)
+
+	tx, err := h.db.Begin()
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to begin transaction")
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(
+		`INSERT INTO portfolios (id, user_id, slug, title, description, theme, seo_title, seo_desc,
+								 is_published, password_hash, expires_at, view_count)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		newID, claims.UserID, newSlug, newTitle, p.Description, string(themeJSON),
+		p.SEOTitle, p.SEODesc, false, p.PasswordHash, p.ExpiresAt, 0, // start unpublished
+	)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to duplicate portfolio")
+	}
+
+	// 3. Duplicate sections
+	rows, err := tx.Query(
+		"SELECT type, position, data, is_visible, COALESCE(column_span, 'full') FROM sections WHERE portfolio_id = ? ORDER BY position",
+		originalID,
+	)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to load original sections")
+	}
+	defer rows.Close()
+
+	type secData struct {
+		sType   string
+		pos     int
+		dataRaw string
+		isVis   bool
+		colSpan string
+	}
+	var copiedSections []secData
+
+	for rows.Next() {
+		var sType string
+		var colSpanNull sql.NullString
+		var pos int
+		var dataRaw []byte
+		var isVis bool
+		if err := rows.Scan(&sType, &pos, &dataRaw, &isVis, &colSpanNull); err != nil {
+			log.Printf("Duplicate section scan error: %v", err)
+			continue
+		}
+
+		colSpan := "full"
+		if colSpanNull.Valid && colSpanNull.String != "" {
+			colSpan = colSpanNull.String
+		}
+
+		copiedSections = append(copiedSections, secData{
+			sType:   sType,
+			pos:     pos,
+			dataRaw: string(dataRaw),
+			isVis:   isVis,
+			colSpan: colSpan,
+		})
+	}
+	rows.Close() // Free the connection before executing INSERTS
+
+	for _, sec := range copiedSections {
+		newSecID := ulid.Make().String()
+		_, err := tx.Exec(
+			"INSERT INTO sections (id, portfolio_id, type, position, data, is_visible, column_span) VALUES (?, ?, ?, ?, ?, ?, ?)",
+			newSecID, newID, sec.sType, sec.pos, sec.dataRaw, sec.isVis, sec.colSpan,
+		)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to insert duplicated section")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to commit duplicated portfolio")
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data": fiber.Map{
+			"id": newID,
+		},
+	})
 }

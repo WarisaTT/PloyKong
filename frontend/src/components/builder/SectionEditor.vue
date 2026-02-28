@@ -1,7 +1,7 @@
 <template>
   <div class="section-editor">
     <div class="generic-settings-card">
-      <div class="editor-field" style="margin-bottom: 12px">
+      <div v-if="isLayoutAdjustable" class="editor-field" style="margin-bottom: 12px">
         <label class="form-label">Layout (การจัดเรียง)</label>
         <select
           v-model="form.layout"
@@ -21,7 +21,7 @@
           :class="{ on: !!form.hide_title }"
           @click="form.hide_title = !form.hide_title; emitUpdate()"
         >
-          {{ form.hide_title ? "Hide" : "Show" }}
+          {{ form.hide_title ? "Show" : "Hide" }}
         </button>
       </div>
 
@@ -32,7 +32,7 @@
           :class="{ on: !!form.hide_divider }"
           @click="form.hide_divider = !form.hide_divider; emitUpdate()"
         >
-          {{ form.hide_divider ? "Hide" : "Show" }}
+          {{ form.hide_divider ? "Show" : "Hide" }}
         </button>
       </div>
 
@@ -63,6 +63,34 @@
               ><Loader2 :size="14" class="spin" /> กำลังอัพโหลด...</template
             >
             <template v-else>Browse</template>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section BG Color (firstjobber only) -->
+      <div v-if="template === 'firstjobber'" class="editor-field" style="margin-top: 10px">
+        <label class="form-label">Section Background Color</label>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <input
+            type="color"
+            v-model="form.section_bg_color"
+            style="width: 36px; height: 28px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: 0"
+            @input="emitUpdate()"
+          />
+          <input
+            v-model="form.section_bg_color"
+            class="form-input"
+            style="flex: 1; font-size: 12px"
+            placeholder="#1e1b2e"
+            @input="emitUpdate()"
+          />
+          <button
+            v-if="form.section_bg_color"
+            class="btn btn-secondary btn-sm"
+            style="font-size: 10px; padding: 2px 8px"
+            @click="form.section_bg_color = ''; emitUpdate()"
+          >
+            Reset
           </button>
         </div>
       </div>
@@ -602,20 +630,31 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from "vue";
+import { reactive, watch, ref, computed } from "vue";
 import type { Section } from "@/types";
 import { aiAPI, uploadAPI } from "@/api";
 import PopupTextEditor from "./PopupTextEditor.vue";
 import { Sparkles, X, Plus, Trash2, Loader2 } from "lucide-vue-next";
 import Swal from "sweetalert2";
 
-const props = defineProps<{ section: Section }>();
+const props = defineProps<{ section: Section, template?: string }>();
 const emit = defineEmits<{ update: [data: any] }>();
 
 // Wrapper to prevent emitting the Vue Proxy directly, which causes infinite update loops in the parent
 function emitUpdate() {
   emit('update', JSON.parse(JSON.stringify(form)));
 }
+
+// Check if the current section + template combo locks the layout via CSS
+const isLayoutAdjustable = computed(() => {
+  const currentTemplate = props.template || 'classic';
+  if (props.section.type === 'hero') {
+    if (['firstjobber', 'programmer', 'business'].includes(currentTemplate)) {
+      return false; // CSS uses !important to force layout, preventing Vue layout classes from working visually
+    }
+  }
+  return true;
+});
 
 // Deep clone section data into reactive form
 const initialData = JSON.parse(JSON.stringify(props.section.data || {}));

@@ -34,6 +34,13 @@
         <Loader2 v-if="isDownloading" class="spin" :size="16" />
         <FileDown v-else :size="16" />
       </button>
+      <button
+        class="btn btn-secondary btn-sm"
+        title="Duplicate Portfolio"
+        @click="$emit('duplicate')"
+      >
+        <Copy :size="16" />
+      </button>
       <RouterLink
         :to="`/portfolios/${portfolio.id}/edit`"
         class="btn btn-secondary btn-sm icon-btn-labeled"
@@ -91,10 +98,11 @@ import {
   Trash2,
   FileDown,
   Loader2,
+  Copy,
 } from "lucide-vue-next";
 
 const props = defineProps<{ portfolio: Portfolio }>();
-defineEmits<{ delete: [] }>();
+defineEmits<{ delete: []; duplicate: [] }>();
 
 const isDownloading = ref(false);
 

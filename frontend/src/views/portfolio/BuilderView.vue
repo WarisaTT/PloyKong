@@ -79,7 +79,7 @@
       </aside>
 
       <!-- Center: Canvas -->
-      <main class="builder-canvas" ref="canvasRef">
+      <div class="canvas-wrapper">
         <!-- Floating Sidebar Toggles -->
         <button
           class="sidebar-toggle left-toggle"
@@ -98,6 +98,8 @@
           <ChevronLeft v-if="isRightCollapsed" :size="16" />
           <ChevronRight v-else :size="16" />
         </button>
+
+        <main class="builder-canvas" ref="canvasRef">
         <div v-if="store.loading" class="canvas-loading">
           <div
             class="skeleton"
@@ -122,28 +124,46 @@
         </div>
 
         <TransitionGroup
-          v-else
-          name="section-list"
           tag="div"
-          class="sections-list"
+          name="section-list"
+          v-else
+          class="sections-list sections-grid"
+          :class="[templateClass, { 'has-divider': theme.show_divider }]"
           ref="listRef"
         >
-          <SectionBlock
-            v-for="section in sortedSections"
+          <div
+            v-for="section in gridSections"
             :key="section.id"
-            :section="section"
-            :is-selected="selectedSectionId === section.id"
-            :theme-class="themeClass"
-            :theme-vars="themeVars"
-            :class="{ 'block-highlight': highlightedBlocks.has(section.id) }"
-            @select="selectSection(section.id)"
-            @delete="store.deleteSection(section.id)"
-            @toggle-visibility="store.toggleSectionVisibility(section.id)"
-            @move-up="moveSection(section.id, 'up')"
-            @move-down="moveSection(section.id, 'down')"
-          />
+            :data-id="section.id"
+            class="section-wrapper drag-item"
+            :class="{ 
+              'span-half': section.column_span === 'half', 
+              'span-full': section.column_span !== 'half', 
+              'is-right': section.isRight,
+              'builder-half-row': section.column_span === 'half',
+              'builder-full-row': section.column_span !== 'half'
+            }"
+          >
+            <SectionBlock
+              :section="section"
+              :is-selected="selectedSectionId === section.id"
+              :theme-class="themeClass"
+              :template-class="templateClass"
+              :is-half-split="section.column_span === 'half'"
+              :theme-vars="themeVars"
+              :class="{ 'block-highlight': highlightedBlocks.has(section.id) }"
+              @select="selectSection(section.id)"
+              @delete="store.deleteSection(section.id)"
+              @toggle-visibility="store.toggleSectionVisibility(section.id)"
+              @toggle-column-span="store.toggleSectionColumnSpan(section.id)"
+              @move-up="moveSection(section.id, 'up')"
+              @move-down="moveSection(section.id, 'down')"
+              @duplicate="store.duplicateSection(section.id)"
+            />
+          </div>
         </TransitionGroup>
       </main>
+      </div>
 
       <!-- Right: Properties Panel -->
       <aside class="props-panel" :class="{ collapsed: isRightCollapsed }">
@@ -184,14 +204,14 @@
             "
           >
             <div
-              v-for="color in COLORS"
-              :key="color.value"
+              v-for="(color, idx) in currentColors"
+              :key="idx"
               class="color-swatch"
-              :style="{ background: color.value }"
-              :class="{ active: theme.primary_color === color.value }"
-              :title="color.name"
+              :style="{ background: color }"
+              :class="{ active: theme.primary_color === color }"
+              :title="`Color ${idx + 1}`"
               @click="
-                updateTheme({ primary_color: color.value, secondary_color: '' })
+                updateTheme({ primary_color: color, secondary_color: '' })
               "
             />
           </div>
@@ -265,6 +285,20 @@
         </div>
 
         <div class="props-section">
+          <label class="toggle-row">
+            <span class="props-label" style="margin: 0">Show Column Divider</span>
+            <div class="toggle-switch">
+              <input
+                type="checkbox"
+                v-model="theme.show_divider"
+                @change="updateTheme({ show_divider: theme.show_divider })"
+              />
+              <span class="slider round"></span>
+            </div>
+          </label>
+        </div>
+
+        <div class="props-section">
           <div class="props-label">Portfolio URL</div>
           <div class="url-display">
             <span class="url-prefix">pk.io/</span>
@@ -281,6 +315,7 @@
           </div>
           <SectionEditor
             :section="selectedSection"
+            :template="store.activePortfolio?.theme?.template || 'classic'"
             @update="handleSectionUpdate"
           />
         </div>
@@ -355,31 +390,57 @@ const highlightedBlocks = ref<Set<string>>(new Set())
 const isLeftCollapsed = ref(false)
 const isRightCollapsed = ref(false)
 
-const COLORS = [
-  { name: 'Indigo', value: '#4F46E5' },
-  { name: 'Purple', value: '#a855f7' },
-  { name: 'Pink', value: '#ec4899' },
-  { name: 'Cyan', value: '#06b6d4' },
-  { name: 'Emerald', value: '#10b981' },
-  { name: 'Orange', value: '#f97316' }
-]
+function hexToRgb(hex: string) {
+  if (!hex) return "0, 0, 0";
+  // Remove # if present
+  const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
+  if (cleanHex.length !== 6) return "0, 0, 0";
+  const r = parseInt(cleanHex.slice(0, 2), 16);
+  const g = parseInt(cleanHex.slice(2, 4), 16);
+  const b = parseInt(cleanHex.slice(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
+}
+
+const PALETTES = [
+  { id:"classic", label:"Classic Colors", colors:["#4F46E5","#9333EA","#DB2777","#06B6D4","#10B981","#F97316"] },
+  { id:"neon", label:"Neon Cyber", colors:["#00F5FF","#7B61FF","#FF00C8","#39FF14","#FFEA00","#FF3366"] },
+  { id:"sunset", label:"Sunset Warm", colors:["#FF5E3A","#FF9500","#FF2A55","#D35DD8","#FFB800","#FF7043"] },
+  { id:"forest", label:"Forest Nature", colors:["#10B981","#059669","#34D399","#A3E635","#06B6D4","#3B82F6"] },
+  { id:"gold", label:"Luxury Gold", colors:["#D4AF37","#FBBF24","#FCD34D","#B45309","#92400E","#F59E0B"] }
+];
 
 const FONTS = [
+  'Inter',
+  'Outfit',
+  'Space Grotesk',
   'Plus Jakarta Sans',
   'Syne',
-  'Sarabun',
+  'Playfair Display',
   'Prompt',
-  'Noto Sans Thai'
+  'Kanit',
+  'Noto Sans Thai',
+  'Sarabun',
+  'Mitr',
+  'Chakra Petch',
+  'IBM Plex Sans Thai'
 ]
 
 const theme = reactive({
   mode: 'dark' as 'dark' | 'light',
   primary_color: '#4F46E5',
   secondary_color: '',
+  palette: 'classic',
+  template: 'classic',
   bg_color: '',
   border_color: '',
   font: 'Plus Jakarta Sans',
-  layout: 'centered' as 'centered' | 'left' | 'split'
+  layout: 'centered' as 'centered' | 'left' | 'split',
+  show_divider: false
+})
+
+const currentColors = computed(() => {
+  const p = PALETTES.find(p => p.id === theme.palette)
+  return p ? p.colors : PALETTES[0].colors
 })
 
 const heroSection = computed(() =>
@@ -452,8 +513,29 @@ function initSortable() {
   })
 }
 
+// Flattened sections for CSS Grid, calculating left/right placement for the divider
+const gridSections = computed(() => {
+  const result: (typeof sortedSections.value[0] & { isRight?: boolean })[] = [];
+  const items = sortedSections.value;
+  let col = 0; // 0 for left, 1 for right
+  for (const s of items) {
+    if (s.column_span === 'half') {
+      result.push({ ...s, isRight: col === 1 });
+      col = (col + 1) % 2;
+    } else {
+      result.push({ ...s, isRight: false });
+      col = 0; // reset
+    }
+  }
+  return result;
+});
+
 const themeClass = computed(() => {
   return `theme-${theme.mode || 'dark'}`
+})
+
+const templateClass = computed(() => {
+  return `tpl-${theme.template || 'classic'}`
 })
 
 const themeVars = computed(() => {
@@ -471,6 +553,9 @@ const themeVars = computed(() => {
   }
   if (theme.bg_color && theme.bg_color !== '#000000') {
     vars['--bg'] = theme.bg_color
+    vars['--bg-rgb'] = hexToRgb(theme.bg_color)
+  } else {
+    vars['--bg-rgb'] = theme.mode === 'light' ? '250, 247, 255' : '5, 8, 20'
   }
   if (theme.border_color && theme.border_color !== '#000000') {
     vars['--avatar-border'] = theme.border_color
@@ -737,6 +822,14 @@ async function aiImproveContent() {
 }
 
 /* Canvas */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .builder-canvas {
   flex: 1;
   position: relative;
@@ -759,7 +852,7 @@ async function aiImproveContent() {
   justify-content: center;
   color: var(--muted);
   cursor: pointer;
-  z-index: 10;
+  z-index: 100; /* Ensure it stays above sections */
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
 }
@@ -799,19 +892,66 @@ async function aiImproveContent() {
   font-size: 14px;
 }
 
-.sections-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* Layout and Grid */
+.sections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  align-items: stretch; /* FORCE EQUAL HEIGHTS ON ROWS */
 }
-.section-list-move {
-  transition: transform 0.3s;
+.section-wrapper.span-full {
+  grid-column: 1 / -1;
+  width: 100%;
 }
-.section-list-enter-active {
-  animation: fadeIn 0.3s ease;
+.section-wrapper.span-half {
+  grid-column: span 1;
+}
+
+/* Animations */
+.section-list-move,
+.section-list-enter-active,
+.section-list-leave-active {
+  transition: all 0.4s ease;
+}
+.section-list-enter-from,
+.section-list-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
 }
 .section-list-leave-active {
-  animation: fadeIn 0.2s ease reverse;
+  position: absolute;
+  width: auto; 
+}
+
+/* Divider Implementation */
+.sections-grid.has-divider .section-wrapper.span-half.is-right {
+  position: relative;
+  padding-left: 16px; 
+}
+.sections-grid.has-divider .section-wrapper.span-half.is-right::before {
+  content: "";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: -8px; /* Offset to visually span the gap */
+  width: 1px;
+  background-color: var(--border);
+}
+
+@media (max-width: 640px) {
+  .sections-grid {
+    grid-template-columns: 1fr;
+  }
+  .section-wrapper.span-half {
+    grid-column: 1 / -1;
+  }
+  .sections-grid.has-divider .section-wrapper.span-half.is-right {
+    padding-left: 0;
+  }
+  .sections-grid.has-divider .section-wrapper.span-half.is-right::before {
+    display: none;
+  }
 }
 
 /* Props Panel */
@@ -1010,9 +1150,55 @@ async function aiImproveContent() {
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
-  align-items: center;
   justify-content: center;
   gap: 6px;
+}
+
+/* Toggle Switch css */
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border);
+  transition: .4s;
+  border-radius: 34px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: var(--primary);
+}
+input:checked + .slider:before {
+  transform: translateX(18px);
 }
 
 @media (max-width: 1024px) {

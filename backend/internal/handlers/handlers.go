@@ -29,7 +29,7 @@ func (h *SectionHandler) List(c *fiber.Ctx) error {
 	portfolioID := c.Params("portfolioId")
 
 	rows, err := h.db.Query(
-		"SELECT id, type, position, data, is_visible, created_at FROM sections WHERE portfolio_id = ? ORDER BY position",
+		"SELECT id, type, position, data, is_visible, COALESCE(column_span, 'full'), created_at FROM sections WHERE portfolio_id = ? ORDER BY position",
 		portfolioID,
 	)
 	if err != nil {
@@ -41,10 +41,13 @@ func (h *SectionHandler) List(c *fiber.Ctx) error {
 	for rows.Next() {
 		var s models.Section
 		var dataRaw []byte
-		if err := rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.CreatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.ColumnSpan, &s.CreatedAt); err != nil {
 			continue
 		}
 		s.Data = json.RawMessage(dataRaw)
+		if s.ColumnSpan == "" {
+			s.ColumnSpan = "full"
+		}
 		sections = append(sections, s)
 	}
 	return c.JSON(fiber.Map{"success": true, "data": sections})
@@ -54,9 +57,10 @@ func (h *SectionHandler) Create(c *fiber.Ctx) error {
 	portfolioID := c.Params("portfolioId")
 
 	var req struct {
-		Type     string          `json:"type"`
-		Position int             `json:"position"`
-		Data     json.RawMessage `json:"data"`
+		Type       string          `json:"type"`
+		Position   int             `json:"position"`
+		Data       json.RawMessage `json:"data"`
+		ColumnSpan string          `json:"column_span"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "invalid body")
@@ -66,10 +70,13 @@ func (h *SectionHandler) Create(c *fiber.Ctx) error {
 	if req.Data == nil {
 		req.Data = json.RawMessage("{}")
 	}
+	if req.ColumnSpan == "" {
+		req.ColumnSpan = "full"
+	}
 
 	_, err := h.db.Exec(
-		"INSERT INTO sections (id, portfolio_id, type, position, data) VALUES (?, ?, ?, ?, ?)",
-		id, portfolioID, req.Type, req.Position, string(req.Data),
+		"INSERT INTO sections (id, portfolio_id, type, position, data, column_span) VALUES (?, ?, ?, ?, ?, ?)",
+		id, portfolioID, req.Type, req.Position, string(req.Data), req.ColumnSpan,
 	)
 	if err != nil {
 		return fiber.NewError(500, "failed to create section")
@@ -82,13 +89,13 @@ func (h *SectionHandler) Update(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	var req struct {
-		Data      json.RawMessage `json:"data"`
-		IsVisible *bool           `json:"is_visible"`
+		Data       json.RawMessage `json:"data"`
+		IsVisible  *bool           `json:"is_visible"`
+		ColumnSpan *string         `json:"column_span"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "invalid body")
 	}
-	// prepare params: if Data is not provided, pass NULL so COALESCE keeps existing value
 	var dataParam interface{}
 	if len(req.Data) == 0 {
 		dataParam = nil
@@ -96,17 +103,18 @@ func (h *SectionHandler) Update(c *fiber.Ctx) error {
 		dataParam = string(req.Data)
 	}
 
-	// IsVisible is a pointer to allow distinguishing between omitted and explicit boolean
 	res, err := h.db.Exec(
-		"UPDATE sections SET data = COALESCE(?, data), is_visible = COALESCE(?, is_visible) WHERE id = ?",
-		dataParam, req.IsVisible, id,
+		`UPDATE sections SET
+			data        = COALESCE(?, data),
+			is_visible  = COALESCE(?, is_visible),
+			column_span = COALESCE(?, column_span)
+		WHERE id = ?`,
+		dataParam, req.IsVisible, req.ColumnSpan, id,
 	)
 	if err != nil {
-		// return DB error message for easier debugging
 		return fiber.NewError(500, err.Error())
 	}
 
-	// ensure a row was affected
 	if affected, _ := res.RowsAffected(); affected == 0 {
 		return fiber.NewError(404, "section not found")
 	}
@@ -134,6 +142,59 @@ func (h *SectionHandler) Reorder(c *fiber.Ctx) error {
 		h.db.Exec("UPDATE sections SET position = ? WHERE id = ?", item.Position, item.ID)
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "sections reordered"})
+}
+
+func (h *SectionHandler) Duplicate(c *fiber.Ctx) error {
+	id := c.Params("id")
+	claims := middleware.GetUserClaims(c)
+
+	var portfolioID, sType, colSpan string
+	var pos int
+	var dataRaw []byte
+	var isVis bool
+
+	// 1. Fetch original section and verify user ownership
+	err := h.db.QueryRow(`
+		SELECT s.portfolio_id, s.type, s.position, s.data, s.is_visible, COALESCE(s.column_span, 'full')
+		FROM sections s
+		JOIN portfolios p ON s.portfolio_id = p.id
+		WHERE s.id = ? AND p.user_id = ?
+	`, id, claims.UserID).Scan(&portfolioID, &sType, &pos, &dataRaw, &isVis, &colSpan)
+
+	if err == sql.ErrNoRows {
+		return fiber.NewError(fiber.StatusNotFound, "section not found or not owned by user")
+	} else if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to fetch section")
+	}
+
+	tx, err := h.db.Begin()
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to start transaction")
+	}
+	defer tx.Rollback()
+
+	// 2. Shift positions of subsequent sections down by 1
+	newPos := pos + 1
+	_, err = tx.Exec("UPDATE sections SET position = position + 1 WHERE portfolio_id = ? AND position >= ?", portfolioID, newPos)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to shift sections")
+	}
+
+	// 3. Insert duplicated section
+	newID := ulid.Make().String()
+	_, err = tx.Exec(
+		"INSERT INTO sections (id, portfolio_id, type, position, data, is_visible, column_span) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		newID, portfolioID, sType, newPos, string(dataRaw), isVis, colSpan,
+	)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to duplicate section")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to commit duplicate section")
+	}
+
+	return c.JSON(fiber.Map{"success": true, "data": fiber.Map{"id": newID}})
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -472,7 +533,7 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 
 	// Load sections
 	rows, _ := h.db.Query(
-		"SELECT id, type, position, data, is_visible FROM sections WHERE portfolio_id = ? AND is_visible = TRUE ORDER BY position",
+		"SELECT id, type, position, data, is_visible, COALESCE(column_span, 'full') FROM sections WHERE portfolio_id = ? AND is_visible = TRUE ORDER BY position",
 		p.ID,
 	)
 	if rows != nil {
@@ -480,7 +541,7 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 		for rows.Next() {
 			var s models.Section
 			var dataRaw []byte
-			rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw, &s.IsVisible)
+			rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.ColumnSpan)
 			s.Data = json.RawMessage(dataRaw)
 			p.Sections = append(p.Sections, s)
 		}
@@ -601,10 +662,7 @@ func (h *PublicHandler) ExportPDFBySlug(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "portfolio not found or not published")
 	}
 
-	// Override the context param "id" so GeneratePDF thinks it was called directly
-	c.Params("id", portfolioID)
-
 	// Create temporary portfolio handler to reuse GeneratePDF logic
 	ph := &PortfolioHandler{db: h.db}
-	return ph.GeneratePDF(c)
+	return ph.GeneratePDFWithID(c, portfolioID)
 }
