@@ -1,0 +1,37 @@
+2026/02/28 16:53:02 ✅ Database connected successfully
+2026/02/28 16:53:02 🔄 Running database migrations...
+2026/02/28 16:53:02 ✅ Migrations completed successfully
+2026/02/28 16:53:02 🚀 PloyKong API running on :8082
+
+ ┌───────────────────────────────────────────────────┐ 
+ │                 PloyKong API v1.0                 │ 
+ │                   Fiber v2.52.5                   │ 
+ │               http://127.0.0.1:8082               │ 
+ │       (bound on host 0.0.0.0 and port 8082)       │ 
+ │                                                   │ 
+ │ Handlers ............ 58  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID ............. 60150 │ 
+ └───────────────────────────────────────────────────┘ 
+
+[16:53:31] 204 - OPTIONS /api/v1/portfolios/01KJHMXHMWC1RERJ9BD8EHPPPX/duplicate |     176.917µs
+[16:53:31] 200 - POST /api/v1/portfolios/01KJHMXHMWC1RERJ9BD8EHPPPX/duplicate |   46.093625ms
+[16:53:31] 204 - OPTIONS /api/v1/portfolios |        6.25µs
+[16:53:31] 200 - GET /api/v1/portfolios |     1.86325ms
+[16:53:34] 204 - OPTIONS /api/v1/portfolios/01KJHTNRVSQHWYN93A69W68N90/duplicate |      16.959µs
+[16:53:34] 200 - POST /api/v1/portfolios/01KJHTNRVSQHWYN93A69W68N90/duplicate |   34.250541ms
+[16:53:34] 200 - GET /api/v1/portfolios |     990.791µs
+[16:53:36] 204 - OPTIONS /api/v1/users/me |      27.417µs
+[16:53:36] 204 - OPTIONS /api/v1/users/me |      17.875µs
+[16:53:36] 200 - GET /api/v1/users/me |    4.358667ms
+[16:53:36] 200 - GET /api/v1/users/me |    2.449959ms
+[16:53:36] 200 - GET /api/v1/portfolios |    2.180042ms
+[16:53:36] 204 - OPTIONS /api/v1/analytics/01KJHTNRVSQHWYN93A69W68N90/summary |       8.084µs
+[16:53:36] 204 - OPTIONS /api/v1/analytics/01KJHTNVGS0VNTXEATTCDHKBTQ/summary |      14.917µs
+[16:53:36] 204 - OPTIONS /api/v1/analytics/01KJHMXHMWC1RERJ9BD8EHPPPX/summary |          20µs
+[16:53:36] 200 - GET /api/v1/analytics/01KJHTNRVSQHWYN93A69W68N90/summary |      32.053ms
+[16:53:36] 200 - GET /api/v1/analytics/01KJHTNVGS0VNTXEATTCDHKBTQ/summary |   34.797875ms
+[16:53:36] 200 - GET /api/v1/analytics/01KJHMXHMWC1RERJ9BD8EHPPPX/summary |   38.596875ms
+[16:53:46] 204 - OPTIONS /api/v1/portfolios/01KJHMXHMWC1RERJ9BD8EHPPPX/duplicate |      40.084µs
+[16:53:46] 200 - POST /api/v1/portfolios/01KJHMXHMWC1RERJ9BD8EHPPPX/duplicate |      64.449ms
+[16:53:46] 204 - OPTIONS /api/v1/portfolios |       7.916µs
+[16:53:46] 200 - GET /api/v1/portfolios |    5.589583ms
