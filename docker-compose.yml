@@ -5,8 +5,8 @@ services:
   # ─── Go API Server ──────────────────────────────────────────────
   api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: ploykong-api
     restart: unless-stopped
     ports:
@@ -24,7 +24,7 @@ services:
       - OPENAI_MODEL=gpt-4o-mini
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     volumes:
-      - ./backend/uploads:/app/uploads
+      - ./uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
