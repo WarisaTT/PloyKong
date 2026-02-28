@@ -19,7 +19,7 @@ COPY --from=builder /app/assets/fonts ./assets/fonts
 # ใช้ path นี้กับ volume
 RUN mkdir -p /uploads
 
-EXPOSE 8082
-HEALTHCHECK --interval=30s --timeout=10s CMD wget -qO- http://localhost:8082/health || exit 1
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=10s CMD wget -qO- http://localhost:3000/health || exit 1
 
 CMD ["./server"]

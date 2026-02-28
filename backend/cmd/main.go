@@ -147,7 +147,7 @@ func main() {
 
 	// If running on Vercel, we force port 3000 (standard Vercel port forwarding)
 	if port == "" {
-		port = "8082" // local dev default
+		port = "3000" // local dev default
 	}
 
 	log.Printf("🚀 PloyKong API running on :%s", port)

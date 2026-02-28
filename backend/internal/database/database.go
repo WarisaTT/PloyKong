@@ -18,24 +18,35 @@ func Connect(cfg *config.Config) (*sql.DB, error) {
 		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName,
 	)
 
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open DB: %w", err)
+	var db *sql.DB
+	var err error
+
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		db, err = sql.Open("mysql", dsn)
+		if err == nil {
+			err = db.Ping()
+			if err == nil {
+				log.Println("✅ Database connected successfully")
+
+				// Connection pool settings
+				db.SetMaxOpenConns(25)
+				db.SetMaxIdleConns(10)
+				db.SetConnMaxLifetime(5 * time.Minute)
+				db.SetConnMaxIdleTime(2 * time.Minute)
+
+				return db, nil
+			}
+		}
+
+		log.Printf("⚠️  Database not ready (attempt %d/%d): %v. Retrying in 5s...", i+1, maxRetries, err)
+		if db != nil {
+			db.Close()
+		}
+		time.Sleep(5 * time.Second)
 	}
 
-	// Connection pool settings (high performance)
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(5 * time.Minute)
-	db.SetConnMaxIdleTime(2 * time.Minute)
-
-	// Verify connection
-	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping DB: %w", err)
-	}
-
-	log.Println("✅ Database connected successfully")
-	return db, nil
+	return nil, fmt.Errorf("failed to connect to DB after %d attempts: %w", maxRetries, err)
 }
 
 // Migrate runs schema creation (idempotent)
