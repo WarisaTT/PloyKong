@@ -141,7 +141,7 @@ func main() {
 	public.Get("/id/:id/pdf", portfolioHandler.GeneratePDF)
 
 	// Static uploads
-	app.Static("/uploads", "./uploads")
+	app.Static("/uploads", cfg.UploadDir)
 
 	port := os.Getenv("PORT")
 
