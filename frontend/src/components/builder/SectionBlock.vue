@@ -207,6 +207,11 @@ async function confirmDelete() {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+.section-block.is-half-split {
+  width: 100%;
+  height: 100%;
+}
+
 .section-block:hover {
   border-color: var(--borderPurple);
   transform: translateY(-2px);
@@ -328,8 +333,21 @@ async function confirmDelete() {
   border-radius: 0 0 11px 11px;
   color: var(--text);
   font-family: var(--font-body);
-  padding: 14px;
+  padding: 0;
   min-height: 60px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tpl-firstjobber .section-preview > div {
+  height: 100% !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.tpl-firstjobber .section-preview > div > section {
+  height: 100% !important;
+  flex: 1;
 }
 
 .selected-indicator {

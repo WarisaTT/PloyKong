@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Prompt:wght@300;400;500;600&family=Kanit:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Anuphan:wght@200;300;400;500;600;700&family=Kanit:wght@700;800;900&display=swap");
 
 @import "tailwindcss/base";
 @import "tailwindcss/components";
@@ -14,8 +14,12 @@ body.theme-dark,
 .theme-dark {
   --bg: #050814;
   --bg2: #080d1f;
+  --bg-2: #0C0D17;
   --surface: rgba(15, 20, 40, 0.8);
+  --surface-2: #161827;
+  --surface-3: #1C1F30;
   --border: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.13);
   --sidebar-bg: rgba(8, 13, 31, 0.95);
 
   --indigo: #4f46e5;
@@ -26,19 +30,63 @@ body.theme-dark,
   --neon-purple: #c084fc;
 
   --text: #e2e8f0 !important;
+  --text-2: #8B92B4;
+  --text-3: #4F567A;
   --muted: #94a3b8;
+
+  --accent: #7C6FE0;
+  --accent-2: #9D8CF5;
+  --accent-subtle: rgba(124, 111, 224, 0.12);
+  --accent-glow: rgba(124, 111, 224, 0.25);
 
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
 
-  --font-display: "Prompt", "Plus Jakarta Sans", sans-serif;
-  --font-body: "Prompt", "Plus Jakarta Sans", sans-serif;
+  --font-display: "Kanit", "Syne", sans-serif;
+  --font-body: "Anuphan", "Inter", sans-serif;
 
   --radius: 12px;
   --radius-lg: 20px;
 
   --title-color: #ffffff;
+
+  --grad-pk: linear-gradient(135deg, #7C6FE0 0%, #E879F9 50%, #22D3EE 100%);
+  --grad-primary: linear-gradient(135deg, #5B4FD0, #8B5CF6 60%, #7C6FE0);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+/* Global Logo Styling */
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  /* High rounding as requested */
+  display: block;
+}
+
+.logo-mark,
+.bp-logo-mark,
+.m-logo-mark,
+.card-logo .logo-mark,
+.logo-pk {
+  overflow: hidden;
+  /* Ensure rounded corners for the image */
+  background: transparent !important;
+  /* Remove background if it's an image */
+  border: none !important;
+  /* Remove old border */
+  box-shadow: none !important;
+  /* Reset shadow for replacement */
+}
+
+/* Light mode specific adjustment if needed */
+.theme-light .logo-img {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
 }
 
 /* ───────────────────────────────────────────────────────────── */
@@ -49,25 +97,43 @@ body.theme-light,
 .theme-light {
   --bg: #faf7ff;
   --bg2: #f3e8ff;
+  --bg-2: #F0F0F8;
   --surface: #ffffff;
+  --surface-2: #F4F4FB;
+  --surface-3: #EEEEF7;
 
   --sidebar-bg: linear-gradient(to bottom, #f3e8ff, #e9d5ff);
 
   --border: rgba(15, 23, 42, 0.14);
+  --border-2: rgba(100, 90, 200, 0.2);
 
   --indigo: #4f46e5;
   --purple: #9333ea;
   --pink: #db2777;
   --cyan: #0891b2;
 
-  --text: #1e1b4b !important;
+  --text: #000000 !important;
+  --text-2: #4A4D6E;
+  --text-3: #8486A8;
   --muted: #6b7280;
+
+  --accent: #6355CC;
+  --accent-2: #7B6FE0;
+  --accent-subtle: rgba(99, 85, 204, 0.1);
+  --accent-glow: rgba(99, 85, 204, 0.18);
 
   --success: #059669;
   --warning: #d97706;
   --danger: #dc2626;
 
   --title-color: #000000;
+
+  --grad-pk: linear-gradient(135deg, #6355CC 0%, #C026D3 50%, #0891B2 100%);
+  --grad-primary: linear-gradient(135deg, #4F46E5, #7C3AED 60%, #6355CC);
+
+  --shadow-sm: 0 2px 8px rgba(80, 60, 180, 0.08);
+  --shadow-md: 0 8px 32px rgba(80, 60, 180, 0.12);
+  --shadow-lg: 0 20px 60px rgba(80, 60, 180, 0.15);
 }
 
 /* ───────────────────────────────────────────────────────────── */

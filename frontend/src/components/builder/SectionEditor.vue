@@ -522,6 +522,39 @@
         <Plus :size="16" /> Add Custom Contact
       </button>
     </template>
+    
+    <!-- AI Chat Editor -->
+    <template v-else-if="section.type === 'ai_chat'">
+      <div class="editor-field">
+        <label class="form-label">Custom Info / Training Data (สิ่งที่ AI ควรรู้เกี่ยวกับคุณ)</label>
+        <PopupTextEditor
+          v-model="form.prompt_hint"
+          title="Training Data"
+          placeholder="เช่น 'ฉันชอบแมว', 'ฉันทำงานที่ Google มาก่อน', 'ฉันเชี่ยวชาญด้าน React เป็นพิเศษ'..."
+          :rows="6"
+          @update:modelValue="emitUpdate()"
+        />
+        <p class="field-hint">ข้อมูลนี้จะถูกส่งไปให้ AI เพื่อให้ตอบคำถามได้แม่นยำขึ้น</p>
+      </div>
+
+      <div class="editor-field" style="margin-top: 12px">
+        <label class="form-label">Example Questions (คำถามตัวอย่าง)</label>
+        <div v-for="(q, i) in (form.example_questions || [])" :key="i" class="q-row" style="display: flex; gap: 8px; margin-bottom: 6px">
+          <input
+            v-model="form.example_questions[i]"
+            class="form-input"
+            placeholder="เช่น 'คุณถนัดเทคโนโลยีอะไรบ้าง?'"
+            @input="emitUpdate()"
+          />
+          <button class="icon-btn danger" @click="removeExampleQuestion(Number(i))">
+            <X :size="14" />
+          </button>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width: 100%" @click="addExampleQuestion">
+          <Plus :size="14" /> Add Question
+        </button>
+      </div>
+    </template>
 
     <!-- Custom Text Editor -->
     <template v-else-if="section.type === 'custom_text'">
@@ -915,6 +948,17 @@ async function improveTagline() {
     form.tagline = data.data.improved_text;
     emit("update", form);
   } catch {}
+}
+
+// AI Chat helpers
+function addExampleQuestion() {
+  if (!form.example_questions) form.example_questions = [];
+  form.example_questions.push("");
+  emitUpdate();
+}
+function removeExampleQuestion(i: number) {
+  form.example_questions.splice(i, 1);
+  emitUpdate();
 }
 </script>
 

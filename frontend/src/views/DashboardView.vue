@@ -3,7 +3,9 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <span class="logo-pk">PK</span>
+        <div class="logo-pk">
+          <img src="/favicon.png" alt="PloyKong Logo" class="logo-img" />
+        </div>
         <span class="logo-text">PloyKong</span>
       </div>
       <nav class="sidebar-nav">

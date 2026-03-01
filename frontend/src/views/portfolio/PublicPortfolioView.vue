@@ -108,6 +108,19 @@
               >
             </div>
           </div>
+          
+          <!-- Example Questions -->
+          <div v-if="exampleQuestions.length > 0 && chatMessages.length <= 1" class="chat-suggestions">
+            <button 
+              v-for="(q, i) in exampleQuestions" 
+              :key="i"
+              class="suggestion-btn"
+              @click="chatInput = q; sendChat()"
+            >
+              {{ q }}
+            </button>
+          </div>
+
           <div class="chat-input-row">
             <input
               v-model="chatInput"
@@ -230,10 +243,14 @@ const visibleSections = computed(() =>
     .sort((a, b) => a.position - b.position),
 );
 
+const nonAIChatSections = computed(() =>
+  visibleSections.value.filter((s) => s.type !== "ai_chat"),
+);
+
 // Flattened sections for CSS Grid, calculating left/right placement for the divider
 const gridSections = computed(() => {
   const result: (typeof visibleSections.value[0] & { isRight?: boolean })[] = [];
-  const sections = visibleSections.value;
+  const sections = nonAIChatSections.value;
   let col = 0; // 0 for left, 1 for right
   
   for (const s of sections) {
@@ -249,8 +266,16 @@ const gridSections = computed(() => {
 });
 
 const hasAIChat = computed(() =>
-  visibleSections.value.some((s) => s.type === "ai_chat"),
+  (portfolio.value?.sections || []).some((s) => s.type === "ai_chat" && s.is_visible),
 );
+
+const exampleQuestions = computed(() => {
+  const aiChatSection = (portfolio.value?.sections || []).find((s) => s.type === "ai_chat");
+  if (aiChatSection && aiChatSection.data && aiChatSection.data.example_questions) {
+    return aiChatSection.data.example_questions.filter((q: string) => q.trim() !== "");
+  }
+  return [];
+});
 
 function getSectionComponent(type: string) {
   const map: Record<string, any> = {
@@ -359,6 +384,7 @@ onMounted(() => loadPortfolio());
 .pub-404,
 .pub-loading {
   min-height: 100vh;
+  gap: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -600,6 +626,30 @@ onMounted(() => loadPortfolio());
   color: var(--muted);
   font-style: italic;
 }
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 12px;
+}
+.suggestion-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.suggestion-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
 .chat-input-row {
   padding: 12px;
   border-top: 1px solid var(--border);

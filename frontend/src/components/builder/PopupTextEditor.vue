@@ -100,11 +100,12 @@ function save() {
 }
 
 .raw-modal-content {
-  background: var(--surface, #1e1e2f);
+  background: var(--bg, #1e1e2f);
   border: 1px solid var(--border, #333);
   border-radius: 16px;
   width: 100%;
   max-width: 800px;
+  color: var(--text);
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 50px rgba(0,0,0,0.5);

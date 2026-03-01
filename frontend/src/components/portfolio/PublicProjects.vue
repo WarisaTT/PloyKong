@@ -150,6 +150,8 @@ defineProps<{ data: any }>();
   color: var(--muted, #94a3b8);
   line-height: 1.6;
   margin-bottom: 12px;
+  word-break: break-word; /* Fix: handle long unbreakable strings */
+  overflow-wrap: break-word;
 }
 .proj-tags {
   display: flex;

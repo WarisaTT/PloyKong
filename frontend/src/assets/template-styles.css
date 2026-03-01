@@ -1286,3 +1286,33 @@
     color: var(--muted) !important;
     margin-top: 8px !important;
 }
+
+/* ════════════════════════════════════════════════════════════
+   FIRST JOBBER GRID ALIGNMENT & CUT-OFF FIXES
+   ════════════════════════════════════════════════════════════ */
+
+/* ให้ grid cell สูงเท่ากัน */
+.tpl-firstjobber .sections-grid {
+    align-items: stretch !important;
+}
+
+/* ให้ wrapper ยืดเต็ม cell */
+.tpl-firstjobber .sections-grid>.section-wrapper.span-half {
+    height: 100% !important;
+}
+
+/* ห้ามบังคับ section เป็น flex */
+.tpl-firstjobber .sections-grid>.section-wrapper.span-half>section {
+    height: 100% !important;
+}
+
+.tpl-firstjobber .pub-section {
+    min-height: 100% !important;
+    /* Changed from height to min-height to prevent cut-off */
+}
+
+/* Fix for centered layout content overflow */
+.tpl-firstjobber .layout-centered .proj-desc {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+}

@@ -155,6 +155,11 @@ export interface SocialLinkItem {
   label?: string;
 }
 
+export interface AIChatData {
+  prompt_hint?: string;
+  example_questions?: string[];
+}
+
 // ─── Analytics ────────────────────────────────────────────────────────────────
 export interface AnalyticsSummary {
   total_views: number;

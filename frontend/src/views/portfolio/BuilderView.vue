@@ -309,7 +309,7 @@
         <!-- Section Editor (when section selected) -->
         <div v-if="selectedSection" class="section-editor">
           <div class="editor-divider"></div>
-          <div class="props-label">
+          <div class="props-title">
             <Pencil :size="12" class="icon-inline" /> Edit:
             {{ selectedSection.type }}
           </div>
@@ -896,9 +896,12 @@ async function aiImproveContent() {
 .sections-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 40px;
   width: 100%;
   align-items: stretch; /* FORCE EQUAL HEIGHTS ON ROWS */
+}
+.tpl-firstjobber.sections-grid {
+  gap: 20px !important;
 }
 .section-wrapper.span-full {
   grid-column: 1 / -1;
@@ -927,14 +930,14 @@ async function aiImproveContent() {
 /* Divider Implementation */
 .sections-grid.has-divider .section-wrapper.span-half.is-right {
   position: relative;
-  padding-left: 16px; 
+  padding-left: 0; 
 }
 .sections-grid.has-divider .section-wrapper.span-half.is-right::before {
   content: "";
   position: absolute;
   top: 10%;
   bottom: 10%;
-  left: -8px; /* Offset to visually span the gap */
+  left: -20px; /* Offset to visually span the gap */
   width: 1px;
   background-color: var(--border);
 }
@@ -1099,7 +1102,7 @@ async function aiImproveContent() {
 
 .icon-inline {
   vertical-align: middle;
-  border: 1px solid var(--border);
+  margin-bottom: 2px;
 }
 
 .btn-icon-text {

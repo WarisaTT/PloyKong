@@ -599,12 +599,23 @@ func (h *PublicHandler) AIChat(c *fiber.Ctx) error {
 	// Build context from sections
 	rows, _ := h.db.Query("SELECT type, data FROM sections WHERE portfolio_id = ? ORDER BY position", portfolioID)
 	var context string
+	var promptHint string
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
 			var sType string
 			var dataRaw []byte
 			rows.Scan(&sType, &dataRaw)
+
+			if sType == "ai_chat" {
+				var aiData map[string]interface{}
+				if err := json.Unmarshal(dataRaw, &aiData); err == nil {
+					if hint, ok := aiData["prompt_hint"].(string); ok && hint != "" {
+						promptHint = hint
+					}
+				}
+			}
+
 			context += fmt.Sprintf("[%s]: %s\n", sType, string(dataRaw))
 		}
 	}
@@ -614,15 +625,20 @@ func (h *PublicHandler) AIChat(c *fiber.Ctx) error {
 		portfolioID, req.SessionID, req.Message)
 
 	// Call AI with RAG context
+	promoPart := ""
+	if promptHint != "" {
+		promoPart = fmt.Sprintf("\nAdditional context about the owner: %s\n", promptHint)
+	}
+
 	prompt := fmt.Sprintf(
 		`You are an AI representative for a portfolio owner. Answer questions about them based ONLY on their portfolio data below.
 		Be professional, enthusiastic about their skills, and helpful to HR/recruiters.
 		If information is not in their portfolio, say "I don't have that specific information, but feel free to contact them directly."
-		
+		%s
 		Portfolio data:
 		%s
 		
-		HR question: %s`, context, req.Message,
+		HR question: %s`, promoPart, context, req.Message,
 	)
 
 	response, err := callFreeAI(prompt)

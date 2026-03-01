@@ -30,6 +30,13 @@ export const useThemeStore = defineStore("theme", () => {
     return `theme-${colorMode.value}`;
   });
 
+  const resolvedDark = computed(() => {
+    if (colorMode.value === "auto") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+    return colorMode.value === "dark";
+  });
+
   function setMode(newMode: "light" | "dark" | "auto") {
     colorMode.value = newMode;
   }
@@ -37,6 +44,9 @@ export const useThemeStore = defineStore("theme", () => {
   return {
     mode,
     themeClass,
+    resolvedDark,
     setMode,
   };
 });
+
+
