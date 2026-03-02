@@ -11,6 +11,7 @@ import (
 	"ploykong-api/internal/middleware"
 	"ploykong-api/internal/models"
 
+	"cloud.google.com/go/auth/credentials/idtoken"
 	"github.com/gofiber/fiber/v2"
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -249,6 +250,90 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"success": true, "message": "logged out successfully"})
+}
+
+type GoogleLoginRequest struct {
+	Credential string `json:"credential"`
+}
+
+func (h *AuthHandler) GoogleLogin(c *fiber.Ctx) error {
+	var req GoogleLoginRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+
+	if h.cfg.GoogleClientID == "" {
+		return fiber.NewError(fiber.StatusInternalServerError, "google login is not configured on the server")
+	}
+
+	payload, err := idtoken.Validate(c.Context(), req.Credential, h.cfg.GoogleClientID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnauthorized, "invalid google token")
+	}
+
+	email := payload.Claims["email"].(string)
+	name, _ := payload.Claims["name"].(string)
+	avatar, _ := payload.Claims["picture"].(string)
+	googleID := payload.Subject
+
+	// Check if user exists by google_id or email
+	var user models.User
+	err = h.db.QueryRow(
+		"SELECT id, email, name, plan FROM users WHERE google_id = ? OR email = ?",
+		googleID, email,
+	).Scan(&user.ID, &user.Email, &user.Name, &user.Plan)
+
+	if err == sql.ErrNoRows {
+		// Create new user (automatically verified as it comes from Google)
+		user.ID = ulid.Make().String()
+		user.Email = email
+		user.Name = name
+		if user.Name == "" {
+			user.Name = "User"
+		}
+		user.Plan = "free"
+
+		_, err = h.db.Exec(
+			"INSERT INTO users (id, email, google_id, name, avatar_url, is_verified) VALUES (?, ?, ?, ?, ?, TRUE)",
+			user.ID, email, googleID, user.Name, avatar,
+		)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "failed to create user")
+		}
+	} else if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "database error")
+	} else {
+		// User exists, update google_id and avatar if needed
+		h.db.Exec("UPDATE users SET google_id = ?, avatar_url = ?, is_verified = TRUE WHERE id = ?", googleID, avatar, user.ID)
+	}
+
+	// Generate tokens
+	claims := &models.Claims{UserID: user.ID, Email: user.Email, Plan: user.Plan}
+	accessToken, refreshToken, err := middleware.GenerateTokenPair(claims, h.cfg)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate tokens")
+	}
+
+	if err := h.storeRefreshToken(user.ID, refreshToken); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to store refresh token")
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data": fiber.Map{
+			"user": fiber.Map{
+				"id":    user.ID,
+				"email": user.Email,
+				"name":  user.Name,
+				"plan":  user.Plan,
+			},
+			"tokens": fiber.Map{
+				"access_token":  accessToken,
+				"refresh_token": refreshToken,
+				"expires_in":    900,
+			},
+		},
+	})
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

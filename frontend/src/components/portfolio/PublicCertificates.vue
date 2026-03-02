@@ -1,7 +1,7 @@
 <template>
   <section class="pub-certs pub-section" :class="'layout-' + (data.layout || 'centered')" :style="data.section_bg_color ? { background: data.section_bg_color } : {}">
     <div class="section-header-wrapper">
-      <h2 class="layered-title" data-text="Certificates">Certificates & Awards</h2>
+      <h2 class="layered-title" :data-text="data.title || 'Certificates'">{{ data.title || 'Certificates & Awards' }}</h2>
     </div>
     <div v-if="data.image_url" class="universal-section-img-container">
       <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
@@ -86,7 +86,7 @@ defineProps<{ data: any }>();
   width: calc(33.333% - 16px);
   min-width: 280px;
   max-width: 400px;
-  flex-grow: 1;
+  flex: 0 1 auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -94,6 +94,27 @@ defineProps<{ data: any }>();
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.layout-centered .cert-card {
+  flex-grow: 0;
+}
+
+.layout-left .cert-card,
+.layout-split .cert-card {
+  flex-grow: 1;
+}
+
+@media (max-width: 900px) {
+  .cert-card {
+    width: calc(50% - 12px);
+  }
+}
+
+@media (max-width: 600px) {
+  .cert-card {
+    width: 100%;
+  }
 }
 .cert-card:hover {
   transform: translateY(-4px);

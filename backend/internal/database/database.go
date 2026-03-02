@@ -176,6 +176,25 @@ func Migrate(db *sql.DB) error {
 		}
 	}
 
+	// ─── User Google ID Migration ──────────────────────────────────
+	var googleIDColCount int
+	err = db.QueryRow(`
+		SELECT COUNT(*) 
+		FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_SCHEMA = DATABASE() 
+		  AND TABLE_NAME = 'users' 
+		  AND COLUMN_NAME = 'google_id'
+	`).Scan(&googleIDColCount)
+	if err != nil {
+		return fmt.Errorf("failed to check google_id existence: %w", err)
+	}
+
+	if googleIDColCount == 0 {
+		if _, err := db.Exec(`ALTER TABLE users ADD COLUMN google_id VARCHAR(100) UNIQUE AFTER email`); err != nil {
+			return fmt.Errorf("failed to add google_id: %w", err)
+		}
+	}
+
 	log.Println("✅ Migrations completed successfully")
 	return nil
 }

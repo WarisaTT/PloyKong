@@ -54,28 +54,52 @@
       <!-- SEO Meta (set via document.title) -->
 
       <!-- Render sections: Grid layout for half-width sections side by side -->
-      <TransitionGroup tag="div" name="section-list" class="sections-grid" :class="{ 'has-divider': portfolio.theme.show_divider }">
-        <div
-          v-for="section in gridSections"
-          :key="section.id"
-          :data-section-type="section.type"
-          class="section-wrapper"
-          :class="{ 
-            'span-half': section.column_span === 'half', 
-            'span-full': section.column_span !== 'half', 
-            'is-right': section.isRight,
-            'pub-container': section.type !== 'hero' && section.column_span !== 'half'
-          }"
-        >
+      <!-- Render sections: Dynamic grouping for full-bleed vs grid-constrained -->
+      <div v-for="(group, idx) in sectionGroups" :key="idx" class="section-group-wrap">
+        <!-- Full-bleed Hero Group -->
+        <div v-if="group.type === 'full'" class="full-bleed-section">
           <component
-            :is="getSectionComponent(section.type)"
-            :data="section.data"
+            :is="getSectionComponent(group.sections[0].type)"
+            :data="group.sections[0].data"
             :theme="portfolio.theme"
             :portfolio="portfolio"
-            :class="{ 'is-half-split': section.column_span === 'half' }"
+            class="is-full-bleed"
           />
         </div>
-      </TransitionGroup>
+
+        <!-- Constrained Grid Group -->
+        <div v-else class="sections-container">
+          <TransitionGroup 
+            tag="div" 
+            name="section-list" 
+            class="sections-grid" 
+            :class="{ 'has-divider': portfolio.theme.show_divider }"
+          >
+            <div
+              v-for="section in group.sections"
+              :key="section.id"
+              :data-section-type="section.type"
+              class="section-wrapper"
+              :class="{ 
+                'span-half': section.column_span === 'half', 
+                'span-full': section.column_span !== 'half', 
+                'is-right': section.isRight,
+                'is-row-start': section.isRowStart,
+                'is-paired': section.isPaired,
+                'hide-divider': !!section.data.hide_divider
+              }"
+            >
+              <component
+                :is="getSectionComponent(section.type)"
+                :data="section.data"
+                :theme="portfolio.theme"
+                :portfolio="portfolio"
+                :class="{ 'is-half-split': section.column_span === 'half' }"
+              />
+            </div>
+          </TransitionGroup>
+        </div>
+      </div>
 
       <!-- AI Chat FAB -->
       <div v-if="hasAIChat" class="chat-fab" @click="chatOpen = !chatOpen">
@@ -216,22 +240,27 @@ const themeVars = computed(() => {
   const secondary = portfolio.value?.theme?.secondary_color || "";
   const font = portfolio.value?.theme?.font || "Plus Jakarta Sans";
   const isLight = portfolio.value?.theme?.mode === "light";
-  const glowHex = isLight ? "15" : "40";
+  const glowHex = isLight ? "25" : "40";
   const vars: Record<string, string> = {
     "--primary": primary,
     "--primary-glow": `${primary}${glowHex}`,
     "--secondary": secondary ? secondary : `${primary}${glowHex}`,
     "--font-display": font,
     "--font-body": font,
+    "--text": isLight ? "#0f172a" : "#ffffff",
+    "--muted": isLight ? "#64748b" : "#94a3b8",
+    "--surface": isLight ? "#ffffff" : "#111827",
+    "--border": isLight ? "#e2e8f0" : "#1f2937",
   };
   const bg = portfolio.value?.theme?.bg_color;
   const border = portfolio.value?.theme?.border_color;
-  if (bg && bg !== "#000000") {
+  if (bg) {
     vars["--bg"] = bg;
     vars["--bg-rgb"] = hexToRgb(bg);
   } else {
-    // Default fallback to black or whatever main.css defines
-    vars["--bg-rgb"] = "5, 8, 20";
+    // Correct fallback based on mode
+    vars["--bg-rgb"] = isLight ? "250, 247, 255" : "5, 8, 20";
+    vars["--bg"] = isLight ? "#faf7ff" : "#050814";
   }
   if (border && border !== "#000000") vars["--avatar-border"] = border;
   return vars;
@@ -249,20 +278,55 @@ const nonAIChatSections = computed(() =>
 
 // Flattened sections for CSS Grid, calculating left/right placement for the divider
 const gridSections = computed(() => {
-  const result: (typeof visibleSections.value[0] & { isRight?: boolean })[] = [];
+  const result: (typeof visibleSections.value[0] & { isRight?: boolean, isRowStart?: boolean, isPaired?: boolean })[] = [];
   const sections = nonAIChatSections.value;
-  let col = 0; // 0 for left, 1 for right
   
-  for (const s of sections) {
+  for (let i = 0; i < sections.length; i++) {
+    const s = sections[i];
+    const prev = i > 0 ? sections[i-1] : null;
+    const next = i < sections.length - 1 ? sections[i+1] : null;
+    
     if (s.column_span === 'half') {
-      result.push({ ...s, isRight: col === 1 });
-      col = (col + 1) % 2;
+      const isRight = prev?.column_span === 'half' && !result[i-1]?.isRight;
+      const isRowStart = !isRight;
+      const isPaired = isRowStart ? (next?.column_span === 'half') : true;
+      
+      result.push({ ...s, isRight, isRowStart, isPaired });
     } else {
-      result.push({ ...s, isRight: false });
-      col = 0; // Reset column tracker after a full-width block
+      result.push({ ...s, isRight: false, isRowStart: true, isPaired: false });
     }
   }
   return result;
+});
+
+// Dynamic grouping for full-bleed sections (Hero) vs grid sections
+const sectionGroups = computed(() => {
+  const groups: { type: 'full' | 'grid'; sections: any[] }[] = [];
+  const sections = gridSections.value;
+  if (!sections.length) return groups;
+
+  let i = 0;
+  while (i < sections.length) {
+    const s = sections[i];
+    // Hero is full-bleed if NOT using firstjobber template
+    const isHeroFullBleed = s.type === 'hero' && portfolio.value?.theme.template !== 'firstjobber';
+
+    if (isHeroFullBleed) {
+      groups.push({ type: 'full', sections: [s] });
+      i++;
+    } else {
+      const gridItems: any[] = [];
+      while (i < sections.length) {
+        const next = sections[i];
+        const nextIsFull = next.type === 'hero' && portfolio.value?.theme.template !== 'firstjobber';
+        if (nextIsFull) break;
+        gridItems.push(next);
+        i++;
+      }
+      groups.push({ type: 'grid', sections: gridItems });
+    }
+  }
+  return groups;
 });
 
 const hasAIChat = computed(() =>
@@ -361,7 +425,7 @@ onMounted(() => loadPortfolio());
   min-height: 100vh;
   position: relative;
   color: var(--text);
-  background: var(--bg) !important; /* Ensure custom bg is always applied */
+  background: var(--bg) fixed !important; /* Fixed background for premium feel */
 }
 
 /* Loading */
@@ -389,7 +453,7 @@ onMounted(() => loadPortfolio());
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  background: var(--bg);
+  background: transparent !important; /* Let body background show through */
   color: var(--text);
 }
 :global(.theme-light) .pub-password-wall,
@@ -462,14 +526,29 @@ onMounted(() => loadPortfolio());
 
 /* Sections */
 /* --- CSS Grid Layout --- */
+.section-group-wrap {
+  width: 100%;
+  height: 100%;
+}
+.full-bleed-section {
+  width: 100%;
+  height: 100%;
+}
+.sections-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px; /* Fixed small padding for mobile, grid max-width handles desktop */
+}
+
 .sections-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 40px; /* Adjust gap to bring side-by-side items decently close */
+  gap: 20px;
   width: 100%;
-  max-width: 100%;
-  padding-bottom: 24px;
-  align-items: stretch; /* MAKE SIDE-BY-SIDE EQUAL HEIGHT */
+  max-width: 1200px; /* Constrain wide screens */
+  padding-bottom: 40px;
+  align-items: stretch;
 }
 .section-wrapper.span-full {
   grid-column: 1 / -1;
@@ -504,7 +583,7 @@ onMounted(() => loadPortfolio());
   position: absolute;
   top: 10%;
   bottom: 10%;
-  left: -20px; /* Offset to exactly half of the 40px grid gap */
+  left: -10px; /* Offset to exactly half of the 20px grid gap */
   width: 1px;
   background-color: var(--border);
 }
@@ -522,6 +601,11 @@ onMounted(() => loadPortfolio());
   .sections-grid.has-divider .section-wrapper.span-half.is-right::before {
     display: none;
   }
+}
+
+.public-portfolio {
+  padding-top: 3px;
+  padding-bottom: 3px;
 }
 
 /* AI Chat FAB */
@@ -676,7 +760,7 @@ onMounted(() => loadPortfolio());
 /* Watermark */
 .pk-watermark {
   text-align: center;
-  padding: 8px 24px 24px 24px;
+  padding: 40px 24px 60px 24px;
 }
 .pk-watermark a {
   font-size: 12px;

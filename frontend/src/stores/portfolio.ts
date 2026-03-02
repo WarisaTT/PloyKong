@@ -191,6 +191,10 @@ export const usePortfolioStore = defineStore("portfolio", () => {
   function toggleSectionColumnSpan(sectionId: string) {
     const section = sections.value.find((s) => s.id === sectionId);
     if (!section || !activePortfolio.value) return;
+
+    // HERO is ALWAYS FULL WIDTH
+    if (section.type === 'hero') return;
+
     const next = (section.column_span || 'full') === 'full' ? 'half' : 'full';
     section.column_span = next;
     sectionAPI.update(sectionId, { column_span: next });

@@ -26,7 +26,7 @@
       </div>
 
       <div v-if="section.type !== 'hero'" class="editor-field toggle-row" style="margin-bottom: 12px">
-        <label class="form-label" style="margin: 0">ซ่อนขีดส้นใต้</label>
+        <label class="form-label" style="margin: 0">ซ่อนขีดคั่น</label>
         <button
           class="toggle"
           :class="{ on: !!form.hide_divider }"
@@ -34,6 +34,16 @@
         >
           {{ form.hide_divider ? "Show" : "Hide" }}
         </button>
+      </div>
+
+      <div v-if="section.type !== 'hero'" class="editor-field" style="margin-bottom: 12px">
+        <label class="form-label">Section Title (หัวข้อ)</label>
+        <input
+          v-model="form.title"
+          class="form-input"
+          placeholder="ระบุหัวข้อที่ต้องการ..."
+          @input="emitUpdate()"
+        />
       </div>
 
       <div class="editor-field">
@@ -87,7 +97,7 @@
           <button
             v-if="form.section_bg_color"
             class="btn btn-secondary btn-sm"
-            style="font-size: 10px; padding: 2px 8px"
+            style="font-size: 14px; padding: 11px 16px;"
             @click="form.section_bg_color = ''; emitUpdate()"
           >
             Reset
@@ -198,7 +208,7 @@
           :key="i"
           class="skill-row"
         >
-          <div style="display: flex; gap: 8px; width: 100%">
+          <div style="display: flex; flex-direction: column; gap: 8px; width: 100%">
             <input
               v-model="skill.name"
               class="form-input"
@@ -259,6 +269,12 @@
           placeholder="Position"
           @input="emitUpdate()"
         />
+        <input
+          v-model="item.location"
+          class="form-input"
+          placeholder="Location (e.g. Bangkok, Remote)"
+          @input="emitUpdate()"
+        />
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px">
           <input
             v-model="item.start_date"
@@ -273,6 +289,16 @@
             :disabled="item.is_current"
             @input="emitUpdate()"
           />
+        </div>
+        <div class="editor-field toggle-row" style="margin-bottom: 8px">
+          <label class="form-label" style="margin: 0; font-size: 11px">ทำงานอยู่ที่นี่ (Current)</label>
+          <button
+            class="toggle"
+            :class="{ on: item.is_current }"
+            @click="item.is_current = !item.is_current; emitUpdate()"
+          >
+            {{ item.is_current ? "YES" : "NO" }}
+          </button>
         </div>
         <PopupTextEditor
           v-model="item.description"
@@ -414,7 +440,7 @@
         <input
           v-model="form.email"
           class="form-input"
-          placeholder="you@example.com"
+          placeholder="ploykong@example.com"
           @input="emitUpdate()"
         />
       </div>
@@ -530,11 +556,10 @@
         <PopupTextEditor
           v-model="form.prompt_hint"
           title="Training Data"
-          placeholder="เช่น 'ฉันชอบแมว', 'ฉันทำงานที่ Google มาก่อน', 'ฉันเชี่ยวชาญด้าน React เป็นพิเศษ'..."
+          placeholder="ข้อมูลนี้จะถูกส่งไปให้ AI เพื่อให้ตอบคำถามได้แม่นยำขึ้น เช่น 'ฉันชอบแมว', 'ฉันทำงานที่ Google มาก่อน', 'ฉันเชี่ยวชาญด้าน React เป็นพิเศษ'..."
           :rows="6"
           @update:modelValue="emitUpdate()"
         />
-        <p class="field-hint">ข้อมูลนี้จะถูกส่งไปให้ AI เพื่อให้ตอบคำถามได้แม่นยำขึ้น</p>
       </div>
 
       <div class="editor-field" style="margin-top: 12px">
@@ -689,12 +714,29 @@ const isLayoutAdjustable = computed(() => {
   return true;
 });
 
+function getDefaultTitle(type: string) {
+  const defaults: Record<string, string> = {
+    skills: "Skills",
+    experience: "Experience",
+    projects: "Projects",
+    education: "Education",
+    contact: "Contact",
+    certificates: "Certificates",
+    stats: "Stats",
+    social: "Connect",
+  };
+  return defaults[type] || "";
+}
+
 // Deep clone section data into reactive form
 const initialData = JSON.parse(JSON.stringify(props.section.data || {}));
 // Explicitly safeguard undefined booleans to ensure deep Vue 3 tracking
 if (initialData.hide_percentage === undefined) initialData.hide_percentage = false;
 if (initialData.hide_title === undefined) initialData.hide_title = false;
 if (initialData.hide_divider === undefined) initialData.hide_divider = false;
+if (props.section.type !== 'hero' && !initialData.title) {
+  initialData.title = getDefaultTitle(props.section.type);
+}
 
 const form = reactive(initialData);
 
@@ -708,6 +750,9 @@ watch(
     if (newData.hide_percentage === undefined) newData.hide_percentage = false;
     if (newData.hide_title === undefined) newData.hide_title = false;
     if (newData.hide_divider === undefined) newData.hide_divider = false;
+    if (props.section.type !== 'hero' && !newData.title) {
+      newData.title = getDefaultTitle(props.section.type);
+    }
     
     // Clear and replace local form deeply
     Object.keys(form).forEach(key => delete (form as any)[key]);
@@ -730,47 +775,9 @@ function removeSkill(i: number) {
 const avatarInputRef = ref<HTMLInputElement | null>(null);
 const uploadingAvatar = ref(false);
 
-async function uploadAvatar(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-
-  uploadingAvatar.value = true;
-  try {
-    const { data } = await uploadAPI.image(file);
-    const apiBase = import.meta.env.VITE_API_URL || "/api/v1";
-    let rootUrl = apiBase.replace(/\/api\/v1\/?$/, "");
-    form.avatar_url = rootUrl + data.data.url;
-    emit("update", form);
-  } catch (error) {
-    Swal.fire("Error", "Failed to upload image", "error");
-  } finally {
-    uploadingAvatar.value = false;
-    if (avatarInputRef.value) avatarInputRef.value.value = "";
-  }
-}
-
 // Upload Cover (for all Generic Sections)
 const coverInputRef = ref<HTMLInputElement | null>(null);
 const uploadingCover = ref(false);
-
-async function uploadCover(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-
-  uploadingCover.value = true;
-  try {
-    const { data } = await uploadAPI.image(file);
-    const apiBase = import.meta.env.VITE_API_URL || "/api/v1";
-    let rootUrl = apiBase.replace(/\/api\/v1\/?$/, "");
-    form.image_url = rootUrl + data.data.url;
-    emit("update", form);
-  } catch (error) {
-    Swal.fire("Error", "Failed to upload cover image", "error");
-  } finally {
-    uploadingCover.value = false;
-    if (coverInputRef.value) coverInputRef.value.value = "";
-  }
-}
 
 // Experience helpers
 function addExp() {
@@ -784,11 +791,11 @@ function addExp() {
     description: "",
     image_urls: []
   });
-  emit("update", form);
+  emitUpdate();
 }
 function removeExp(i: number) {
   form.items.splice(i, 1);
-  emit("update", form);
+  emitUpdate();
 }
 
 // Experience Gallery Upload
@@ -801,28 +808,60 @@ function setExpInputRef(el: any, i: number) {
 function triggerExpUpload(i: number) {
   expInputRefs.value[i]?.click();
 }
-async function uploadExpImage(e: Event, i: number) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+const currentUploadingSectionId = ref<string | null>(null);
 
-  uploadingExp.value = i;
+async function safeUpload(file: File, callback: (url: string) => void) {
+  const uploadId = props.section.id;
   try {
     const { data } = await uploadAPI.image(file);
     const apiBase = import.meta.env.VITE_API_URL || "/api/v1";
     let rootUrl = apiBase.replace(/\/api\/v1\/?$/, "");
-    if (!form.items[i].image_urls) form.items[i].image_urls = [];
-    form.items[i].image_urls.push(rootUrl + data.data.url);
-    emit("update", form);
+    const fullUrl = rootUrl + data.data.url;
+    
+    // ONLY update if we are still on the same section!
+    if (props.section.id === uploadId) {
+      callback(fullUrl);
+      emitUpdate();
+    } else {
+      console.warn("Upload finished but section changed. Discarding result to prevent corruption.");
+    }
   } catch (error) {
     Swal.fire("Error", "Failed to upload image", "error");
-  } finally {
-    uploadingExp.value = null;
-    if (expInputRefs.value[i]) expInputRefs.value[i]!.value = "";
   }
+}
+
+async function uploadAvatar(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploadingAvatar.value = true;
+  await safeUpload(file, (url) => { form.avatar_url = url; });
+  uploadingAvatar.value = false;
+  if (avatarInputRef.value) avatarInputRef.value.value = "";
+}
+
+async function uploadCover(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploadingCover.value = true;
+  await safeUpload(file, (url) => { form.image_url = url; });
+  uploadingCover.value = false;
+  if (coverInputRef.value) coverInputRef.value.value = "";
+}
+
+async function uploadExpImage(e: Event, i: number) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploadingExp.value = i;
+  await safeUpload(file, (url) => {
+    if (!form.items[i].image_urls) form.items[i].image_urls = [];
+    form.items[i].image_urls.push(url);
+  });
+  uploadingExp.value = null;
+  if (expInputRefs.value[i]) expInputRefs.value[i]!.value = "";
 }
 function removeExpImage(expIndex: number, imgIndex: number) {
   form.items[expIndex].image_urls.splice(imgIndex, 1);
-  emit("update", form);
+  emitUpdate();
 }
 
 // Project helpers
@@ -835,11 +874,11 @@ function addProj() {
     github_url: "",
     tags: [],
   });
-  emit("update", form);
+  emitUpdate();
 }
 function removeProj(i: number) {
   form.items.splice(i, 1);
-  emit("update", form);
+  emitUpdate();
 }
 
 // Certificate helpers
@@ -852,11 +891,11 @@ function addCert() {
     description: "",
     image_url: ""
   });
-  emit("update", form);
+  emitUpdate();
 }
 function removeCert(i: number) {
   form.items.splice(i, 1);
-  emit("update", form);
+  emitUpdate();
 }
 
 const certInputRefs = ref<Record<number, HTMLInputElement | null>>({});
@@ -871,20 +910,12 @@ function triggerCertUpload(i: number) {
 async function uploadCertImage(e: Event, i: number) {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
-
   uploadingCert.value = i;
-  try {
-    const { data } = await uploadAPI.image(file);
-    const apiBase = import.meta.env.VITE_API_URL || "/api/v1";
-    let rootUrl = apiBase.replace(/\/api\/v1\/?$/, "");
-    form.items[i].image_url = rootUrl + data.data.url;
-    emit("update", form);
-  } catch (error) {
-    Swal.fire("Error", "Failed to upload certificate image", "error");
-  } finally {
-    uploadingCert.value = null;
-    if (certInputRefs.value[i]) certInputRefs.value[i]!.value = "";
-  }
+  await safeUpload(file, (url) => {
+    form.items[i].image_url = url;
+  });
+  uploadingCert.value = null;
+  if (certInputRefs.value[i]) certInputRefs.value[i]!.value = "";
 }
 
 // Contact helpers
@@ -897,11 +928,11 @@ function addCustomContact() {
     value: "",
     link: "",
   });
-  emit("update", form);
+  emitUpdate();
 }
 function removeCustomContact(i: number) {
   form.custom_items.splice(i, 1);
-  emit("update", form);
+  emitUpdate();
 }
 
 // Education helpers
@@ -946,8 +977,8 @@ async function improveTagline() {
       "portfolio tagline for " + form.role,
     );
     form.tagline = data.data.improved_text;
-    emit("update", form);
-  } catch {}
+    emitUpdate();
+} catch {}
 }
 
 // AI Chat helpers

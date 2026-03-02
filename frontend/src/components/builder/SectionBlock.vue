@@ -23,6 +23,7 @@
 
         <!-- Toggle List/Grid Column Span -->
         <button
+          v-if="section.type !== 'hero'"
           class="icon-btn"
           :title="section.column_span === 'half' ? 'Make Full Width' : 'Make Half Width'"
           @click="$emit('toggle-column-span')"
@@ -62,9 +63,12 @@
     <div
       class="section-preview"
       :class="[themeClass, templateClass, { 'is-half-split': isHalfSplit }]"
-      :style="[themeVars || {}, { pointerEvents: 'none' }]"
+      :style="{ ...themeVars, pointerEvents: 'none' }"
     >
-      <div :class="{ 'pub-container': section.type !== 'hero' && !isHalfSplit }">
+      <div 
+        class="section-preview-inner"
+        :class="{ 'pub-container': section.type !== 'hero' && !isHalfSplit }"
+      >
         <PublicHero v-if="section.type === 'hero'" :data="section.data" />
         <PublicSkills
           v-else-if="section.type === 'skills'"

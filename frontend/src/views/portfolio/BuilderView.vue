@@ -2,45 +2,98 @@
   <div class="builder-layout">
     <!-- ─── Top Bar ─────────────────────────────────────────────────────── -->
     <header class="builder-topbar">
-      <RouterLink to="/dashboard" class="back-btn" title="Dashboard">
-        <ArrowLeft class="icon" :size="20" />
-      </RouterLink>
+      <div class="topbar-left">
+        <RouterLink to="/dashboard" class="back-btn" title="Dashboard">
+          <ArrowLeft class="icon" :size="20" />
+        </RouterLink>
+      </div>
 
-      <div class="topbar-center">
-        <span class="portfolio-slug"
-          ><Globe :size="14" class="icon-inline" />
-          {{ store.activePortfolio?.slug }}.ploykong.com</span
+      <div class="topbar-center mobile-hide">
+        <div class="slug-container">
+          <span class="portfolio-slug">
+            <Globe :size="14" class="icon-inline" />
+            {{ store.activePortfolio?.slug }}.ploykong.com
+          </span>
+          <button
+            class="copy-link-btn-indigo"
+            :disabled="!store.activePortfolio?.is_published"
+            title="Copy Public Link"
+            @click="copyPublicLink"
+          >
+            <Check v-if="copied" :size="14" />
+            <Copy v-else :size="14" />
+            <span class="copy-text">{{ copied ? 'Copied!' : 'Copy' }}</span>
+          </button>
+        </div>
+        <span v-if="store.saving" class="saving-indicator">
+          <Save :size="12" class="icon-inline" /> Saving...
+        </span>
+      </div>
+
+      <!-- MOBILE TOP NAV SELECTOR -->
+      <div class="builder-mobile-tabs @768:flex">
+        <button 
+          class="mobile-tab-btn" 
+          :class="{ active: !isLeftCollapsed }"
+          @click="openSidebar('left')"
+          title="Blocks"
         >
-        <span v-if="store.saving" class="saving-indicator"
-          ><Save :size="12" class="icon-inline" /> Saving...</span
+          <Blocks :size="18" />
+        </button>
+        <button 
+          class="mobile-tab-btn" 
+          :class="{ active: !isRightCollapsed && !selectedSectionId }"
+          @click="openSidebar('right')"
+          title="Design"
         >
+          <Palette :size="18" />
+        </button>
+        <button 
+          v-if="selectedSectionId"
+          class="mobile-tab-btn pulse-hint" 
+          :class="{ active: !isRightCollapsed && selectedSectionId }"
+          @click="scrollToEditor"
+          title="Edit Section"
+        >
+          <Pencil :size="18" />
+        </button>
+        <button 
+          class="mobile-tab-btn"
+          :disabled="!store.activePortfolio?.is_published"
+          @click="copyPublicLink"
+          title="Copy Link"
+        >
+          <Check v-if="copied" :size="18" class="text-success" />
+          <Copy v-else :size="18" />
+        </button>
+        <button 
+          v-if="!isLeftCollapsed || !isRightCollapsed"
+          class="mobile-tab-btn hide-btn"
+          @click="isLeftCollapsed = true; isRightCollapsed = true"
+          title="Close Sidebar"
+        >
+          <X :size="18" />
+        </button>
       </div>
 
       <div class="topbar-actions">
         <button
-          class="btn btn-secondary btn-sm btn-icon-text"
+          class="btn btn-secondary btn-sm btn-icon-only-mobile"
           :disabled="!store.activePortfolio?.is_published"
-          :title="
-            !store.activePortfolio?.is_published
-              ? 'ไม่สามารถเปิดดูได้เว้นแต่จะ Publish'
-              : 'Preview'
-          "
           @click="previewPortfolio"
         >
           <Eye v-if="store.activePortfolio?.is_published" :size="14" />
           <EyeOff v-else :size="14" />
-          Preview
+          <span class="mobile-hide">Preview</span>
         </button>
         <button
-          class="btn btn-sm btn-icon-text publish-btn"
-          :class="
-            store.activePortfolio?.is_published ? 'btn-danger' : 'btn-primary'
-          "
+          class="btn btn-sm btn-icon-only-mobile publish-btn"
+          :class="store.activePortfolio?.is_published ? 'btn-danger' : 'btn-primary'"
           @click="togglePublish"
         >
           <Play v-if="store.activePortfolio?.is_published" :size="14" />
           <Zap v-else :size="14" />
-          {{ store.activePortfolio?.is_published ? 'Unpublish' : 'Publish' }}
+          <span class="mobile-hide">{{ store.activePortfolio?.is_published ? 'Unpublish' : 'Publish' }}</span>
         </button>
       </div>
     </header>
@@ -54,12 +107,23 @@
       }"
     >
       <!-- Left: Block Palette -->
-      <aside class="block-palette" :class="{ collapsed: isLeftCollapsed }">
+      <aside 
+        class="block-palette" 
+        :class="{ collapsed: isLeftCollapsed }" 
+        :style="{ 
+          width: leftSidebarWidth + 'px', 
+          '--sidebar-width': leftSidebarWidth + 'px' 
+        }"
+      >
+        <div class="resize-handle right-handle" @mousedown="startResizing('left', $event)"></div>
         <div class="palette-header">
-          <span class="palette-title"
-            ><Blocks :size="14" class="icon-inline" /> Blocks</span
-          >
-          <span class="palette-hint">Click to add</span>
+          <span class="palette-title" :style="{paddingTop: '10px'}">
+            <Blocks :size="18" class="icon-inline" :style="{paddingTop: '5px'}" /> Blocks
+          </span>
+          <button class="mobile-close-sidebar @768:flex" @click="isLeftCollapsed = true">
+            <X :size="18" />
+          </button>
+          <span class="palette-hint mobile-hide" :style="{paddingTop: '10px'}">Click to add</span>
         </div>
         <div class="palette-list">
           <div
@@ -80,9 +144,9 @@
 
       <!-- Center: Canvas -->
       <div class="canvas-wrapper">
-        <!-- Floating Sidebar Toggles -->
+        <!-- Floating Sidebar Toggles - Hidden on mobile -->
         <button
-          class="sidebar-toggle left-toggle"
+          class="sidebar-toggle left-toggle mobile-hide"
           @click="isLeftCollapsed = !isLeftCollapsed"
           :title="isLeftCollapsed ? 'Expand Blocks' : 'Collapse Blocks'"
         >
@@ -91,7 +155,7 @@
         </button>
 
         <button
-          class="sidebar-toggle right-toggle"
+          class="sidebar-toggle right-toggle mobile-hide"
           @click="isRightCollapsed = !isRightCollapsed"
           :title="isRightCollapsed ? 'Expand Properties' : 'Collapse Properties'"
         >
@@ -100,77 +164,74 @@
         </button>
 
         <main class="builder-canvas" ref="canvasRef">
-        <div v-if="store.loading" class="canvas-loading">
-          <div
-            class="skeleton"
-            style="height: 80px; margin-bottom: 12px; border-radius: 12px"
-          ></div>
-          <div
-            class="skeleton"
-            style="height: 120px; margin-bottom: 12px; border-radius: 12px"
-          ></div>
-          <div
-            class="skeleton"
-            style="height: 160px; border-radius: 12px"
-          ></div>
-        </div>
+          <div class="canvas-content-limiter">
+          <!-- Canvas Loading and Empty states -->
+          <div v-if="store.loading" class="canvas-loading">...</div>
+          <div v-else-if="store.sections.length === 0" class="canvas-empty">...</div>
 
-        <div v-else-if="store.sections.length === 0" class="canvas-empty">
-          <div class="empty-icon">
-            <Palette :size="48" stroke-width="1.5" />
-          </div>
-          <h3>Create Your Portfolio!</h3>
-          <p>Click Block on the left to add components</p>
-        </div>
-
-        <TransitionGroup
-          tag="div"
-          name="section-list"
-          v-else
-          class="sections-list sections-grid"
-          :class="[templateClass, { 'has-divider': theme.show_divider }]"
-          ref="listRef"
-        >
-          <div
-            v-for="section in gridSections"
-            :key="section.id"
-            :data-id="section.id"
-            class="section-wrapper drag-item"
-            :class="{ 
-              'span-half': section.column_span === 'half', 
-              'span-full': section.column_span !== 'half', 
-              'is-right': section.isRight,
-              'builder-half-row': section.column_span === 'half',
-              'builder-full-row': section.column_span !== 'half'
-            }"
+          <TransitionGroup
+            tag="div"
+            name="section-list"
+            v-else
+            class="sections-list sections-grid"
+            :class="[templateClass, { 'has-divider': theme.show_divider }]"
+            ref="listRef"
           >
-            <SectionBlock
-              :section="section"
-              :is-selected="selectedSectionId === section.id"
-              :theme-class="themeClass"
-              :template-class="templateClass"
-              :is-half-split="section.column_span === 'half'"
-              :theme-vars="themeVars"
-              :class="{ 'block-highlight': highlightedBlocks.has(section.id) }"
-              @select="selectSection(section.id)"
-              @delete="store.deleteSection(section.id)"
-              @toggle-visibility="store.toggleSectionVisibility(section.id)"
-              @toggle-column-span="store.toggleSectionColumnSpan(section.id)"
-              @move-up="moveSection(section.id, 'up')"
-              @move-down="moveSection(section.id, 'down')"
-              @duplicate="store.duplicateSection(section.id)"
-            />
+            <div
+              v-for="section in gridSections"
+              :key="section.id"
+              :data-id="section.id"
+              class="section-wrapper drag-item"
+              :class="{ 
+                'span-half': section.column_span === 'half', 
+                'span-full': section.column_span !== 'half', 
+                'is-right': section.isRight,
+                'is-row-start': section.isRowStart,
+                'is-paired': section.isPaired,
+                'builder-half-row': section.column_span === 'half',
+                'builder-full-row': section.column_span !== 'half'
+              }"
+            >
+              <SectionBlock
+                :section="section"
+                :is-selected="selectedSectionId === section.id"
+                :theme-class="themeClass"
+                :template-class="templateClass"
+                :is-half-split="section.column_span === 'half'"
+                :theme-vars="themeVars"
+                :class="{ 'block-highlight': highlightedBlocks.has(section.id) }"
+                @select="selectSection(section.id)"
+                @delete="store.deleteSection(section.id)"
+                @toggle-visibility="store.toggleSectionVisibility(section.id)"
+                @toggle-column-span="store.toggleSectionColumnSpan(section.id)"
+                @move-up="moveSection(section.id, 'up')"
+                @move-down="moveSection(section.id, 'down')"
+                @duplicate="store.duplicateSection(section.id)"
+              />
+            </div>
+          </TransitionGroup>
           </div>
-        </TransitionGroup>
-      </main>
+        </main>
       </div>
 
       <!-- Right: Properties Panel -->
-      <aside class="props-panel" :class="{ collapsed: isRightCollapsed }">
-        <div class="props-header">
-          <span class="props-title"
-            ><Palette :size="14" class="icon-inline" /> Properties</span
-          >
+      <aside 
+        class="props-panel" 
+        :class="{ collapsed: isRightCollapsed }" 
+        :style="{ 
+          width: rightSidebarWidth + 'px', 
+          '--sidebar-width': rightSidebarWidth + 'px' 
+        }"
+      >
+        <div class="resize-handle left-handle" @mousedown="startResizing('right', $event)"></div>
+        <div class="props-inner-scroll" ref="propsScrollRef">
+          <div class="props-header">
+          <span class="props-title">
+            <Palette :size="14" class="icon-inline" /> Properties
+          </span>
+          <button class="mobile-close-sidebar @768:flex" @click="isRightCollapsed = true">
+            <X :size="18" />
+          </button>
         </div>
 
         <!-- Theme Settings -->
@@ -284,19 +345,6 @@
           </select>
         </div>
 
-        <div class="props-section">
-          <label class="toggle-row">
-            <span class="props-label" style="margin: 0">Show Column Divider</span>
-            <div class="toggle-switch">
-              <input
-                type="checkbox"
-                v-model="theme.show_divider"
-                @change="updateTheme({ show_divider: theme.show_divider })"
-              />
-              <span class="slider round"></span>
-            </div>
-          </label>
-        </div>
 
         <div class="props-section">
           <div class="props-label">Portfolio URL</div>
@@ -307,11 +355,31 @@
         </div>
 
         <!-- Section Editor (when section selected) -->
-        <div v-if="selectedSection" class="section-editor">
+        <div v-if="selectedSection" class="section-editor" ref="editorRef">
           <div class="editor-divider"></div>
-          <div class="props-title">
+          <div class="props-title" style="margin-bottom: 12px;">
             <Pencil :size="12" class="icon-inline" /> Edit:
             {{ selectedSection.type }}
+          </div>
+
+          <!-- Column Divider Toggle: Only show for half-width sections -->
+          <div v-if="selectedSection.column_span === 'half'" class="props-section" style="background: rgba(var(--primary-glow), 0.05); padding: 12px; border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 20px;">
+            <label class="toggle-row" style="cursor: pointer;">
+              <span class="props-label" style="margin: 0; font-size: 11px;">
+                <LayoutGrid :size="12" class="icon-inline" /> Show Vertical Divider
+              </span>
+              <div class="toggle-switch">
+                <input
+                  type="checkbox"
+                  v-model="theme.show_divider"
+                  @change="updateTheme({ show_divider: theme.show_divider })"
+                />
+                <span class="slider round"></span>
+              </div>
+            </label>
+            <p style="font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.3;">
+              แสดงเส้นคั่นแนวตั้งระหว่าง Section ที่วางคู่กัน
+            </p>
           </div>
           <SectionEditor
             :section="selectedSection"
@@ -343,7 +411,8 @@
             <pre>{{ aiResult }}</pre>
           </div>
         </div>
-      </aside>
+      </div>
+    </aside>
     </div>
   </div>
 </template>
@@ -371,7 +440,11 @@ import {
   Play,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronUp,
+  X,
+  Copy,
+  Check
 } from 'lucide-vue-next'
 import SectionBlock from '@/components/builder/SectionBlock.vue'
 import SectionEditor from '@/components/builder/SectionEditor.vue'
@@ -385,10 +458,49 @@ const selectedSectionId = ref<string | null>(null)
 const aiResult = ref<string | null>(null)
 const canvasRef = ref<HTMLElement | null>(null)
 const listRef = ref<any>(null)
+const editorRef = ref<HTMLElement | null>(null)
+const propsScrollRef = ref<HTMLElement | null>(null)
 const highlightedBlocks = ref<Set<string>>(new Set())
 
 const isLeftCollapsed = ref(false)
 const isRightCollapsed = ref(false)
+const leftSidebarWidth = ref(260)
+const rightSidebarWidth = ref(320)
+const copied = ref(false)
+
+// Resizing logic
+const isResizing = ref<'left' | 'right' | null>(null)
+
+function startResizing(side: 'left' | 'right', e: MouseEvent) {
+  isResizing.value = side
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', stopResizing)
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+}
+
+function handleMouseMove(e: MouseEvent) {
+  if (!isResizing.value) return
+  if (isResizing.value === 'left') {
+    const newWidth = e.clientX
+    if (newWidth > 180 && newWidth < 500) {
+      leftSidebarWidth.value = newWidth
+    }
+  } else {
+    const newWidth = window.innerWidth - e.clientX
+    if (newWidth > 250 && newWidth < 600) {
+      rightSidebarWidth.value = newWidth
+    }
+  }
+}
+
+function stopResizing() {
+  isResizing.value = null
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', stopResizing)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
 
 function hexToRgb(hex: string) {
   if (!hex) return "0, 0, 0";
@@ -471,6 +583,12 @@ onMounted(async () => {
     }
   }
 
+  // Mobile optimization: collapse sidebars on small screens
+  if (window.innerWidth < 1100) {
+    isLeftCollapsed.value = true
+    isRightCollapsed.value = true
+  }
+
   // Initialize Drag and Drop if list exists
   if (listRef.value) {
     initSortable()
@@ -495,9 +613,11 @@ function initSortable() {
   if (!el) return
 
   Sortable.create(el, {
-    handle: '.drag-handle', // Drag only by this icon
+    // handle: '.drag-handle', // NOW REMOVED TO ALLOW DRAGGING THE WHOLE SECTION
+    filter: 'input, button, .icon-btn, .color-swatch, .form-input, select', // Prevent dragging when clicking UI items
+    preventOnFilter: false,
     animation: 250, // Smooth slide animation
-    delay: 150, // Require 150ms hold to start dragging (Great for preventing accidental drags on touch)
+    delay: 50, // Short delay to allow clicking
     delayOnTouchOnly: true, // Only require hold on touch devices
     ghostClass: 'sortable-ghost', // Class added to the dragged item
     onEnd: (evt: Sortable.SortableEvent) => {
@@ -515,16 +635,22 @@ function initSortable() {
 
 // Flattened sections for CSS Grid, calculating left/right placement for the divider
 const gridSections = computed(() => {
-  const result: (typeof sortedSections.value[0] & { isRight?: boolean })[] = [];
+  const result: (typeof sortedSections.value[0] & { isRight?: boolean, isRowStart?: boolean, isPaired?: boolean })[] = [];
   const items = sortedSections.value;
-  let col = 0; // 0 for left, 1 for right
-  for (const s of items) {
+  
+  for (let i = 0; i < items.length; i++) {
+    const s = items[i];
+    const prev = i > 0 ? items[i-1] : null;
+    const next = i < items.length - 1 ? items[i+1] : null;
+    
     if (s.column_span === 'half') {
-      result.push({ ...s, isRight: col === 1 });
-      col = (col + 1) % 2;
+      const isRight = prev?.column_span === 'half' && !result[i-1]?.isRight;
+      const isRowStart = !isRight;
+      const isPaired = isRowStart ? (next?.column_span === 'half') : true;
+      
+      result.push({ ...s, isRight, isRowStart, isPaired });
     } else {
-      result.push({ ...s, isRight: false });
-      col = 0; // reset
+      result.push({ ...s, isRight: false, isRowStart: true, isPaired: false });
     }
   }
   return result;
@@ -542,29 +668,73 @@ const themeVars = computed(() => {
   const primary = theme.primary_color || '#4F46E5'
   const secondary = theme.secondary_color || ''
   const font = theme.font || 'Prompt'
-  // In light mode, glow needs to be slightly more transparent so it isn't overpowering, but visible.
-  const glowHex = theme.mode === 'light' ? '15' : '40'
+  const isLight = theme.mode === 'light'
+  const glowHex = isLight ? '25' : '40'
   const vars: Record<string, string> = {
     '--primary': primary,
     '--primary-glow': `${primary}${glowHex}`,
     '--secondary': secondary ? secondary : `${primary}${glowHex}`,
     '--font-display': font,
-    '--font-body': font
+    '--font-body': font,
+    '--text': isLight ? '#0f172a' : '#ffffff',
+    '--muted': isLight ? '#64748b' : '#94a3b8',
+    '--surface': isLight ? '#ffffff' : '#111827',
+    '--border': isLight ? '#e2e8f0' : '#1f2937'
   }
-  if (theme.bg_color && theme.bg_color !== '#000000') {
+  if (theme.bg_color) {
     vars['--bg'] = theme.bg_color
     vars['--bg-rgb'] = hexToRgb(theme.bg_color)
   } else {
-    vars['--bg-rgb'] = theme.mode === 'light' ? '250, 247, 255' : '5, 8, 20'
+    vars['--bg'] = isLight ? '#faf7ff' : '#050814'
+    vars['--bg-rgb'] = isLight ? '250, 247, 255' : '5, 8, 20'
   }
-  if (theme.border_color && theme.border_color !== '#000000') {
+  if (theme.border_color) {
     vars['--avatar-border'] = theme.border_color
   }
   return vars
 })
 
 function selectSection(id: string) {
-  selectedSectionId.value = selectedSectionId.value === id ? null : id
+  const isNewSelection = selectedSectionId.value !== id;
+  selectedSectionId.value = isNewSelection ? id : null;
+  
+  if (selectedSectionId.value) {
+    // Scroll to editor
+    isRightCollapsed.value = false;
+    if (window.innerWidth <= 1100) isLeftCollapsed.value = true;
+    nextTick(() => {
+      scrollToEditor();
+    });
+  } else {
+    // Scroll back to top (Theme Settings)
+    nextTick(() => {
+      if (propsScrollRef.value) {
+        propsScrollRef.value.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
+}
+
+function openSidebar(side: 'left' | 'right') {
+  if (side === 'left') {
+    isLeftCollapsed.value = false
+    if (window.innerWidth <= 1100) isRightCollapsed.value = true
+  } else {
+    isRightCollapsed.value = false
+    if (window.innerWidth <= 1100) isLeftCollapsed.value = true
+  }
+}
+
+function scrollToEditor() {
+  isRightCollapsed.value = false
+  isLeftCollapsed.value = true
+  
+  // Wait for sidebar to expand before scrolling
+  setTimeout(() => {
+    if (editorRef.value) {
+      editorRef.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, 300)
 }
 
 async function addBlock(type: SectionType) {
@@ -603,6 +773,19 @@ async function togglePublish() {
 function previewPortfolio() {
   const slug = store.activePortfolio?.slug
   if (slug) window.open(`/p/${slug}`, '_blank')
+}
+
+function copyPublicLink() {
+  const slug = store.activePortfolio?.slug
+  if (!slug) return
+  
+  const url = `${window.location.origin}/p/${slug}`
+  navigator.clipboard.writeText(url).then(() => {
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
+  })
 }
 
 // Debounce the backend API call to save bandwidth
@@ -667,7 +850,6 @@ async function aiImproveContent() {
   overflow: hidden;
 }
 
-/* Topbar */
 .builder-topbar {
   display: flex;
   align-items: center;
@@ -677,36 +859,28 @@ async function aiImproveContent() {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   z-index: 50;
+  position: relative;
 }
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: var(--muted);
-  text-decoration: none;
-  border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  transition: all 0.2s ease;
+.topbar-left, .topbar-actions {
+  flex: 1;
+  display: flex;
 }
-
-.back-btn:hover {
-  color: var(--text);
-  border-color: var(--indigo);
-  background: rgba(79, 70, 229, 0.1);
-  transform: translateY(-1px);
-}
-
-.back-btn:hover .icon {
-  transform: translateX(-2px);
-  transition: transform 0.2s ease;
+.topbar-actions {
+  justify-content: flex-end;
 }
 .topbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+.slug-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
 }
 .portfolio-slug {
   font-size: 13px;
@@ -715,6 +889,38 @@ async function aiImproveContent() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.copy-link-btn-indigo {
+  background: transparent;
+  border: none;
+  color: var(--indigo);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-left: 4px;
+}
+.copy-link-btn-indigo:hover {
+  background: rgba(79, 70, 229, 0.15);
+}
+.copy-link-btn-indigo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.copy-text {
+  font-size: 11px;
+}
+@media (max-width: 1100px) {
+  .topbar-center {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+  }
 }
 .saving-indicator {
   font-size: 12px;
@@ -740,19 +946,43 @@ async function aiImproveContent() {
   position: relative;
 }
 
-/* Block Palette */
 .block-palette {
+  position: relative;
   width: 240px;
   flex-shrink: 0;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 16px 12px;
-  transition: transform 0.3s ease, margin 0.3s ease;
+  overflow: hidden; /* Hide content during resize/collapse */
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  z-index: 10;
 }
 .block-palette.collapsed {
-  transform: translateX(-100%);
-  margin-right: -240px; /* Pull the canvas over */
+  margin-left: calc(-1 * var(--sidebar-width, 240px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Resize Handles */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 1000;
+  transition: background 0.2s;
+}
+.resize-handle:hover {
+  background: var(--primary);
+  opacity: 0.5;
+}
+.right-handle {
+  right: 0;
+}
+.left-handle {
+  left: 0;
 }
 
 .palette-header {
@@ -817,8 +1047,23 @@ async function aiImproveContent() {
   opacity: 0;
   transition: opacity 0.15s;
 }
+.palette-list {
+  flex: 1;
+  overflow-y: auto;
+}
 .palette-item:hover .palette-add {
   opacity: 1;
+}
+
+/* Scrollable Inner Props */
+.props-inner-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  padding: 20px 16px;
 }
 
 /* Canvas */
@@ -834,9 +1079,15 @@ async function aiImproveContent() {
   flex: 1;
   position: relative;
   overflow-y: auto;
-  padding: 24px;
-  background: var(--bg);
-  transition: all 0.3s ease;
+  padding: 32px 16px;
+  padding-bottom: 10px; /* Reduced from 500px for better balance */
+  background: var(--bg) fixed;
+}
+
+.canvas-content-limiter {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .sidebar-toggle {
@@ -897,7 +1148,7 @@ async function aiImproveContent() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
-  width: 100%;
+  width: 100% !important;
   align-items: stretch; /* FORCE EQUAL HEIGHTS ON ROWS */
 }
 .tpl-firstjobber.sections-grid {
@@ -959,17 +1210,22 @@ async function aiImproveContent() {
 
 /* Props Panel */
 .props-panel {
-  width: 260px;
+  position: relative;
+  width: 320px;
   flex-shrink: 0;
   background: var(--sidebar-bg);
   border-left: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 16px;
-  transition: transform 0.3s ease, margin 0.3s ease;
+  overflow: hidden;
+  padding: 0; /* Padding moved to inner scroll */
+  transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
 }
 .props-panel.collapsed {
-  transform: translateX(100%);
-  margin-left: -260px; /* Pull the canvas over */
+  margin-right: calc(-1 * var(--sidebar-width, 320px));
+  opacity: 0;
+  pointer-events: none;
 }
 .props-header {
   margin-bottom: 16px;
@@ -1204,21 +1460,139 @@ input:checked + .slider:before {
   transform: translateX(18px);
 }
 
-@media (max-width: 1024px) {
-  .builder-main {
-    grid-template-columns: 200px 1fr;
+/* Mobile Tabs at Top */
+.builder-mobile-tabs {
+  display: none;
+  gap: 4px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .builder-mobile-tabs {
+    display: flex;
   }
-  .props-panel {
-    display: none;
+  .topbar-center {
+    display: none !important;
   }
 }
+
+.mobile-tab-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-tab-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.mobile-tab-btn.hide-btn {
+  color: var(--muted);
+  margin-left: 8px;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  width: 32px;
+}
+
+.mobile-close-sidebar {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
 @media (max-width: 768px) {
-  .builder-main {
-    grid-template-columns: 1fr;
+  .mobile-close-sidebar {
+    display: flex;
   }
+}
+
+/* Responsive Utilities */
+.mobile-hide {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .mobile-hide {
+    display: none !important;
+  }
+}
+
+.btn-icon-only-mobile {
+  padding: 8px !important;
+  min-width: 40px !important;
+}
+
+@media (max-width: 768px) {
+  .btn-icon-only-mobile {
+    padding: 8px !important;
+  }
+}
+
+/* Sidebar Overlays on Mobile */
+@media (max-width: 768px) {
+  .block-palette, .props-panel {
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    width: 280px !important;
+    z-index: 1000;
+    margin: 0 !important;
+    transform: none !important;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    background: var(--surface) !important;
+  }
+  
   .block-palette {
-    display: none;
+    left: 0;
   }
+  
+  .props-panel {
+    right: 0;
+    width: 320px !important;
+  }
+
+  /* Overlay hidden state */
+  .block-palette.collapsed {
+    transform: translateX(-100%) !important;
+  }
+  .props-panel.collapsed {
+    transform: translateX(100%) !important;
+  }
+
+  .builder-canvas {
+    padding: 16px;
+  }
+
+  .sections-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+}
+
+.pulse-hint {
+  color: var(--primary);
+  animation: pulse-soft 2s infinite;
+}
+
+@keyframes pulse-soft {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .builder-layout.theme-dark {
@@ -1227,5 +1601,12 @@ input:checked + .slider:before {
 
 .builder-layout.theme-light {
   --divider-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Hide handles on mobile */
+@media (max-width: 768px) {
+  .resize-handle {
+    display: none !important;
+  }
 }
 </style>

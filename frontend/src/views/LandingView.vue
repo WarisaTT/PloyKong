@@ -11,7 +11,7 @@
           <div class="logo-mark">
             <img src="/favicon.png" alt="PloyKong Logo" class="logo-img" />
           </div>
-          <span class="logo-text">PloyKong</span>
+          <span class="logo-text">Ploy<em>Kong</em></span>
         </RouterLink>
 
         <!-- Nav links (desktop) -->
@@ -115,16 +115,16 @@
               </div>
               <div class="browser-url">
                 <Lock2 :size="10" />
-                napat.ploykong.com
+                pk.ploykong.com
               </div>
             </div>
             <div class="browser-body">
               <!-- Mini portfolio preview -->
               <div class="mini-portfolio">
                 <div class="mp-hero">
-                  <div class="mp-avatar">NP</div>
+                  <div class="mp-avatar">PK</div>
                   <div>
-                    <div class="mp-name">Napat K.</div>
+                    <div class="mp-name">Ploy K.</div>
                     <div class="mp-role">Full-Stack Developer</div>
                   </div>
                   <div class="mp-hire">Hire Me ✨</div>
@@ -276,11 +276,11 @@
             <div class="chat-demo">
               <div class="chat-msg hr">
                 <div class="chat-avatar hr-av">HR</div>
-                <div class="chat-bubble">What's Napat's experience with microservices?</div>
+                <div class="chat-bubble">What's Ploykong's experience with microservices?</div>
               </div>
               <div class="chat-msg ai">
                 <div class="chat-avatar ai-av">🤖</div>
-                <div class="chat-bubble">Napat has 3 years of experience building microservices with Go, having led the architecture of...</div>
+                <div class="chat-bubble">Ploykong has 3 years of experience building microservices with Go, having led the architecture of...</div>
               </div>
             </div>
           </div>
@@ -292,7 +292,7 @@
             <h3 class="bento-h3">One-Click Publish</h3>
             <p class="bento-p">URL สวย แชร์ได้ทันที อัปเดตเข้าลิงก์เดิม</p>
             <div class="url-demo">
-              <span class="url-base">ploykong.com/</span><span class="url-slug">napat</span>
+              <span class="url-base">ploykong.com/</span><span class="url-slug">pk</span>
             </div>
           </div>
         </div>
@@ -334,6 +334,9 @@
         </div>
       </div>
     </section>
+
+    <!-- Interactive Demo Section -->
+    <LandingDemo />
 
     <!-- ══════════════════════════════════════════
          PRICING
@@ -439,13 +442,13 @@
           <div class="logo-mark sm">
             <img src="/favicon.png" alt="PloyKong Logo" class="logo-img" />
           </div>
-          <span class="footer-name">PloyKong</span>
+          <span class="footer-name">Ploy<em>Kong</em></span>
           <span class="footer-slogan">— มีดีต้องปล่อยของ</span>
         </div>
         <div class="footer-links">
           <a href="#">Privacy</a>
           <a href="#">Terms</a>
-          <a href="https://github.com" target="_blank">GitHub</a>
+          <a href="https://github.com/WarisaTT" target="_blank">GitHub</a>
           <a href="#">Contact</a>
         </div>
         <div class="footer-copy">
@@ -458,6 +461,7 @@
 </template>
 
 <script setup>
+import LandingDemo from '@/components/LandingDemo.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
@@ -554,7 +558,7 @@ const testimonials = [
   {
     quote: 'ระบบ Analytics ทำให้รู้ว่า HR ดูพอร์ตนานแค่ไหน ปรับปรุงได้ตรงจุดมากๆ',
     name: 'Promptpol P.',
-    role: 'Frpntend Develop @ CP-ALL',
+    role: 'Frontend Develop @ CP-ALL',
     initials: 'PP',
     color: 'linear-gradient(135deg,#22D3EE,#34D399)',
   },
@@ -565,8 +569,8 @@ const testimonials = [
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --font-display: "Noto Sans Thai", sans-serif;
-  --font-body: "Noto Sans Thai", sans-serif;
+  --font-display: "Syne", "Anuphan", "Noto Sans Thai", sans-serif;
+  --font-body: "Inter", "Anuphan", "Noto Sans Thai", sans-serif;
 }
 
 /* ══════════════════════════════════════════
@@ -574,7 +578,7 @@ const testimonials = [
 ════════════════════════════════════════════ */
 .landing {
   min-height: 100vh;
-  font-family: 'Inter', 'Anuphan', system-ui, sans-serif;
+  font-family: var(--font-body);    
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
@@ -626,6 +630,8 @@ const testimonials = [
   font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
   letter-spacing: -0.3px;
 }
+
+.logo-text em{ font-style: normal; background: var(--grad-pk); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
 .nav-center {
   display: flex; align-items: center; gap: 6px; flex: 1;
@@ -739,7 +745,18 @@ const testimonials = [
   display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
 }
 @media (max-width: 960px) {
-  .hero-inner { grid-template-columns: 1fr; }
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+  .hero-content { align-items: center; }
+  .hero-body { margin: 0 auto; }
+  .hero-actions { justify-content: center; }
+  .hero-visual { max-width: 500px; margin: 0 auto; }
+}
+@media (max-width: 480px) {
+  .hero { padding-top: 80px; }
+  .hero-h1 { font-size: 38px; }
+  .h1-sub { font-size: 24px; }
+  .hero-actions { flex-direction: column; width: 100%; }
+  .btn-hero-primary, .btn-hero-ghost { width: 100%; justify-content: center; }
 }
 
 .hero-content { display: flex; flex-direction: column; gap: 24px; }
@@ -930,7 +947,9 @@ const testimonials = [
   border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
 }
 @media (max-width: 600px) {
-  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); margin-top: 32px; }
+  .hstat { padding: 12px; }
+  .hstat-num { font-size: 18px; }
 }
 
 .hstat {
@@ -978,7 +997,16 @@ const testimonials = [
 /* ══════════════════════════════════════════
    SECTION SHARED
 ════════════════════════════════════════════ */
-.section-wrap { max-width: 1200px; margin: 0 auto; padding: 100px 24px; }
+.section-wrap { 
+  width: 100%; 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  padding: 100px 0; 
+}
+
+@media (max-width: 768px) {
+  .section-wrap { width: 90%; padding: 60px 0; }
+}
 .section-header { text-align: center; margin-bottom: 60px; }
 .section-tag {
   font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
@@ -1003,8 +1031,15 @@ const testimonials = [
   gap: 16px;
 }
 
-@media (max-width: 900px) { .feat-bento { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .feat-bento { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { 
+  .feat-bento { grid-template-columns: repeat(2, 1fr); } 
+  .bento-lg, .bento-md { grid-column: span 2; }
+}
+@media (max-width: 600px) { 
+  .feat-bento { grid-template-columns: 1fr; }
+  .bento-lg, .bento-md, .bento-sm { grid-column: span 1; }
+  .section-wrap { padding: 60px 20px; }
+}
 
 .bento-card {
   position: relative; overflow: hidden;
@@ -1225,7 +1260,7 @@ const testimonials = [
   color: var(--text-2); margin-bottom: 14px;
 }
 .price-amount { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
-.price-num { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; line-height: 1; }
+.price-num { font-family: 'Syne', 'Anuphan', sans-serif; font-size: 48px; font-weight: 700; line-height: 1; }
 .price-per { font-size: 14px; color: var(--text-2); }
 .price-desc { font-size: 13px; color: var(--text-2); }
 

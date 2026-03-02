@@ -65,9 +65,25 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function loginWithGoogle(credential: string) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const { data } = await authAPI.loginWithGoogle(credential);
+      setTokens(data.data.tokens.access_token, data.data.tokens.refresh_token);
+      user.value = data.data.user;
+      return true;
+    } catch (e: any) {
+      error.value = e.response?.data?.error || "Google login failed";
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   async function logout() {
     if (refreshToken.value) {
-      await authAPI.logout(refreshToken.value).catch(() => {});
+      await authAPI.logout(refreshToken.value).catch(() => { });
     }
     clearTokens();
     user.value = null;
@@ -108,6 +124,7 @@ export const useAuthStore = defineStore("auth", () => {
     isPro,
     login,
     register,
+    loginWithGoogle,
     logout,
     fetchMe,
   };

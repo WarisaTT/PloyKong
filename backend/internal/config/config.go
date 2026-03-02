@@ -33,6 +33,16 @@ type Config struct {
 	UploadDir     string
 	MaxUploadMB   int64
 	CloudinaryURL string
+
+	// S3 Storage
+	S3Bucket    string
+	S3Region    string
+	S3AccessKey string
+	S3SecretKey string
+	S3Endpoint  string // For S3-compatible services like DigitalOcean Spaces or MinIO
+
+	// Google Auth
+	GoogleClientID string
 }
 
 func Load() *Config {
@@ -67,6 +77,14 @@ func Load() *Config {
 		UploadDir:     getEnv("UPLOAD_DIR", "./uploads"),
 		MaxUploadMB:   10,
 		CloudinaryURL: getEnv("CLOUDINARY_URL", ""),
+
+		// S3 Storage
+		S3Bucket:       getEnv("S3_BUCKET", ""),
+		S3Region:       getEnv("S3_REGION", "ap-southeast-1"),
+		S3AccessKey:    getEnv("S3_ACCESS_KEY", ""),
+		S3SecretKey:    getEnv("S3_SECRET_KEY", ""),
+		S3Endpoint:     getEnv("S3_ENDPOINT", ""),
+		GoogleClientID: getEnv("GOOGLE_CLIENT_ID", ""),
 	}
 }
 

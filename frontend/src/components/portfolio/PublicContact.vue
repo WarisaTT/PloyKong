@@ -1,7 +1,7 @@
 <template>
   <section id="contact" class="pub-contact pub-section" :class="'layout-' + (data.layout || 'centered')">
     <div class="section-header-wrapper">
-      <h2 class="layered-title" data-text="Contact">Contact</h2>
+      <h2 class="layered-title" :data-text="data.title || 'Contact'">{{ data.title || 'Contact' }}</h2>
     </div>
     <div v-if="data.image_url" class="universal-section-img-container">
       <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
@@ -157,15 +157,26 @@ function getIcon(platform: string) {
 .layout-left .section-header-wrapper {
   text-align: left;
 }
+.contact-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
 .layout-left .contact-grid {
   justify-content: flex-start;
 }
 
-.contact-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  justify-content: center;  
+.contact-card {
+  flex: 0 1 280px;
+  min-width: 240px;
+}
+
+@media (max-width: 640px) {
+  .contact-card {
+    flex: 1 1 100%;
+  }
 }
 
 .contact-card {

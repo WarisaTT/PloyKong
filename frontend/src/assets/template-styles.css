@@ -6,42 +6,196 @@
    ============================================================ */
 
 /* Legacy hardcoded grid rules removed. Layout is now dynamically handled by half-width column spans. */
+.pub-container {
+    padding: 0 16px !important;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
 
-/* ════════════════════════════════════════════════════════════
-   PROGRAMMER  ·  Terminal / Hacker
-   Fira Code mono · `// comment` labels · bordered terminal cards
-   ════════════════════════════════════════════════════════════ */
+/* Base sections styling */
 
 .tpl-programmer {
     font-family: var(--font-body) !important;
 }
 
-/* --- Terminal bar at top of hero --- */
-.tpl-programmer .pub-hero {
-    padding-top: 0 !important;
-    background:
-        radial-gradient(ellipse at 5% 10%, var(--primary-glow), transparent 50%),
-        linear-gradient(180deg, rgba(var(--bg-rgb), 0.85), transparent) !important;
+/* Global Stretch Rules for all templates (Works in Public and Builder) */
+.sections-grid {
+    background: none !important;
+    align-items: stretch !important;
+    gap: 20px !important;
 }
 
-.tpl-programmer .pub-hero::before {
-    content: '●  ●  ●    portfolio.sh — ' attr(data-name);
-    display: block;
-    height: 36px;
-    line-height: 36px;
-    padding: 0 16px;
-    background: var(--surface);
-    border-bottom: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
-    font-size: 11px;
-    letter-spacing: 1px;
-    color: var(--primary);
+.sections-grid>.section-wrapper.span-half {
+    height: 100% !important;
 }
+
+/* Builder specific targets */
+.sections-grid>.section-wrapper.span-half>.section-block,
+.sections-grid>.section-wrapper.span-half>.section-block>.section-preview,
+.sections-grid>.section-wrapper.span-half>.section-block>.section-preview>.section-preview-inner {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Public specific targets */
+.sections-grid>.section-wrapper.span-half>section,
+.sections-grid>.section-wrapper.span-half>.section-preview-inner {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure sections inside stretches to full height of parent grid cell */
+.pub-section {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    border-top: none !important;
+    /* Unified border on wrapper instead */
+}
+
+/* Global Row Divider Logic */
+.section-wrapper {
+    position: relative;
+}
+
+/* Hide divider if user opted-out via hide_divider in data */
+.section-wrapper.hide-divider {
+    --row-divider-opacity: 0;
+}
+
+.section-wrapper.is-row-start::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1px;
+    background: var(--border);
+    opacity: var(--row-divider-opacity, 1);
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Always hide divider for the very first section of the grid */
+.sections-grid>.section-wrapper:first-child::before {
+    display: none !important;
+}
+
+/* Handle template specific border colors */
+.tpl-programmer .section-wrapper.is-row-start::before {
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.tpl-business .section-wrapper.is-row-start::before {
+    height: 2px;
+}
+
+.tpl-creative .section-wrapper.is-row-start::before {
+    background: linear-gradient(90deg, var(--primary), var(--secondary), transparent);
+}
+
+.tpl-creative .pub-section::before {
+    display: none !important;
+    /* Hide old gradient divider */
+}
+
+.section-wrapper.is-row-start.span-full::before,
+.section-wrapper.is-row-start.span-half:not(.is-paired)::before {
+    width: 100% !important;
+}
+
+.section-wrapper.is-row-start.span-half.is-paired::before {
+    width: calc(200% + 20px) !important;
+    /* Bridges the 20px gap */
+}
+
+@media (max-width: 640px) {
+    .section-wrapper.span-half.is-row-start.is-paired::before {
+        width: 100% !important;
+        /* Reset on mobile stacking */
+    }
+}
+
+/* Contact, Social, Stats & Skills: 2-column rule for 1/2 column layouts with left alignment */
+.section-wrapper.span-half .layout-left .contact-grid,
+.section-wrapper.span-half .layout-left .social-grid,
+.section-wrapper.span-half .layout-left .stats-grid,
+.section-wrapper.span-half .layout-left .skills-grid.grid-tags {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+.section-wrapper.span-half .layout-left .contact-card,
+.section-wrapper.span-half .layout-left .social-btn,
+.section-wrapper.span-half .layout-left .stat-box,
+.section-wrapper.span-half .layout-left .skill-tag {
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    /* Allow shrinking */
+}
+
+/* Projects & Certs: Stack better in 1/2 column */
+.section-wrapper.span-half .proj-card,
+.section-wrapper.span-half .cert-card {
+    width: 100% !important;
+    max-width: none !important;
+    flex: 0 0 100% !important;
+}
+
+.tpl-programmer .pub-container,
+.tpl-programmer .section-preview-inner {
+    background: var(--bg) !important;
+}
+
+/* --- Terminal bar at top of hero --- */
+.tpl-programmer {
+    background: none !important;
+
+}
+
+.tpl-programmer .pub-hero {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    /* border-top removed - handled by wrapper */
+
+    background-color: var(--bg) !important;
+    background-image:
+        /* glow มุมขวาบน */
+        radial-gradient(circle at 100% 0%,
+            color-mix(in srgb, var(--secondary) 40%, transparent) 0%,
+            transparent 55%),
+
+        /* glow ซ้ายบนจาง ๆ เพิ่ม balance */
+        radial-gradient(circle at 0% 0%,
+            color-mix(in srgb, var(--primary) 25%, transparent) 0%,
+            transparent 60%),
+
+        /* base fade */
+        linear-gradient(to bottom,
+            color-mix(in srgb, var(--secondary) 8%, transparent) 0%,
+            rgba(var(--bg-rgb), 0) 70%) !important;
+
+    background-repeat: no-repeat !important;
+    background-blend-mode: normal !important;
+
+    height: auto !important;
+    line-height: normal !important;
+}
+
 
 .tpl-programmer .hero-ring {
     display: none !important;
 }
 
 .tpl-programmer .pub-hero-inner {
+    margin-left: auto !important;
     flex-direction: row !important;
     text-align: left !important;
     align-items: flex-start !important;
@@ -80,20 +234,23 @@
 }
 
 .tpl-programmer .hero-name {
-    font-size: 28px !important;
-    letter-spacing: -1px !important;
-    text-align: left !important;
-    background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
+    font-size: 42px !important;
+    font-weight: 800 !important;
+    letter-spacing: -1.2px !important;
+    line-height: 1.1 !important;
+    color: color-mix(in srgb, var(--primary) 85%, var(--secondary));
+    background: none !important;
+    -webkit-text-fill-color: unset !important;
+    text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.25),
+        0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .tpl-programmer .hero-tagline {
     font-size: 12px !important;
     text-align: left !important;
     color: var(--muted) !important;
-    -webkit-text-fill-color: var(--muted) !important;
+    -webkit-text-fill-color: var(--text) !important;
     background: none !important;
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
@@ -101,7 +258,7 @@
 
 .tpl-programmer .hero-tagline::before {
     content: '// ';
-    opacity: 0.5;
+    opacity: 0.6;
 }
 
 .tpl-programmer .hero-cta {
@@ -130,7 +287,7 @@
 }
 
 .tpl-programmer .hero-btn:not(.primary) {
-    border-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: var(--border) !important;
     color: var(--text) !important;
     background: transparent !important;
     box-shadow: none !important;
@@ -138,12 +295,34 @@
 
 /* Section labels */
 .tpl-programmer .pub-section {
-    border-top: 1px solid color-mix(in srgb, var(--primary) 20%, transparent) !important;
+    /* border-top removed - handled by wrapper */
     padding: 32px 24px !important;
 }
 
+@media (max-width: 768px) {
+    .tpl-programmer .pub-hero-inner {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 32px 16px !important;
+    }
+
+    .tpl-programmer .hero-avatar-wrap {
+        margin: 0 auto 16px !important;
+    }
+
+    .tpl-programmer .hero-name,
+    .tpl-programmer .hero-tagline {
+        text-align: center !important;
+    }
+
+    .tpl-programmer .hero-cta {
+        justify-content: center !important;
+    }
+}
+
 .tpl-programmer .layered-title {
-    font-size: 10px !important;
+    font-size: 25px !important;
     font-weight: 400 !important;
     color: var(--primary) !important;
     letter-spacing: 3px !important;
@@ -171,8 +350,40 @@
     border-radius: 2px !important;
     font-family: inherit !important;
     font-size: 11px !important;
-    color: var(--primary) !important;
+    color: var(--text) !important;
     padding: 4px 10px !important;
+}
+
+/* ── Skills ── */
+.tpl-programmer .pub-section .skills-grid .skill-tag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: max-content !important;
+
+}
+
+.tpl-programmer .pub-section .skills-groups {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px !important;
+    justify-content: center !important;
+}
+
+.tpl-programmer .pub-section .skills-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px 16px !important;
+    width: 100% !important;
+}
+
+/* Skills: massive text */
+.tpl-programmer .pub-section .skills-groups {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, auto));
+    gap: 20px;
+    justify-content: flex-start;
 }
 
 /* Experience: terminal bordered cards */
@@ -197,25 +408,81 @@
 }
 
 .tpl-programmer .tl-position {
-    color: var(--primary) !important;
+    color: color-mix(in srgb, var(--text) 70%, var(--primary) 80%) !important;
     font-weight: 700 !important;
     font-size: 13px !important;
 }
 
+/* Position */
+.tpl-programmer .tl-loc {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.2px !important;
+
+    color: color-mix(in srgb, var(--text) 70%, var(--secondary) 80%) !important;
+}
+
+/* Company */
 .tpl-programmer .tl-company {
     font-size: 11px !important;
-    color: var(--secondary) !important;
+    font-weight: 600 !important;
+
+    color: var(--primary) !important;
+
 }
 
 .tpl-programmer .tl-date {
     font-size: 10px !important;
-    color: rgba(255, 255, 255, 0.3) !important;
+    color: var(--muted) !important;
 }
 
 .tpl-programmer .tl-desc {
     font-size: 11px !important;
     color: var(--muted) !important;
     margin-top: 6px !important;
+}
+
+/* Contact: Centered flex for leftover items */
+.tpl-programmer .layout-centered .contact-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 20px !important;
+}
+
+.tpl-programmer .layout-centered .contact-card {
+    flex: 0 0 auto !important;
+    width: 260px !important;
+}
+
+.tpl-programmer .contact-card {
+    background: color-mix(in srgb, var(--surface) 80%, transparent) !important;
+    border-color: color-mix(in srgb, var(--primary) 15%, transparent) !important;
+    border-radius: 4px !important;
+    padding: 24px !important;
+}
+
+.tpl-programmer .contact-card:hover {
+    background: var(--primary-glow) !important;
+    border-color: var(--primary) !important;
+}
+
+@media (max-width: 768px) {
+    .tpl-programmer .layout-centered .contact-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+    }
+
+    .tpl-programmer .layout-centered .contact-card {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .tpl-programmer .layout-centered .contact-grid {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 
@@ -294,6 +561,29 @@
     border-radius: 0 !important;
 }
 
+@media (max-width: 768px) {
+    .tpl-designer .pub-hero-inner {
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 32px !important;
+    }
+
+    .tpl-designer .hero-avatar-wrap {
+        width: 180px !important;
+        height: 240px !important;
+        margin: 0 auto !important;
+    }
+
+    .tpl-designer .hero-name,
+    .tpl-designer .hero-tagline {
+        text-align: center !important;
+    }
+
+    .tpl-designer .hero-cta {
+        justify-content: center !important;
+    }
+}
+
 .tpl-designer .hero-ring {
     display: none !important;
 }
@@ -328,7 +618,7 @@
     font-weight: 300;
     text-align: left !important;
     margin: 0 0 32px !important;
-    background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
+    background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
@@ -464,28 +754,12 @@
     max-width: 100% !important;
     font-family: var(--font-body) !important;
     width: 100% !important;
-    padding: 2px 24px !important;
-}
-
-/* ให้ grid cell สูงเท่ากัน */
-.tpl-firstjobber .sections-grid {
-    align-items: stretch;
-    gap: 20px !important;
-    /* ลดช่องว่างบน-ล่าง */
-}
-
-/* ให้ wrapper ยืดเต็ม cell */
-.tpl-firstjobber .sections-grid>.section-wrapper.span-half {
-    height: 100%;
+    gap: 4px !important;
 }
 
 /* ห้ามบังคับ section เป็น flex */
 .tpl-firstjobber .sections-grid>.section-wrapper.span-half>section {
     height: 100%;
-}
-
-.tpl-firstjobber .pub-section {
-    height: 100% !important;
 }
 
 .tpl-firstjobber .sections-container>div,
@@ -551,6 +825,47 @@
 
 .tpl-firstjobber .hero-ring {
     display: none !important;
+}
+
+@media (max-width: 768px) {
+    .tpl-firstjobber {
+        padding: 2px 12px !important;
+    }
+
+    .tpl-firstjobber .pub-hero-inner {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 24px 16px !important;
+    }
+
+    .tpl-firstjobber .hero-avatar-wrap {
+        margin: 0 auto 16px !important;
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    .tpl-firstjobber .hero-text {
+        grid-template-columns: 1fr !important;
+        text-align: center !important;
+    }
+
+    .tpl-firstjobber .hero-role-badge,
+    .tpl-firstjobber .hero-name,
+    .tpl-firstjobber .hero-tagline {
+        grid-column: 1 / -1 !important;
+        text-align: center !important;
+        justify-content: center !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .tpl-firstjobber .hero-cta {
+        grid-column: 1 / -1 !important;
+        grid-row: auto !important;
+        align-items: center !important;
+        margin-top: 16px !important;
+    }
 }
 
 /* ── Hero Text: CSS Grid layout ── */
@@ -906,6 +1221,8 @@
     background: none !important;
     padding: 0 !important;
     border-bottom: 2px solid var(--primary) !important;
+    max-height: max-content !important;
+
 }
 
 .tpl-business .pub-hero-inner {
@@ -918,7 +1235,7 @@
 }
 
 .tpl-business .hero-avatar-wrap {
-    width: 130px !important;
+    width: 30% !important;
     min-height: 280px;
     flex-shrink: 0;
     margin: 0 !important;
@@ -930,12 +1247,14 @@
     align-items: center !important;
     justify-content: center !important;
     padding: 24px 12px !important;
+    max-height: max-content !important;
+
 }
 
 .tpl-business .hero-img,
 .tpl-business .hero-avatar-fallback {
-    width: 64px !important;
-    height: 64px !important;
+    width: 200px !important;
+    height: 200px !important;
     border-radius: 8px !important;
     margin-bottom: 0 !important;
 }
@@ -1010,10 +1329,9 @@
     color: #fff !important;
 }
 
-/* Sections */
 .tpl-business .pub-section {
     padding: 28px 0 !important;
-    border-top: 2px solid var(--border) !important;
+    /* border-top removed - handled by wrapper */
 }
 
 .tpl-business .layered-title {
@@ -1193,11 +1511,9 @@
     color: var(--text) !important;
 }
 
-/* Sections */
 .tpl-creative .pub-section {
     padding: 60px 0 !important;
-    border-top: none !important;
-    position: relative;
+    /* border-top removed - handled by wrapper */
 }
 
 .tpl-creative .pub-section::before {
@@ -1229,6 +1545,10 @@
 }
 
 .tpl-creative .skill-tag {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
+    width: max-content !important;
     background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
     color: #000 !important;
     border: none !important;
@@ -1240,6 +1560,71 @@
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
 }
+
+/* ── Skills ── */
+.tpl-creative .pub-section .skills-grid .skill-tag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: max-content !important;
+
+}
+
+.tpl-creative .pub-section .skills-groups {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px !important;
+    justify-content: center !important;
+}
+
+.tpl-creative .pub-section .skills-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px 16px !important;
+    width: 100% !important;
+}
+
+/* Skills: massive text */
+.tpl-creative .pub-section .skills-groups {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, auto));
+    gap: 20px;
+    justify-content: flex-start;
+}
+
+/* ── Skills ── */
+.tpl-creative .pub-section .skills-grid .skill-tag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: max-content !important;
+
+}
+
+.tpl-creative .pub-section .skills-groups {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px !important;
+    justify-content: center !important;
+}
+
+.tpl-creative .pub-section .skills-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px 16px !important;
+    width: 100% !important;
+}
+
+/* Skills: massive text */
+.tpl-creative .pub-section .skills-groups {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, auto));
+    gap: 20px;
+    justify-content: flex-start;
+}
+
 
 .tpl-creative .experience-item {
     padding-left: 24px !important;

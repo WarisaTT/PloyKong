@@ -11,6 +11,7 @@ import (
 type User struct {
 	ID         string         `json:"id"`
 	Email      string         `json:"email"`
+	GoogleID   sql.NullString `json:"-"`
 	Password   string         `json:"-"` // never expose
 	Name       string         `json:"name"`
 	AvatarURL  sql.NullString `json:"avatar_url"`
@@ -138,13 +139,14 @@ type HeroData struct {
 // ─── Experience Section Data ──────────────────────────────────────────────────
 
 type ExperienceItem struct {
-	Company     string `json:"company"`
-	Position    string `json:"position"`
-	StartDate   string `json:"start_date"`
-	EndDate     string `json:"end_date"`
-	IsCurrent   bool   `json:"is_current"`
-	Description string `json:"description"`
-	Location    string `json:"location"`
+	Company     string   `json:"company"`
+	Position    string   `json:"position"`
+	StartDate   string   `json:"start_date"`
+	EndDate     string   `json:"end_date"`
+	IsCurrent   bool     `json:"is_current"`
+	Description string   `json:"description"`
+	Location    string   `json:"location"`
+	ImageURLs   []string `json:"image_urls,omitempty"`
 }
 
 type ExperienceData struct {

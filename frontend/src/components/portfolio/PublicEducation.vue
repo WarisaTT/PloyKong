@@ -4,7 +4,7 @@
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
   ]" :style="data.section_bg_color ? { background: data.section_bg_color } : {}">
     <div class="section-header-wrapper">
-      <h2 class="layered-title" data-text="Education">Education</h2>
+      <h2 class="layered-title" :data-text="data.title || 'Education'">{{ data.title || 'Education' }}</h2>
     </div>
     <div v-if="data.image_url" class="universal-section-img-container">
       <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />

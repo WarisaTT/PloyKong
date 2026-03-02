@@ -6,7 +6,7 @@
         <div class="logo-pk">
           <img src="/favicon.png" alt="PloyKong Logo" class="logo-img" />
         </div>
-        <span class="logo-text">PloyKong</span>
+        <span class="logo-text">Ploy<em>Kong</em></span>
       </div>
       <nav class="sidebar-nav">
         <RouterLink
@@ -291,6 +291,9 @@ async function handleLogout() {
   font-size: 17px;
   font-weight: 800;
 }
+
+.logo-text em{ font-style: normal; background: var(--grad-pk); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
 
 .sidebar-nav {
   flex: 1;

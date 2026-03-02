@@ -10,6 +10,11 @@ import (
 
 	"ploykong-api/internal/config"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awscfg "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gofiber/fiber/v2"
@@ -46,7 +51,55 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 	// 4. Generate safe, unique filename
 	filename := fmt.Sprintf("%s_%d%s", ulid.Make().String(), time.Now().Unix(), ext)
 
-	// 5. Check if Cloudinary is configured
+	// 5. Check if S3 is configured
+	if h.cfg.S3Bucket != "" && h.cfg.S3AccessKey != "" && h.cfg.S3SecretKey != "" {
+		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			if h.cfg.S3Endpoint != "" {
+				return aws.Endpoint{
+					URL:           h.cfg.S3Endpoint,
+					SigningRegion: h.cfg.S3Region,
+				}, nil
+			}
+			return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+		})
+
+		sdkConfig, err := awscfg.LoadDefaultConfig(context.TODO(),
+			awscfg.WithRegion(h.cfg.S3Region),
+			awscfg.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(h.cfg.S3AccessKey, h.cfg.S3SecretKey, "")),
+			awscfg.WithEndpointResolverWithOptions(customResolver),
+		)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "S3 configuration error")
+		}
+
+		s3Client := s3.NewFromConfig(sdkConfig)
+		uploader := manager.NewUploader(s3Client)
+
+		file, err := fileHeader.Open()
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "Failed to open upload file")
+		}
+		defer file.Close()
+
+		result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
+			Bucket: aws.String(h.cfg.S3Bucket),
+			Key:    aws.String(fmt.Sprintf("uploads/%s", filename)),
+			Body:   file,
+			ACL:    "public-read",
+		})
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to upload to S3: %v", err))
+		}
+
+		return c.JSON(fiber.Map{
+			"success": true,
+			"data": fiber.Map{
+				"url": result.Location,
+			},
+		})
+	}
+
+	// 6. Check if Cloudinary is configured
 	if h.cfg.CloudinaryURL != "" {
 		cld, err := cloudinary.NewFromURL(h.cfg.CloudinaryURL)
 		if err != nil {

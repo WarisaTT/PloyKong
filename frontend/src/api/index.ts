@@ -115,6 +115,8 @@ export const authAPI = {
     api.post("/auth/refresh", { refresh_token: refreshToken }),
   logout: (refreshToken: string) =>
     api.post("/auth/logout", { refresh_token: refreshToken }),
+  loginWithGoogle: (credential: string) =>
+    api.post("/auth/google", { credential }),
 };
 
 // ─── User ─────────────────────────────────────────────────────────────────────

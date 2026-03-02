@@ -108,7 +108,6 @@ async function downloadResume() {
 ========================= */
 .universal-section-img {
   width: 100%;
-  max-width: 800px;
   height: 250px;
   object-fit: cover;
   border-radius: 16px;
@@ -117,12 +116,13 @@ async function downloadResume() {
 }
 
 .pub-hero {
+  width: 100% !important;
   position: relative;
 
   display: flex;
   justify-content: center; /* จัดกลางแนวนอน */
 
-  min-height: 50vh;
+  min-height: max-content;
   padding: 40px 0;
 
   overflow: hidden;

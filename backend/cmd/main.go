@@ -79,6 +79,7 @@ func main() {
 	auth := api.Group("/auth")
 	auth.Post("/register", authHandler.Register)
 	auth.Post("/login", authHandler.Login)
+	auth.Post("/google", authHandler.GoogleLogin)
 	auth.Post("/refresh", authHandler.RefreshToken)
 	auth.Post("/logout", middleware.Protected(cfg), authHandler.Logout)
 
