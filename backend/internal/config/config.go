@@ -43,6 +43,10 @@ type Config struct {
 
 	// Google Auth
 	GoogleClientID string
+
+	// URLs (for SEO/Redirects)
+	BaseURL string // API Base URL
+	FEURL   string // Frontend Base URL
 }
 
 func Load() *Config {
@@ -85,6 +89,8 @@ func Load() *Config {
 		S3SecretKey:    getEnv("S3_SECRET_KEY", ""),
 		S3Endpoint:     getEnv("S3_ENDPOINT", ""),
 		GoogleClientID: getEnv("GOOGLE_CLIENT_ID", ""),
+		BaseURL:        getEnv("BASE_URL", "http://localhost:3000"),
+		FEURL:          getEnv("FE_URL", "https://ploy-kong.vercel.app"),
 	}
 }
 

@@ -54,16 +54,25 @@
       >
         <BarChart2 :size="16" />
       </RouterLink>
-      <!-- View Public Link Button -->
+      <!-- View Public Link Button (SEO Friendly) -->
       <a
         v-if="portfolio.is_published"
-        :href="`/p/${portfolio.slug}`"
+        :href="publicUrl"
         target="_blank"
         class="btn btn-secondary btn-sm"
         title="View Public Link"
       >
         <ExternalLink :size="16" />
       </a>
+      <button
+        v-if="portfolio.is_published"
+        class="btn btn-secondary btn-sm"
+        title="Copy SEO Link"
+        @click="copyLink"
+      >
+        <Check v-if="isCopied" :size="16" class="text-success" />
+        <Copy v-else :size="16" />
+      </button>
       <button
         v-else
         disabled
@@ -84,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { RouterLink } from "vue-router";
 import type { Portfolio } from "@/types";
 import { portfolioAPI } from "@/api";
@@ -99,12 +108,28 @@ import {
   FileDown,
   Loader2,
   Copy,
+  Check,
 } from "lucide-vue-next";
 
 const props = defineProps<{ portfolio: Portfolio }>();
 defineEmits<{ delete: []; duplicate: [] }>();
 
 const isDownloading = ref(false);
+const isCopied = ref(false);
+
+const publicUrl = computed(() => {
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace('/api/v1', '')
+  return `${apiBase}/public/p/${props.portfolio.slug}`
+});
+
+function copyLink() {
+  navigator.clipboard.writeText(publicUrl.value).then(() => {
+    isCopied.value = true;
+    setTimeout(() => {
+      isCopied.value = false;
+    }, 2000);
+  });
+}
 
 async function downloadPdf() {
   if (isDownloading.value) return;

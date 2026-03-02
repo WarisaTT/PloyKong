@@ -477,9 +477,14 @@ func callFreeAI(prompt string) (string, error) {
 // PUBLIC HANDLER (no auth — for portfolio viewers)
 // ════════════════════════════════════════════════════════════════════════════
 
-type PublicHandler struct{ db *sql.DB }
+type PublicHandler struct {
+	db  *sql.DB
+	cfg *config.Config
+}
 
-func NewPublicHandler(db *sql.DB) *PublicHandler { return &PublicHandler{db: db} }
+func NewPublicHandler(db *sql.DB, cfg *config.Config) *PublicHandler {
+	return &PublicHandler{db: db, cfg: cfg}
+}
 
 func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 	slug := c.Params("slug")
@@ -602,7 +607,7 @@ func (h *PublicHandler) renderSEOPage(c *fiber.Ctx, p *models.Portfolio) error {
 		description = p.Description.String
 	}
 
-	image := "https://ploykong.com/og-image.png"
+	image := h.cfg.BaseURL + "/og-image.png"
 	if p.OGImageURL.Valid && p.OGImageURL.String != "" {
 		image = p.OGImageURL.String
 	}
@@ -617,7 +622,7 @@ func (h *PublicHandler) renderSEOPage(c *fiber.Ctx, p *models.Portfolio) error {
     
     <!-- Open Graph / Meta -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://ploykong.com/p/%s">
+    <meta property="og:url" content="%s/p/%s">
     <meta property="og:title" content="%s">
     <meta property="og:description" content="%s">
     <meta property="og:image" content="%s">
@@ -644,11 +649,11 @@ func (h *PublicHandler) renderSEOPage(c *fiber.Ctx, p *models.Portfolio) error {
         // If the shared link IS already the SPA URL, JS takes over as usual.
         // We use a small delay for better feel if landed directly.
         // If landed on API, redirect to Frontend.
-        const FE_URL = "https://ploy-kong.vercel.app/p/%s";
+        const FE_URL = "%s/p/%s";
         window.location.href = FE_URL;
     </script>
 </body>
-</html>`, title, description, p.Slug, title, description, image, title, description, image, p.Slug)
+</html>`, title, description, h.cfg.FEURL, p.Slug, title, description, image, title, description, image, h.cfg.FEURL, p.Slug)
 
 	c.Set("Content-Type", "text/html")
 	return c.SendString(html)

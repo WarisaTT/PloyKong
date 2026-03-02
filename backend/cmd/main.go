@@ -133,7 +133,7 @@ func main() {
 	api.Post("/upload", middleware.Protected(cfg), uploadHandler.UploadImage)
 
 	// Public (no auth)
-	publicHandler := handlers.NewPublicHandler(db)
+	publicHandler := handlers.NewPublicHandler(db, cfg)
 	public := api.Group("/public")
 	public.Get("/p/:slug", publicHandler.ViewPortfolio)
 	public.Post("/p/:slug/track", publicHandler.TrackEvent)
