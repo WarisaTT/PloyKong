@@ -19,6 +19,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gofiber/fiber/v2"
 	"github.com/oklog/ulid/v2"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type UploadHandler struct {
@@ -82,10 +83,11 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 		defer file.Close()
 
 		result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
-			Bucket: aws.String(h.cfg.S3Bucket),
-			Key:    aws.String(fmt.Sprintf("uploads/%s", filename)),
-			Body:   file,
-			ACL:    "public-read",
+			Bucket:      aws.String(h.cfg.S3Bucket),
+			Key:         aws.String(fmt.Sprintf("uploads/%s", filename)),
+			Body:        file,
+			ContentType: aws.String(fileHeader.Header.Get("Content-Type")),
+			ACL:         types.ObjectCannedACLPublicRead,
 		})
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Failed to upload to S3: %v", err))
