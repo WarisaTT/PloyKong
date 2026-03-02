@@ -430,6 +430,8 @@ onMounted(() => loadPortfolio());
   position: relative;
   color: var(--text);
   background: var(--bg) fixed !important; /* Fixed background for premium feel */
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Loading */
@@ -547,7 +549,7 @@ onMounted(() => loadPortfolio());
 
 .sections-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 20px;
   width: 100%;
   max-width: 1200px; /* Constrain wide screens */
@@ -575,7 +577,10 @@ onMounted(() => loadPortfolio());
 }
 .section-list-leave-active {
   position: absolute;
-  width: 100%; /* adjust if needed for container offset */
+  width: 100%;
+  left: 0;
+  box-sizing: border-box;
+  opacity: 0;
 }
 
 /* Divider Implementation */
@@ -594,7 +599,7 @@ onMounted(() => loadPortfolio());
 
 @media (max-width: 640px) {
   .sections-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .section-wrapper.span-half {
     grid-column: 1 / -1;

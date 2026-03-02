@@ -831,8 +831,13 @@ onUnmounted(() => {
 .fly-in-r { transform: translateX(20px); }
 .fly-in.show, .fly-in-l.show, .fly-in-r.show { opacity: 1; transform: translate(0); }
 
-.toast-area { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
-.toast { background: var(--surf); border: 1px solid var(--border2); padding: 10px 16px; border-radius: 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); }
+.toast-area { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; max-width: calc(100% - 40px); }
+.toast { background: var(--surf); border: 1px solid var(--border2); padding: 10px 16px; border-radius: 10px; font-size: 11px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+@media (max-width: 600px) {
+  .toast-area { top: auto; bottom: 80px; left: 50%; right: auto; transform: translateX(-50%); align-items: center; width: 100%; }
+  .toast { width: fit-content; max-width: 280px; }
+}
 
 .confetti-wrap { position: absolute; inset: 0; pointer-events: none; z-index: 99; }
 .confetti-piece { position: absolute; top: -10px; animation: fall linear both; }

@@ -1004,6 +1004,9 @@ const testimonials = [
   .hstat { padding: 12px; }
   .hstat-num { font-size: 18px; }
 }
+@media (max-width: 400px) {
+  .hero-stats { grid-template-columns: 1fr !important; }
+}
 
 .hstat {
   display: flex; flex-direction: column; align-items: center;

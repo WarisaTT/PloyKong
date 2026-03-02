@@ -9,8 +9,31 @@
 .pub-container {
     padding: 0 16px !important;
     width: 100% !important;
+    max-width: 100vw !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    overflow-x: hidden !important;
+}
+
+@media (max-width: 768px) {
+    .pub-container {
+        padding: 0 12px !important;
+    }
+
+    .sections-grid {
+        gap: 16px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .sections-grid {
+        gap: 12px !important;
+    }
+
+    .skill-tag {
+        padding: 6px 12px !important;
+        font-size: 11px !important;
+    }
 }
 
 /* Base sections styling */
@@ -87,7 +110,7 @@
 /* Handle template specific border colors */
 .tpl-programmer .section-wrapper.is-row-start::before {
     background: color-mix(in srgb, var(--primary) 20%, transparent);
-    
+
 }
 
 .tpl-business .section-wrapper.is-row-start::before {
@@ -143,6 +166,16 @@
 }
 
 /* Projects & Certs: Stack better in 1/2 column */
+@media (max-width: 480px) {
+
+    .section-wrapper.span-half .layout-left .contact-grid,
+    .section-wrapper.span-half .layout-left .social-grid,
+    .section-wrapper.span-half .layout-left .stats-grid,
+    .section-wrapper.span-half .layout-left .skills-grid.grid-tags {
+        grid-template-columns: 1fr !important;
+    }
+}
+
 .section-wrapper.span-half .proj-card,
 .section-wrapper.span-half .cert-card {
     width: 100% !important;
@@ -847,46 +880,6 @@
     display: none !important;
 }
 
-@media (max-width: 768px) {
-    .tpl-firstjobber {
-        padding: 2px 12px !important;
-    }
-
-    .tpl-firstjobber .pub-hero-inner {
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        padding: 24px 16px !important;
-    }
-
-    .tpl-firstjobber .hero-avatar-wrap {
-        margin: 0 auto 16px !important;
-        width: 100px !important;
-        height: 100px !important;
-    }
-
-    .tpl-firstjobber .hero-text {
-        grid-template-columns: 1fr !important;
-        text-align: center !important;
-    }
-
-    .tpl-firstjobber .hero-role-badge,
-    .tpl-firstjobber .hero-name,
-    .tpl-firstjobber .hero-tagline {
-        grid-column: 1 / -1 !important;
-        text-align: center !important;
-        justify-content: center !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-
-    .tpl-firstjobber .hero-cta {
-        grid-column: 1 / -1 !important;
-        grid-row: auto !important;
-        align-items: center !important;
-        margin-top: 16px !important;
-    }
-}
 
 /* ── Hero Text: CSS Grid layout ── */
 .tpl-firstjobber .hero-text {
@@ -930,6 +923,12 @@
     -webkit-text-fill-color: var(--text) !important;
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
+}
+
+@media (max-width: 480px) {
+    .tpl-firstjobber .hero-name {
+        font-size: 32px !important;
+    }
 }
 
 /* CTA — row 1-2 right, stacked vertically */
@@ -1091,6 +1090,88 @@
     padding: 16px 0 !important;
     margin-bottom: 0 !important;
     box-shadow: none !important;
+}
+
+/* --- Mobile Overrides for FirstJobber (Placed at end for correct override) --- */
+@media (max-width: 768px) {
+    .tpl-firstjobber .pub-hero-inner {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 24px 16px !important;
+    }
+
+    .tpl-firstjobber .hero-avatar-wrap {
+        margin: 0 auto 16px !important;
+        width: 100px !important;
+        height: 100px !important;
+        align-self: center !important;
+    }
+
+    .tpl-firstjobber .hero-text {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    .tpl-firstjobber .hero-role-badge,
+    .tpl-firstjobber .hero-name,
+    .tpl-firstjobber .hero-tagline {
+        text-align: center !important;
+        justify-content: center !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .tpl-firstjobber .hero-tagline {
+        border-top: none !important;
+        padding-top: 0 !important;
+    }
+
+    .tpl-firstjobber .hero-cta {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin-top: 16px !important;
+        gap: 12px !important;
+    }
+
+    /* Global stack for all template skills groups */
+    .tpl-programmer .pub-section .skills-groups,
+    .tpl-creative .pub-section .skills-groups,
+    .tpl-business .pub-section .skills-groups,
+    .tpl-classic .pub-section .skills-groups,
+    .tpl-firstjobber .pub-section .skills-groups {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+    }
+
+    /* FirstJobber proj grid stack */
+    .tpl-firstjobber .proj-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    .hero-cta {
+        flex-direction: column !important;
+        width: 100% !important;
+        align-items: center !important;
+    }
+
+    .hero-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .tpl-firstjobber .hero-name {
+        font-size: 30px !important;
+    }
 }
 
 .tpl-firstjobber .experience-item:last-child {
@@ -1258,18 +1339,19 @@
 @media (max-width: 768px) {
     .tpl-business .pub-hero-inner {
         flex-direction: column !important;
+        padding: 0 !important;
     }
 
     .tpl-business .hero-avatar-wrap {
         width: 100% !important;
         border-right: none !important;
         border-bottom: 1px solid var(--border) !important;
-        padding: 40px 24px !important;
+        padding: 32px 16px !important;
         min-height: auto !important;
     }
 
     .tpl-business .hero-text {
-        padding: 40px 24px !important;
+        padding: 32px 16px !important;
         text-align: center !important;
         align-items: center !important;
     }
@@ -1488,6 +1570,62 @@
     text-transform: uppercase !important;
     letter-spacing: 2px !important;
     color: var(--muted) !important;
+}
+
+/* Projects for Business */
+.tpl-business .proj-card {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    border-radius: 0 !important;
+    padding: 24px 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 240px 1fr !important;
+    gap: 32px !important;
+    transition: background 0.2s !important;
+}
+
+.tpl-business .proj-card:hover {
+    background: color-mix(in srgb, var(--surface) 20%, transparent) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.tpl-business .proj-img {
+    width: 100% !important;
+    aspect-ratio: 16/9 !important;
+    height: auto !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--border) !important;
+}
+
+.tpl-business .proj-body {
+    padding: 0 !important;
+    text-align: left !important;
+}
+
+.tpl-business .proj-title {
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.tpl-business .proj-tag {
+    background: transparent !important;
+    border: 1px solid var(--border) !important;
+    color: var(--muted) !important;
+    text-transform: uppercase !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+}
+
+@media (max-width: 768px) {
+    .tpl-business .proj-card {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
 }
 
 /* Contact for Business */

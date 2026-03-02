@@ -5,9 +5,9 @@
         class="portfolio-dot"
         :class="{ live: portfolio.is_published }"
       ></div>
-      <div>
+      <div class="portfolio-text">
         <div class="portfolio-title">{{ portfolio.title }}</div>
-        <div class="portfolio-slug">{{ portfolio.slug }}.ploykong.com</div>
+        <div class="portfolio-slug">{{ portfolio.slug }}</div>
       </div>
     </div>
 
@@ -39,7 +39,7 @@
         title="Duplicate Portfolio"
         @click="$emit('duplicate')"
       >
-        <Copy :size="16" />
+        <Files :size="16" />
       </button>
       <RouterLink
         :to="`/portfolios/${portfolio.id}/edit`"
@@ -71,7 +71,7 @@
         @click="copyLink"
       >
         <Check v-if="isCopied" :size="16" class="text-success" />
-        <Copy v-else :size="16" />
+        <Link v-else :size="16" />
       </button>
       <button
         v-else
@@ -107,7 +107,8 @@ import {
   Trash2,
   FileDown,
   Loader2,
-  Copy,
+  Files,
+  Link,
   Check,
 } from "lucide-vue-next";
 
@@ -158,17 +159,19 @@ async function downloadPdf() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   gap: 16px;
-  flex-wrap: wrap;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
 }
+
 .portfolio-item:hover {
-  border-color: rgba(79, 70, 229, 0.3);
+  border-color: var(--primary);
   background: var(--bg2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .portfolio-info {
@@ -176,55 +179,95 @@ async function downloadPdf() {
   align-items: center;
   gap: 12px;
   flex: 1;
-  min-width: 160px;
+  min-width: 0;
 }
+
 .portfolio-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--muted);
   flex-shrink: 0;
 }
+
 .portfolio-dot.live {
   background: var(--success);
-  box-shadow: 0 0 6px var(--success);
+  box-shadow: 0 0 8px var(--success);
 }
+
+.portfolio-text {
+  min-width: 0;
+  flex: 1;
+}
+
 .portfolio-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-anchor: middle;
+  text-overflow: ellipsis;
 }
+
 .portfolio-slug {
-  font-size: 11px;
-  color: var(--neon-cyan);
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.8;
 }
 
 .portfolio-stats {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
+
 .stat-chip {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text-2);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-}
-.stat-chip .icon {
-  opacity: 0.7;
+  gap: 6px;
+  background: var(--surface-2);
+  padding: 4px 10px;
+  border-radius: 8px;
 }
 
 .portfolio-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
+
 .portfolio-actions .btn {
-  padding: 6px 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
 }
+
 .icon-btn-labeled {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+@media (max-width: 768px) {
+  .portfolio-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .portfolio-info {
+    width: 100%;
+  }
+  .portfolio-stats {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .portfolio-actions {
+    width: 100%;
+    justify-content: flex-start;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
 }
 </style>

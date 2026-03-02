@@ -505,31 +505,8 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 		&passwordHash, &p.ExpiresAt, &p.ViewCount,
 	)
 
-	// SEO/Crawler logic: Check if crawler or specifically requested HTML
-	ua := strings.ToLower(c.Get("User-Agent"))
-	crawlers := []string{
-		"facebookexternalhit", "twitterbot", "linkedinbot", "whatsapp",
-		"discordbot", "telegrambot", "line/", "slackbot", "googlebot",
-		"bingbot", "redditbot", "applebot",
-	}
-
-	isCrawler := false
-	for _, bot := range crawlers {
-		if strings.Contains(ua, bot) {
-			isCrawler = true
-			break
-		}
-	}
-
-	// If it's a crawler or explicitly asking for HTML preview
-	if isCrawler || c.Query("preview") == "true" {
-		p.ScanTheme(themeRaw)
-		p.Description = descNull
-		p.SEOTitle = seoTitleNull
-		p.SEODesc = seoDescNull
-		p.OGImageURL = ogImageNull
-		return h.renderSEOPage(c, &p)
-	}
+	// Determine if the client wants JSON (API call from SPA) or HTML (Browser/Bot)
+	wantsJSON := strings.Contains(c.Get("Accept"), "application/json") || c.Query("format") == "json"
 
 	if err == sql.ErrNoRows {
 		return fiber.NewError(404, "portfolio not found")
@@ -537,19 +514,28 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(500, "database error")
 	}
-	if !p.IsPublished {
-		return fiber.NewError(403, "this portfolio is not published")
-	}
-	if p.ExpiresAt != nil && time.Now().After(*p.ExpiresAt) {
-		return fiber.NewError(410, "this portfolio link has expired")
-	}
 
+	// Prepare portfolio data
 	p.ScanTheme(themeRaw)
 	p.Description = descNull
 	p.SEOTitle = seoTitleNull
 	p.SEODesc = seoDescNull
 	p.OGImageURL = ogImageNull
 	p.HasPassword = passwordHash.Valid
+
+	// If it's a direct browser visit or a Bot, show the SEO Page + Redirect
+	if !wantsJSON {
+		return h.renderSEOPage(c, &p)
+	}
+
+	// ─── API RESPONSE (JSON) ──────────────────────────────────────────────────
+	// This part is for the Frontend SPA fetching data
+	if !p.IsPublished {
+		return fiber.NewError(403, "this portfolio is not published")
+	}
+	if p.ExpiresAt != nil && time.Now().After(*p.ExpiresAt) {
+		return fiber.NewError(410, "this portfolio link has expired")
+	}
 
 	// Check password
 	if passwordHash.Valid {
