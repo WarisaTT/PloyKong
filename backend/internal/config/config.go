@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -89,8 +90,8 @@ func Load() *Config {
 		S3SecretKey:    getEnv("S3_SECRET_KEY", ""),
 		S3Endpoint:     getEnv("S3_ENDPOINT", ""),
 		GoogleClientID: getEnv("GOOGLE_CLIENT_ID", ""),
-		BaseURL:        getEnv("BASE_URL", "http://localhost:3000"),
-		FEURL:          getEnv("FE_URL", "https://ploy-kong.vercel.app"),
+		BaseURL:        strings.TrimRight(getEnv("BASE_URL", "http://localhost:3000"), "/) "),
+		FEURL:          strings.TrimRight(getEnv("FE_URL", "https://ploy-kong.vercel.app"), "/) "),
 	}
 }
 

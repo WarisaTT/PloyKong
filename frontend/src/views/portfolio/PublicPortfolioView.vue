@@ -364,7 +364,8 @@ async function loadPortfolio(pw?: string) {
     portfolio.value = data.data;
     // SEO Title update
     setTimeout(() => {
-      document.title = (data.data.seo_title || data.data.title) + " | PloyKong";
+      const title = data.data.seo_title?.String || data.data.title;
+      document.title = (typeof title === 'string' ? title : data.data.title) + " | PloyKong";
     }, 100);
     // Track view
     publicAPI.track(slug.value, "view", document.referrer || "direct");
