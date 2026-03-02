@@ -235,6 +235,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Ensure mobile comfort */
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+}
+
 /* Light gradient background enhancement removed - now integrated into --bg above */
 
 /* ───────────────────────────────────────────────────────────── */
@@ -295,6 +302,15 @@ h6 {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .btn {
+    width: 100%;
+    /* Stack buttons globally on mobile if needed */
+    padding: 12px 24px;
+    font-size: 15px;
+  }
 }
 
 .btn-primary {
@@ -448,7 +464,8 @@ h6 {
 .layered-title {
   position: relative;
   display: inline-block;
-  font-size: 36px;
+  font-size: clamp(24px, 5vw, 36px);
+  /* Responsive font size */
   font-weight: 800;
   text-transform: uppercase;
   color: var(--title-color, var(--text));
@@ -544,6 +561,21 @@ h6 {
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.5s infinite;
   border-radius: 6px;
+}
+
+/* Global Grid Fixes */
+.stats-grid,
+.skills-grid,
+.social-grid {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @keyframes skeleton-shimmer {

@@ -217,51 +217,41 @@
     </div>
 
     <!-- BUSINESS -->
-    <div v-else-if="layout === 'business'" class="tpl-business" :style="{ display: 'flex', background: th.bg, minHeight: '500px', fontFamily: '\'Palatino Linotype\', Palatino, serif' }">
-      <div :style="{ width: '110px', flexShrink: 0, background: th.isDark ? th.primary + '12' : th.primary + '08', borderRight: `1px solid ${th.border}`, padding: '18px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }">
-        <div :style="{ width: '52px', height: '52px', borderRadius: '8px', background: `linear-gradient(135deg, ${th.primary}, ${th.secondary})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', boxShadow: th.isDark ? `0 0 16px ${th.primary}40` : `0 4px 12px ${th.primary}30` }">👤</div>
+    <div v-else-if="layout === 'business'" class="tpl-business" :style="{ display: 'flex', background: th.bg, minHeight: '500px', fontFamily: 'serif' }">
+      <div :style="{ width: '130px', flexShrink: 0, background: th.isDark ? th.primary + '18' : th.primary + '08', borderRight: `2px solid ${th.primary}40`, padding: '24px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }">
+        <div :style="{ width: '64px', height: '64px', borderRadius: '8px', background: `linear-gradient(135deg, ${th.primary}, ${th.secondary})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', boxShadow: `0 4px 16px ${th.primary}40`, border: `2px solid ${th.bg}` }">👤</div>
         <div style="text-align:center;">
-          <div :style="{ color: th.text, fontSize: '11px', fontWeight: 800, lineHeight: 1.2 }">{{ h.name.split(' ')[0] }}</div>
-          <div :style="{ color: th.primary, fontSize: '8px', marginTop: '2px' }">{{ h.role.split(' ')[0] }}</div>
+          <div :style="{ color: th.text, fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }">{{ h.name.split(' ')[0] }}</div>
+          <div :style="{ color: th.primary, fontSize: '9px', fontWeight: 700, marginTop: '2px', opacity: 0.8 }">{{ h.role.split(' ')[0] }}</div>
         </div>
-        <div v-for="(item, i) in ['About','Skills','Contact']" :key="i" :style="{ width: '100%', padding: '6px 8px', borderRadius: '6px', background: i===0 ? th.primary + '25' : 'transparent', color: i===0 ? th.primary : th.muted, fontSize: '9px', fontWeight: 700, textAlign: 'center', border: `1px solid ${i===0 ? th.primary+'40' : 'transparent'}`, cursor: 'pointer' }">{{ item }}</div>
-        <div style="margin-top:auto; width:100%;">
-          <div v-for="(v, i) in [ct.email?.split('@')[0], ct.location?.split(',')[0]].filter(Boolean)" :key="i" :style="{ color: th.muted, fontSize: '8px', textAlign: 'center', marginBottom: '4px', wordBreak: 'break-all' }">{{ v }}</div>
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 4px;">
+           <div v-for="(item, i) in ['PROFILES','COMPETENCIES','HISTORY']" :key="i" :style="{ width: '100%', padding: '8px 4px', borderRadius: '2px', color: i===0 ? th.primary : th.muted, fontSize: '8px', fontWeight: 800, textAlign: 'center', borderBottom: `1px solid ${i===0 ? th.primary+'40' : 'transparent'}`, letterSpacing: '1px' }">{{ item }}</div>
         </div>
       </div>
-      <div style="flex:1; padding:18px 16px; display:flex; flex-direction:column; gap:14px; overflow:hidden;">
-        <div :style="{ borderBottom: `1px solid ${th.border}`, paddingBottom: '14px' }">
-          <div :style="{ color: th.muted, fontSize: '9px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }">Profile</div>
-          <div :style="{ color: th.text, fontSize: '18px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '2px' }">{{ h.name }}</div>
-          <div :style="{ color: th.primary, fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '8px', fontStyle: 'italic' }">{{ h.role }}</div>
-          <div :style="{ color: th.muted, fontSize: '10px', lineHeight: 1.7 }">{{ h.tagline.split('\n')[0] }}</div>
-          <div v-if="h.show_hire_me" :style="{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: `linear-gradient(135deg, ${th.primary}, ${th.secondary})`, color: th.isDark ? '#000' : '#fff', fontSize: '9px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', padding: '6px 14px', borderRadius: '3px' }">◈ Available for Hire</div>
+      <div style="flex:1; padding:32px 24px; display:flex; flex-direction:column; gap:24px; overflow:hidden;">
+        <div :style="{ borderBottom: `2px solid ${th.primary}`, paddingBottom: '20px' }">
+          <div :style="{ color: th.primary, fontSize: '10px', fontWeight: 800, letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px' }">Executive Summary</div>
+          <div :style="{ color: th.text, fontSize: '24px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '4px' }">{{ h.name }}</div>
+          <div :style="{ color: th.muted, fontSize: '11px', fontWeight: 700, letterSpacing: '1px', marginBottom: '12px' }">{{ h.role }}</div>
+          <div :style="{ color: th.muted, fontSize: '11px', lineHeight: 1.8 }">{{ h.tagline.split('\n')[0] }}</div>
         </div>
-        <div>
-          <div :style="{ color: th.muted, fontSize: '9px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }">Core Competencies</div>
-          <div v-for="(s, i) in skills" :key="i" style="margin-bottom: 8px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span :style="{ color: th.text, fontSize: '11px', fontWeight: 600 }">{{ s.name }}</span>
-              <span :style="{ color: th.primary, fontSize: '10px', fontWeight: 700 }">{{ s.level }}%</span>
-            </div>
-            <div :style="{ background: th.border, borderRadius: '100px', height: '4px', overflow: 'hidden' }">
-              <div :style="{ width: s.level + '%', height: '100%', background: `linear-gradient(90deg, ${th.primary}80, ${th.primary})`, borderRadius: '100px', boxShadow: th.isDark ? `0 0 6px ${th.primary}60` : 'none' }"></div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div :style="{ color: th.muted, fontSize: '9px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px' }">Career History</div>
-          <div v-for="(e, i) in exps" :key="i" style="display:flex; gap:10px; margin-bottom:10px;">
-            <div style="display:flex; flex-direction:column; align-items:center; padding-top:2px;">
-              <div :style="{ width: '8px', height: '8px', borderRadius: '50%', background: th.primary, flexShrink: 0, boxShadow: th.isDark ? `0 0 8px ${th.primary}` : 'none' }"></div>
-              <div v-if="Number(i) < exps.length - 1" :style="{ width: '1px', flex: 1, background: th.border, margin: '3px 0' }"></div>
-            </div>
-            <div>
-              <div :style="{ color: th.text, fontSize: '11px', fontWeight: 700 }">{{ e.position }}</div>
-              <div :style="{ color: th.primary, fontSize: '9px', fontWeight: 600 }">{{ e.company }}</div>
-              <div :style="{ color: th.muted, fontSize: '9px' }">{{ e.start_date }} – {{ e.is_current ? 'Present' : e.end_date }}</div>
-            </div>
-          </div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+           <div>
+              <div :style="{ color: th.primary, fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }">Core Skills</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <div v-for="(s, i) in skills.slice(0,4)" :key="i" :style="{ border: `1px solid ${th.border}`, padding: '6px 14px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, color: th.text }">{{ s.name }}</div>
+              </div>
+           </div>
+           <div>
+              <div :style="{ color: th.primary, fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }">Professional Experience</div>
+              <div v-for="(e, i) in exps.slice(0,1)" :key="i" style="display: flex; gap: 16px;">
+                <div :style="{ color: th.primary, fontSize: '10px', fontWeight: 800, width: '80px', flexShrink: 0 }">{{ e.start_date.split('-')[0] }} - Pres</div>
+                <div>
+                  <div :style="{ color: th.text, fontSize: '13px', fontWeight: 800 }">{{ e.position }}</div>
+                  <div :style="{ color: th.muted, fontSize: '11px', marginTop: '2px' }">{{ e.company }}</div>
+                </div>
+              </div>
+           </div>
         </div>
       </div>
     </div>

@@ -83,22 +83,17 @@ api.interceptors.response.use(
         processQueue(e, null);
         localStorage.clear();
         window.location.href = "/login";
-        // notify user about refresh failure
-        try {
-          showError(getErrorMessage(e));
-        } catch { }
+        // Silent failure - handled by redirect
         return Promise.reject(e);
       } finally {
         isRefreshing = false;
       }
     }
-    // For non-401 errors, show a user alert with the message
-    try {
-      if (error?.response?.status !== 401) {
-        showError(getErrorMessage(error));
-      }
-    } catch (e) {
-      /* ignore */
+    // Non-401 errors are now handled by the calling code/stores.
+    // We remove the global showError which was causing disruptive modals for ignorable background tasks.
+    if (error?.response?.status >= 500) {
+      // eslint-disable-next-line no-console
+      console.error("Server Error:", getErrorMessage(error));
     }
 
     return Promise.reject(error);

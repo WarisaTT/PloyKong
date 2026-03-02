@@ -1,5 +1,31 @@
 <template>
   <div class="dashboard-layout">
+    <!-- Mobile Header -->
+    <header class="mobile-nav">
+      <div class="sidebar-logo">
+        <div class="logo-pk">
+          <img src="/favicon.png" alt="PloyKong Logo" class="logo-img" />
+        </div>
+        <span class="logo-text">Ploy<em>Kong</em></span>
+      </div>
+      <div class="mobile-nav-actions">
+        <button 
+          class="mobile-icon-btn" 
+          @click="themeStore.setMode(themeStore.mode === 'dark' ? 'light' : 'dark')"
+          :title="themeStore.mode === 'dark' ? 'Switch to Light' : 'Switch to Dark'"
+        >
+          <Sun v-if="themeStore.mode === 'dark'" :size="20" />
+          <Moon v-else :size="20" />
+        </button>
+        <RouterLink to="/settings" class="mobile-icon-btn" title="Settings">
+          <Settings :size="20" />
+        </RouterLink>
+        <button class="mobile-icon-btn logout-btn" @click="handleLogout" title="Logout">
+          <LogOut :size="20" />
+        </button>
+      </div>
+    </header>
+
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-logo">
@@ -174,7 +200,7 @@ import {
   Layers,
 } from "lucide-vue-next";
 import Swal from "sweetalert2";
-import { showSuccess, showError } from "@/utils/alert";
+import { showSuccess, toastError } from "@/utils/alert";
 
 const authStore = useAuthStore();
 const portfolioStore = usePortfolioStore();
@@ -237,7 +263,7 @@ async function duplicatePortfolio(id: string) {
     await portfolioStore.duplicatePortfolio(id);
     showSuccess("Portfolio duplicated successfully!");
   } catch (e: any) {
-    showError("Failed to duplicate portfolio");
+    toastError("Failed to duplicate portfolio");
   }
 }
 
@@ -494,12 +520,61 @@ async function handleLogout() {
 @media (max-width: 768px) {
   .dashboard-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
   }
   .sidebar {
     display: none;
   }
+  .mobile-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .mobile-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .mobile-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .mobile-icon-btn:hover {
+    background: var(--bg-2);
+    color: var(--text);
+  }
+  .logout-btn {
+    color: var(--danger, #f87171);
+  }
   .dashboard-main {
-    padding: 16px;
+    padding: 20px 16px;
+  }
+  .dash-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .dash-header .btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav {
+    display: none;
   }
 }
 </style>

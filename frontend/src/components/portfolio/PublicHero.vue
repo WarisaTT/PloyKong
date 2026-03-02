@@ -357,6 +357,9 @@ async function downloadResume() {
 }
 
 @media (max-width: 768px) {
+  .pub-hero {
+    padding: 32px 16px;
+  }
   .pub-hero.layout-split .pub-hero-inner {
     flex-direction: column;
     text-align: center;
@@ -371,6 +374,38 @@ async function downloadResume() {
   }
   .pub-hero.layout-split .hero-cta {
     justify-content: center;
+  }
+  
+  .hero-avatar-wrap, .hero-img, .hero-avatar-fallback {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .hero-name {
+    font-size: clamp(32px, 10vw, 48px);
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-cta {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .hero-btn {
+    width: 100%;
+    min-width: 0;
+    height: 52px;
+    padding: 0 24px;
+  }
+  .hero-tagline {
+    font-size: 15px;
+    margin-bottom: 24px;
+    padding: 0 8px;
+  }
+  .hero-role-badge {
+    font-size: 11px;
+    padding: 6px 16px;
   }
 }
 </style>

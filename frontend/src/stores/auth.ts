@@ -14,17 +14,6 @@ export const useAuthStore = defineStore("auth", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  // show friendly alert when an error is set
-  watch(error, (v) => {
-    if (!v) return;
-    try {
-      const friendly = v;
-      showError(String(friendly));
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error("Alert failed", e);
-    }
-  });
 
   // ─── Getters ──────────────────────────────────────────────────────────────
   const isAuthenticated = computed(() => !!accessToken.value);

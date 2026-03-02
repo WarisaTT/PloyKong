@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"ploykong-api/internal/config"
@@ -499,6 +500,32 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 		&passwordHash, &p.ExpiresAt, &p.ViewCount,
 	)
 
+	// SEO/Crawler logic: Check if crawler or specifically requested HTML
+	ua := strings.ToLower(c.Get("User-Agent"))
+	crawlers := []string{
+		"facebookexternalhit", "twitterbot", "linkedinbot", "whatsapp",
+		"discordbot", "telegrambot", "line/", "slackbot", "googlebot",
+		"bingbot", "redditbot", "applebot",
+	}
+
+	isCrawler := false
+	for _, bot := range crawlers {
+		if strings.Contains(ua, bot) {
+			isCrawler = true
+			break
+		}
+	}
+
+	// If it's a crawler or explicitly asking for HTML preview
+	if isCrawler || c.Query("preview") == "true" {
+		p.ScanTheme(themeRaw)
+		p.Description = descNull
+		p.SEOTitle = seoTitleNull
+		p.SEODesc = seoDescNull
+		p.OGImageURL = ogImageNull
+		return h.renderSEOPage(c, &p)
+	}
+
 	if err == sql.ErrNoRows {
 		return fiber.NewError(404, "portfolio not found")
 	}
@@ -515,6 +542,8 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 	p.ScanTheme(themeRaw)
 	p.Description = descNull
 	p.SEOTitle = seoTitleNull
+	p.SEODesc = seoDescNull
+	p.OGImageURL = ogImageNull
 	p.HasPassword = passwordHash.Valid
 
 	// Check password
@@ -557,6 +586,72 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 	go h.trackView(ip, userAgent, referer, p.ID)
 
 	return c.JSON(fiber.Map{"success": true, "data": p})
+}
+
+// renderSEOPage generates a minimal HTML page with OG tags for link sharing
+func (h *PublicHandler) renderSEOPage(c *fiber.Ctx, p *models.Portfolio) error {
+	title := p.Title
+	if p.SEOTitle.Valid && p.SEOTitle.String != "" {
+		title = p.SEOTitle.String
+	}
+
+	description := "สร้างพอร์ตโฟลิโออัจฉริยะใน 2 นาทีกับ PloyKong"
+	if p.SEODesc.Valid && p.SEODesc.String != "" {
+		description = p.SEODesc.String
+	} else if p.Description.Valid && p.Description.String != "" {
+		description = p.Description.String
+	}
+
+	image := "https://ploykong.com/og-image.png"
+	if p.OGImageURL.Valid && p.OGImageURL.String != "" {
+		image = p.OGImageURL.String
+	}
+
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%s | PloyKong</title>
+    <meta name="description" content="%s">
+    
+    <!-- Open Graph / Meta -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ploykong.com/p/%s">
+    <meta property="og:title" content="%s">
+    <meta property="og:description" content="%s">
+    <meta property="og:image" content="%s">
+    
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="%s">
+    <meta property="twitter:description" content="%s">
+    <meta property="twitter:image" content="%s">
+    
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .loading { text-align: center; }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #6366f1; border-radius: 50%%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0%% { transform: rotate(0deg); } 100%% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <div class="loader"></div>
+        <p>กำลังข้ามไปยังพอร์ตโฟลิโอของคุณ...</p>
+    </div>
+    <script>
+        // Humans are redirected to the SPA URL
+        // If the shared link IS already the SPA URL, JS takes over as usual.
+        // We use a small delay for better feel if landed directly.
+        // If landed on API, redirect to Frontend.
+        const FE_URL = "https://ploy-kong.vercel.app/p/%s";
+        window.location.href = FE_URL;
+    </script>
+</body>
+</html>`, title, description, p.Slug, title, description, image, title, description, image, p.Slug)
+
+	c.Set("Content-Type", "text/html")
+	return c.SendString(html)
 }
 
 func (h *PublicHandler) TrackEvent(c *fiber.Ctx) error {

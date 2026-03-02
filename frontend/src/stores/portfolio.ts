@@ -13,17 +13,6 @@ export const usePortfolioStore = defineStore("portfolio", () => {
   const saving = ref(false);
   const error = ref<string | null>(null);
 
-  // show friendly alert when an error is set
-  watch(error, (v) => {
-    if (!v) return;
-    try {
-      const friendly = v;
-      showError(String(friendly));
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error("Alert failed", e);
-    }
-  });
 
   // ─── Portfolio CRUD ───────────────────────────────────────────────────────
   async function fetchPortfolios() {

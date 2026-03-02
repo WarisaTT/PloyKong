@@ -362,7 +362,10 @@ async function loadPortfolio(pw?: string) {
   try {
     const { data } = await publicAPI.view(slug.value, pw);
     portfolio.value = data.data;
-    document.title = `${data.data.title} | PloyKong`;
+    // SEO Title update
+    setTimeout(() => {
+      document.title = (data.data.seo_title || data.data.title) + " | PloyKong";
+    }, 100);
     // Track view
     publicAPI.track(slug.value, "view", document.referrer || "direct");
   } catch (e: any) {

@@ -88,7 +88,7 @@ import { ref } from "vue";
 import { RouterLink } from "vue-router";
 import type { Portfolio } from "@/types";
 import { portfolioAPI } from "@/api";
-import { showError, showSuccess } from "@/utils/alert";
+import { showSuccess, toastError } from "@/utils/alert";
 import {
   Eye,
   EyeOff,
@@ -121,7 +121,7 @@ async function downloadPdf() {
     showSuccess("PDF Downloaded successfully!");
   } catch (err: any) {
     console.error("Failed to download PDF", err);
-    showError("Failed to generate PDF. Please try again.");
+    toastError("Failed to generate PDF. Please try again.");
   } finally {
     isDownloading.value = false;
   }

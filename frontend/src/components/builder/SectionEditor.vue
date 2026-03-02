@@ -693,7 +693,7 @@ import type { Section } from "@/types";
 import { aiAPI, uploadAPI } from "@/api";
 import PopupTextEditor from "./PopupTextEditor.vue";
 import { Sparkles, X, Plus, Trash2, Loader2 } from "lucide-vue-next";
-import Swal from "sweetalert2";
+import { toastError } from "@/utils/alert";
 
 const props = defineProps<{ section: Section, template?: string }>();
 const emit = defineEmits<{ update: [data: any] }>();
@@ -826,7 +826,7 @@ async function safeUpload(file: File, callback: (url: string) => void) {
       console.warn("Upload finished but section changed. Discarding result to prevent corruption.");
     }
   } catch (error) {
-    Swal.fire("Error", "Failed to upload image", "error");
+    toastError("Failed to upload image");
   }
 }
 

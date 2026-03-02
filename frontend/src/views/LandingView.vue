@@ -185,7 +185,7 @@
       <div class="marquee-label">Built with</div>
       <div class="marquee-track">
         <div class="marquee-inner">
-          <span v-for="t in [...techs, ...techs]" :key="t+Math.random()" class="marquee-item">{{ t }}</span>
+          <span v-for="t in [...techs, ...techs, ...techs]" :key="t+Math.random()" class="marquee-item">{{ t }}</span>
         </div>
       </div>
     </div>
@@ -589,6 +589,59 @@ const testimonials = [
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Marquee Styles */
+.marquee-strip {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee-label {
+  padding: 0 24px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-3);
+  background: var(--surface);
+  z-index: 2;
+  position: relative;
+}
+
+.marquee-track {
+  display: flex;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.marquee-inner {
+  display: flex;
+  gap: 32px;
+  animation: marquee 30s linear infinite;
+  padding-left: 32px;
+}
+
+.marquee-item {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 640px) {
+  .marquee-label { display: none; }
+  .marquee-inner { animation-duration: 20s; }
 }
 
 /* ══════════════════════════════════════════
