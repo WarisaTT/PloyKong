@@ -118,7 +118,7 @@ const isDownloading = ref(false);
 const isCopied = ref(false);
 
 const publicUrl = computed(() => {
-  const apiBase = (import.meta.env.VITE_API_URL || '').replace('/api/v1', '')
+  const apiBase = import.meta.env.VITE_API_URL || '/api/v1'
   return `${apiBase}/public/p/${props.portfolio.slug}`
 });
 

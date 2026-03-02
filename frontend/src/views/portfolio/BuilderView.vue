@@ -778,9 +778,9 @@ function previewPortfolio() {
 function copyPublicLink() {
   const slug = store.activePortfolio?.slug
   if (!slug) return
-  
+
   // Use the API's Public URL to trigger the SEO/Crawler handler
-  const apiBase = (import.meta.env.VITE_API_URL || '').replace('/api/v1', '')
+  const apiBase = import.meta.env.VITE_API_URL || '/api/v1'
   const url = `${apiBase}/public/p/${slug}`
   navigator.clipboard.writeText(url).then(() => {
     copied.value = true
