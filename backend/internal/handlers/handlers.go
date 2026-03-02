@@ -525,6 +525,19 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 
 	// If it's a direct browser visit or a Bot, show the SEO Page + Redirect
 	if !wantsJSON {
+		// FALLBACK: If og_image_url is not set, try to get avatar from hero section
+		if !p.OGImageURL.Valid || p.OGImageURL.String == "" {
+			var heroDataRaw []byte
+			h.db.QueryRow("SELECT data FROM sections WHERE portfolio_id = ? AND type = 'hero' LIMIT 1", p.ID).Scan(&heroDataRaw)
+			if heroDataRaw != nil {
+				var heroMap map[string]interface{}
+				if err := json.Unmarshal(heroDataRaw, &heroMap); err == nil {
+					if avatar, ok := heroMap["avatar_url"].(string); ok && avatar != "" {
+						p.OGImageURL = sql.NullString{String: avatar, Valid: true}
+					}
+				}
+			}
+		}
 		return h.renderSEOPage(c, &p)
 	}
 
@@ -593,9 +606,14 @@ func (h *PublicHandler) renderSEOPage(c *fiber.Ctx, p *models.Portfolio) error {
 		description = p.Description.String
 	}
 
-	image := h.cfg.BaseURL + "/og-image.png"
+	image := h.cfg.FEURL + "/og-image.png"
 	if p.OGImageURL.Valid && p.OGImageURL.String != "" {
 		image = p.OGImageURL.String
+
+		// Ensure absolute URL if it's a relative path (e.g. /uploads/...)
+		if strings.HasPrefix(image, "/") {
+			image = h.cfg.BaseURL + image
+		}
 	}
 
 	html := fmt.Sprintf(`<!DOCTYPE html>
