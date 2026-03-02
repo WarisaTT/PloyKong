@@ -87,6 +87,7 @@
 /* Handle template specific border colors */
 .tpl-programmer .section-wrapper.is-row-start::before {
     background: color-mix(in srgb, var(--primary) 20%, transparent);
+    
 }
 
 .tpl-business .section-wrapper.is-row-start::before {
