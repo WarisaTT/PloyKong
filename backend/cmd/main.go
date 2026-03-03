@@ -74,6 +74,8 @@ func main() {
 	// ─── API Routes ──────────────────────────────────────────────────────────
 	api := app.Group("/api/v1")
 
+	publicHandler := handlers.NewPublicHandler(db, cfg)
+
 	// Auth (public)
 	authHandler := handlers.NewAuthHandler(db, cfg)
 	auth := api.Group("/auth")
@@ -92,6 +94,9 @@ func main() {
 
 	// Portfolio (protected)
 	portfolioHandler := handlers.NewPortfolioHandler(db)
+
+	api.Get("/ai/knowledge-center", middleware.Protected(cfg), portfolioHandler.GetMyGaps)
+
 	portfolios := api.Group("/portfolios", middleware.Protected(cfg))
 	portfolios.Get("/", portfolioHandler.ListMyPortfolios)
 	portfolios.Post("/", portfolioHandler.Create)
@@ -101,6 +106,7 @@ func main() {
 	portfolios.Post("/:id/publish", portfolioHandler.Publish)
 	portfolios.Post("/:id/unpublish", portfolioHandler.Unpublish)
 	portfolios.Post("/:id/duplicate", portfolioHandler.Duplicate)
+	portfolios.Get("/:id/gaps", publicHandler.GetKnowledgeGaps)
 
 	// Sections (protected)
 	sectionHandler := handlers.NewSectionHandler(db)
@@ -127,19 +133,19 @@ func main() {
 	ai.Post("/improve-text", aiHandler.ImproveText)
 	ai.Post("/score-resume", aiHandler.ScoreResume)
 	ai.Post("/suggest-skills", aiHandler.SuggestSkills)
+	ai.Post("/magic-fill", aiHandler.MagicFill)
 
 	// Upload (protected)
 	uploadHandler := handlers.NewUploadHandler(cfg)
 	api.Post("/upload", middleware.Protected(cfg), uploadHandler.UploadImage)
 
 	// Public (no auth)
-	publicHandler := handlers.NewPublicHandler(db, cfg)
 	public := api.Group("/public")
 	public.Get("/p/:slug", publicHandler.ViewPortfolio)
 	public.Post("/p/:slug/track", publicHandler.TrackEvent)
 	public.Post("/p/:slug/chat", publicHandler.AIChat)
 	public.Get("/p/:slug/pdf", publicHandler.ExportPDFBySlug)
-	api.Get("/id/:id/pdf", portfolioHandler.GeneratePDF)
+	public.Get("/id/:id/pdf", portfolioHandler.GeneratePDF)
 
 	// Static uploads
 	app.Static("/uploads", cfg.UploadDir)

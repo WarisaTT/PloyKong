@@ -32,6 +32,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: "/ai-center",
+      name: "ai-center",
+      component: () => import("@/views/dashboard/KnowledgeCenterView.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/portfolios/new",
       name: "portfolio-new",
       component: () => import("@/views/portfolio/NewPortfolioView.vue"),

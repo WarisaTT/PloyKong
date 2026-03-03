@@ -642,6 +642,8 @@ const testimonials = [
 @media (max-width: 640px) {
   .marquee-label { display: none; }
   .marquee-inner { animation-duration: 20s; }
+  .section-header { margin-bottom: 40px; }
+  .section-h2 { font-size: 28px; }
 }
 
 /* ══════════════════════════════════════════
@@ -802,13 +804,20 @@ const testimonials = [
   .hero-content { align-items: center; }
   .hero-body { margin: 0 auto; }
   .hero-actions { justify-content: center; }
-  .hero-visual { max-width: 500px; margin: 0 auto; }
+  .hero-visual { max-width: 100%; margin: 60px auto 30px; }
+  /* Show only 1 floating card or scale down */
+  .float-card { scale: 0.85; }
+  .fc-ai { left: -10px; bottom: 10px; }
+  .fc-stat { right: -10px; top: 20px; }
+  .fc-notify { top: -40px; left: 50%; translate: -50% 0; }
 }
-@media (max-width: 480px) {
-  .hero { padding-top: 80px; }
-  .hero-h1 { font-size: 38px; }
-  .h1-sub { font-size: 24px; }
-  .hero-actions { flex-direction: column; width: 100%; }
+
+@media (max-width: 640px) {
+  .hero { padding-top: 100px; padding-bottom: 40px; }
+  .hero-h1 { font-size: 44px; letter-spacing: -1.5px; }
+  .h1-sub { font-size: 20px; }
+  .hero-body { font-size: 14px; padding: 0 10px; }
+  .hero-actions { flex-direction: column; width: 100%; gap: 12px; }
   .btn-hero-primary, .btn-hero-ghost { width: 100%; justify-content: center; }
 }
 
@@ -1087,23 +1096,26 @@ const testimonials = [
   gap: 16px;
 }
 
-@media (max-width: 900px) { 
-  .feat-bento { grid-template-columns: repeat(2, 1fr); } 
-  .bento-lg, .bento-md { grid-column: span 2; }
-}
-@media (max-width: 600px) { 
+@media (max-width: 850px) { 
   .feat-bento { grid-template-columns: 1fr; }
-  .bento-lg, .bento-md, .bento-sm { grid-column: span 1; }
+  .bento-lg, .bento-md, .bento-sm { grid-column: span 1 !important; }
   .section-wrap { padding: 60px 20px; }
 }
 
 .bento-card {
   position: relative; overflow: hidden;
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 20px; padding: 28px;
-  transition: all 0.3s;
+  border-radius: 24px; padding: 28px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; flex-direction: column;
 }
-.bento-card:hover { border-color: var(--border-2); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.bento-card:hover { border-color: var(--border-2); transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+@media (max-width: 640px) {
+  .bento-card { padding: 20px; border-radius: 20px; }
+  .bento-h3 { font-size: 18px; }
+  .bento-p { font-size: 12px; }
+}
 
 .bento-lg { grid-column: span 2; grid-row: span 1; }
 .bento-md { grid-column: span 2; }
@@ -1132,7 +1144,18 @@ const testimonials = [
 .bento-p { font-size: 13px; color: var(--text-2); line-height: 1.7; }
 
 /* Drag demo */
-.drag-demo { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; max-width: 320px; }
+.drag-demo { 
+  margin-top: 20px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+  width: 100%; 
+  max-width: 320px; 
+}
+@media (max-width: 480px) {
+  .drag-demo { max-width: 260px; }
+  .drag-block { font-size: 11px; padding: 8px 12px; }
+}
 .drag-block {
   padding: 10px 14px; border-radius: 10px; font-size: 13px;
   background: var(--surface-2); border: 1px solid var(--border);
@@ -1152,7 +1175,10 @@ const testimonials = [
 }
 .ai-in { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
 .ai-out { background: var(--accent-subtle); color: var(--accent-2); border: 1px solid var(--accent-glow); }
-.ai-arrow { font-size: 11px; color: var(--accent-2); text-align: center; font-weight: 700; }
+.ai-arrow { font-size: 10px; color: var(--accent-2); text-align: center; font-weight: 700; }
+@media (max-width: 480px) {
+  .ai-in, .ai-out { font-size: 10px; padding: 6px 10px; }
+}
 
 /* Analytics bars */
 .analytics-bars {
@@ -1170,7 +1196,8 @@ const testimonials = [
   margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
 .lock-icon { color: var(--gold); }
-.lock-text { font-size: 12px; color: var(--text-2); font-weight: 600; }
+.lock-demo i, .lock-demo .lock-icon { scale: 0.8; }
+.lock-text { font-size: 12px; color: var(--text-2); font-weight: 600; text-align: center; }
 .lock-timer {
   font-size: 11px; padding: 4px 12px; border-radius: 20px;
   background: rgba(244,200,66,0.1); color: var(--gold);

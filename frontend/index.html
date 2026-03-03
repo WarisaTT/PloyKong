@@ -3,18 +3,22 @@
 
 <head>
   <script>
-    const saved = localStorage.getItem("theme");
-    const systemLight = window.matchMedia(
-      "(prefers-color-scheme: light)",
-    ).matches;
+    (function () {
+      const saved = localStorage.getItem("theme") || "dark";
+      const systemLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      let theme = saved;
+      if (saved === "auto" || saved === "system") {
+        theme = systemLight ? "light" : "dark";
+      }
+      document.documentElement.className = "theme-" + theme;
 
-    if (saved) {
-      document.documentElement.classList.add("theme-" + saved);
-    } else if (systemLight) {
-      document.documentElement.classList.add("theme-system");
-    } else {
-      document.documentElement.classList.add("theme-dark");
-    }
+      // Inline style to prevent white flash
+      const bg = (theme === "dark" || theme === "purple") ? "#050814" : "#faf7ff";
+      const color = (theme === "dark" || theme === "purple") ? "#e2e8f0" : "#000000";
+      const style = document.createElement('style');
+      style.innerHTML = `html, body { background-color: ${bg} !important; color: ${color}; }`;
+      document.head.appendChild(style);
+    })();
   </script>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/favicon.png" />

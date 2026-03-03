@@ -6,53 +6,55 @@
     <div class="section-header-wrapper">
       <h2 class="layered-title" :data-text="data.title || 'Projects'">{{ data.title || 'Projects' }}</h2>
     </div>
-    <div v-if="data.image_url" class="universal-section-img-container">
-      <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
-    </div>
-    <div class="proj-grid">
-      <div
-        v-for="(proj, i) in data.items"
-        :key="i"
-        class="proj-card animate-scale-up"
-        v-intersect
-        :style="{ transitionDelay: `${Number(i) * 100}ms` }"
-      >
-        <img
-          v-if="proj.image_url"
-          :src="proj.image_url"
-          :alt="proj.title"
-          class="proj-img"
-        />
-        <div class="proj-body">
-          <div class="proj-title">{{ proj.title }}</div>
-          <div class="proj-desc">{{ proj.description }}</div>
-          <div class="proj-tags">
-            <span v-for="tag in proj.tags" :key="tag" class="proj-tag">{{
-              tag
-            }}</span>
-          </div>
-          <div class="proj-links">
-            <a
-              v-if="proj.live_url"
-              :href="proj.live_url"
-              target="_blank"
-              class="proj-link"
-              ><LinkIcon :size="12" class="icon-sm" /> Live</a
-            >
-            <a
-              v-if="proj.github_url"
-              :href="proj.github_url"
-              target="_blank"
-              class="proj-link"
-              ><Github :size="12" class="icon-sm" /> GitHub</a
-            >
+    <div class="pub-section-content">
+      <div v-if="data.image_url" class="universal-section-img-container">
+        <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
+      </div>
+      <div class="proj-grid">
+        <div
+          v-for="(proj, i) in data.items"
+          :key="i"
+          class="proj-card animate-scale-up"
+          v-intersect
+          :style="{ transitionDelay: `${Number(i) * 100}ms` }"
+        >
+          <img
+            v-if="proj.image_url"
+            :src="proj.image_url"
+            :alt="proj.title"
+            class="proj-img"
+          />
+          <div class="proj-body">
+            <div class="proj-title">{{ proj.title }}</div>
+            <div class="proj-desc">{{ proj.description }}</div>
+            <div class="proj-tags">
+              <span v-for="tag in proj.tags" :key="tag" class="proj-tag">{{
+                tag
+              }}</span>
+            </div>
+            <div class="proj-links">
+              <a
+                v-if="proj.live_url"
+                :href="proj.live_url"
+                target="_blank"
+                class="proj-link"
+                ><LinkIcon :size="12" class="icon-sm" /> Live</a
+              >
+              <a
+                v-if="proj.github_url"
+                :href="proj.github_url"
+                target="_blank"
+                class="proj-link"
+                ><Github :size="12" class="icon-sm" /> GitHub</a
+              >
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
-      <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
+        <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      </div>
     </div>
   </section>
 </template>

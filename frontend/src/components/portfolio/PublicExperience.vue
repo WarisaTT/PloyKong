@@ -6,56 +6,58 @@
     <div class="section-header-wrapper">
       <h2 class="layered-title" :data-text="data.title || 'Experience'">{{ data.title || 'Experience' }}</h2>
     </div>
-    <div v-if="data.image_url" class="universal-section-img-container">
-      <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
-    </div>
-    <div class="experience-list">
-      <div
-        v-for="(item, i) in data.items"
-        :key="i"
-        class="experience-item animate-slide-in-right"
-        :class="{ 'has-timeline': data.items.length > 1 }"
-        v-intersect
-        :style="{ transitionDelay: `${Number(i) * 100}ms` }"
-      >
-        <div v-if="data.items.length > 1" class="timeline-dot"></div>
+    <div class="pub-section-content">
+      <div v-if="data.image_url" class="universal-section-img-container">
+        <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
+      </div>
+      <div class="experience-list">
         <div
-          class="timeline-line"
-          v-if="data.items.length > 1 && Number(i) < data.items.length - 1"
-        ></div>
-        <div class="timeline-content">
-          <div class="tl-header">
-            <div class="tl-position">{{ item.position }}</div>
-            <div class="tl-date">
-              {{ item.start_date }} –
-              {{ item.is_current ? "Present" : item.end_date }}
+          v-for="(item, i) in data.items"
+          :key="i"
+          class="experience-item animate-slide-in-right"
+          :class="{ 'has-timeline': data.items.length > 1 }"
+          v-intersect
+          :style="{ transitionDelay: `${Number(i) * 100}ms` }"
+        >
+          <div v-if="data.items.length > 1" class="timeline-dot"></div>
+          <div
+            class="timeline-line"
+            v-if="data.items.length > 1 && Number(i) < data.items.length - 1"
+          ></div>
+          <div class="timeline-content">
+            <div class="tl-header">
+              <div class="tl-position">{{ item.position }}</div>
+              <div class="tl-date">
+                {{ item.start_date }} –
+                {{ item.is_current ? "Present" : item.end_date }}
+              </div>
             </div>
+            <div class="tl-company">
+              {{ item.company }}
+              <span v-if="item.location" class="tl-loc"
+                >· {{ item.location }}</span
+              >
+            </div>
+            <div class="tl-desc">{{ item.description }}</div>
+            
+            <!-- Experience Image Gallery (New) -->
+            <div v-if="item.image_urls && item.image_urls.length > 0" class="tl-gallery">
+              <img 
+                v-for="(img, imgIdx) in item.image_urls" 
+                :key="imgIdx" 
+                :src="img" 
+                class="tl-gallery-img" 
+                alt="Experience photo"
+                loading="lazy"
+              />
+            </div>
+            
           </div>
-          <div class="tl-company">
-            {{ item.company }}
-            <span v-if="item.location" class="tl-loc"
-              >· {{ item.location }}</span
-            >
-          </div>
-          <div class="tl-desc">{{ item.description }}</div>
-          
-          <!-- Experience Image Gallery (New) -->
-          <div v-if="item.image_urls && item.image_urls.length > 0" class="tl-gallery">
-            <img 
-              v-for="(img, imgIdx) in item.image_urls" 
-              :key="imgIdx" 
-              :src="img" 
-              class="tl-gallery-img" 
-              alt="Experience photo"
-              loading="lazy"
-            />
-          </div>
-          
         </div>
       </div>
-    </div>
-    <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
-      <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
+        <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      </div>
     </div>
   </section>
 </template>
@@ -198,6 +200,13 @@ defineProps<{ data: any }>();
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   z-index: 2;
   position: relative;
+}
+
+.generic-hint {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  opacity: 0.7;
 }
 
 .icon-inline {

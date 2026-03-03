@@ -1,5 +1,5 @@
 <template>
-  <div class="portfolio-item">
+  <div class="portfolio-item" @click="goToEdit">
     <div class="portfolio-info">
       <div
         class="portfolio-dot"
@@ -28,26 +28,15 @@
       <button
         class="btn btn-secondary btn-sm"
         title="Generate PDF"
-        @click="downloadPdf"
+        @click.stop="downloadPdf"
         :disabled="isDownloading"
       >
         <Loader2 v-if="isDownloading" class="spin" :size="16" />
         <FileDown v-else :size="16" />
       </button>
-      <button
-        class="btn btn-secondary btn-sm"
-        title="Duplicate Portfolio"
-        @click="$emit('duplicate')"
-      >
-        <Files :size="16" />
-      </button>
+      
       <RouterLink
-        :to="`/portfolios/${portfolio.id}/edit`"
-        class="btn btn-secondary btn-sm icon-btn-labeled"
-      >
-        <Pencil :size="14" /> Edit
-      </RouterLink>
-      <RouterLink
+        @click.stop
         :to="`/portfolios/${portfolio.id}/analytics`"
         class="btn btn-secondary btn-sm"
         title="Analytics"
@@ -55,20 +44,11 @@
         <BarChart2 :size="16" />
       </RouterLink>
       <!-- View Public Link Button (SEO Friendly) -->
-      <a
-        v-if="portfolio.is_published"
-        :href="publicUrl"
-        target="_blank"
-        class="btn btn-secondary btn-sm"
-        title="View Public Link"
-      >
-        <ExternalLink :size="16" />
-      </a>
       <button
         v-if="portfolio.is_published"
         class="btn btn-secondary btn-sm"
         title="Copy SEO Link"
-        @click="copyLink"
+        @click.stop="copyLink"
       >
         <Check v-if="isCopied" :size="16" class="text-success" />
         <Link v-else :size="16" />
@@ -78,12 +58,20 @@
         disabled
         class="btn btn-secondary btn-sm"
         title="Portfolio is unpublished"
+        @click.stop
       >
         <EyeOff :size="16" />
       </button>
       <button
+        class="btn btn-add btn-sm"
+        title="Duplicate Portfolio"
+        @click.stop="$emit('duplicate')"
+      >
+        <Files :size="16" />
+      </button>
+      <button
         class="btn btn-danger btn-sm"
-        @click="$emit('delete')"
+        @click.stop="$emit('delete')"
         title="Delete"
       >
         <Trash2 :size="16" />
@@ -94,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 import type { Portfolio } from "@/types";
 import { portfolioAPI } from "@/api";
 import { showSuccess, toastError } from "@/utils/alert";
@@ -113,10 +101,15 @@ import {
 } from "lucide-vue-next";
 
 const props = defineProps<{ portfolio: Portfolio }>();
-defineEmits<{ delete: []; duplicate: [] }>();
+const emit = defineEmits<{ delete: []; duplicate: [] }>();
 
+const router = useRouter();
 const isDownloading = ref(false);
 const isCopied = ref(false);
+
+function goToEdit() {
+  router.push(`/portfolios/${props.portfolio.id}/edit`);
+}
 
 const publicUrl = computed(() => {
   const apiBase = import.meta.env.VITE_API_URL || '/api/v1'
@@ -165,6 +158,7 @@ async function downloadPdf() {
   border-radius: 12px;
   gap: 16px;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .portfolio-item:hover {

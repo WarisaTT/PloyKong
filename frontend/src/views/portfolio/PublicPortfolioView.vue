@@ -123,7 +123,7 @@
               class="chat-msg"
               :class="msg.role"
             >
-              <span class="chat-bubble">{{ msg.content }}</span>
+              <span class="chat-bubble" v-html="renderMarkdown(msg.content)"></span>
             </div>
             <div v-if="chatLoading" class="chat-msg assistant">
               <span class="chat-bubble chat-typing"
@@ -180,6 +180,11 @@ import { useRoute } from "vue-router";
 import { publicAPI } from "@/api";
 import type { Portfolio } from "@/types";
 import { Lock, Search, Bot, X, Loader2, Zap } from "lucide-vue-next";
+import { marked } from "marked";
+
+const renderMarkdown = (text: string) => {
+  return marked.parse(text);
+};
 
 function hexToRgb(hex: string) {
   if (!hex) return "0, 0, 0";
@@ -702,11 +707,16 @@ onMounted(() => loadPortfolio());
 }
 .chat-bubble {
   max-width: 100%;
-  padding: 9px 14px;
+  padding: 10px 14px;
   border-radius: 14px;
   font-size: 13px;
   line-height: 1.5;
+  word-wrap: break-word;
 }
+.chat-bubble :first-child { margin-top: 0; }
+.chat-bubble :last-child { margin-bottom: 0; }
+.chat-bubble p { margin-bottom: 4px; }
+.chat-bubble strong { font-weight: 700; }
 .chat-msg.user .chat-bubble {
   background-color: var(--primary);
   color: #fff;

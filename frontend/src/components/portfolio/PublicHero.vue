@@ -46,8 +46,7 @@
           class="hero-btn primary"
           @click="trackHire"
         >
-          <Send :size="18" />
-          <span>Hire Me</span>
+          <span>Hire Me !</span>
         </a>
 
         <button v-if="data.show_resume" @click="downloadResume" :disabled="downloadingResume" class="hero-btn secondary">

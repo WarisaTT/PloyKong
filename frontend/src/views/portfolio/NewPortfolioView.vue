@@ -1,7 +1,7 @@
 <template>
   <div class="new-portfolio-page" :style="pageBackground">
     <div class="new-card">
-      <div style="position: absolute; top: 24px; left: 24px;">
+      <div class="back-btn-wrap">
         <RouterLink to="/dashboard" class="back-btn" title="Back to Dashboard">
           <ArrowLeft class="icon" :size="20" />
         </RouterLink>
@@ -287,6 +287,13 @@ async function createPortfolio() {
   border-radius: 24px;
   padding: 44px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+
+/* Back Button Wrapper (absolute on desktop, relative on mobile) */
+.back-btn-wrap {
+  position: absolute;
+  top: 24px;
+  left: 24px;
 }
 
 .steps-indicator {
@@ -743,5 +750,153 @@ async function createPortfolio() {
 
 .spin {
   animation: spin 1s linear infinite;
+}
+
+/* ── Mobile Responsive ─────────────────────────────────── */
+@media (max-width: 640px) {
+  .new-portfolio-page {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 20px;
+    overflow-y: auto;
+  }
+
+  .new-card {
+    padding: 24px 20px;
+    border-radius: 20px;
+    max-width: 100%;
+  }
+
+  /* Back button: collapse into flow */
+  .back-btn-wrap {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-bottom: 12px;
+  }
+
+  .step-header h2 {
+    font-size: 20px;
+  }
+
+  .step-header p {
+    font-size: 12px;
+  }
+
+  /* Layout grid: 2 columns on mobile */
+  .layout-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* Classic card stays full-width */
+  .layout-card.layout-classic {
+    grid-column: 1 / -1;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .layout-card.layout-classic .layout-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .layout-card.layout-classic .layout-name {
+    font-size: 14px;
+  }
+
+  .layout-card {
+    padding: 14px 8px;
+    border-radius: 12px;
+  }
+
+  .layout-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .layout-name {
+    font-size: 12px;
+  }
+
+  .layout-desc {
+    font-size: 9px;
+  }
+
+  .selected-badge {
+    font-size: 8px;
+    padding: 2px 7px;
+  }
+
+  /* Palette: 1 column on very small screens */
+  .palette-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .palette-card.palette-classic {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    align-items: flex-start;
+  }
+
+  .palette-card.palette-classic .color-swatches {
+    width: 100%;
+  }
+
+  .palette-card.palette-classic .swatch {
+    width: auto;
+    height: 24px;
+    flex: 1;
+  }
+
+  /* Preview: scale down the wrapper */
+  .preview-wrapper {
+    transform: scale(0.9);
+    transform-origin: top center;
+    border-radius: 14px;
+    margin-bottom: -10%;
+  }
+
+  /* Theme toggle in step 3 */
+  .theme-toggle-group {
+    scale: 0.85;
+    transform-origin: right center;
+  }
+
+  /* Btn next */
+  .btn-next {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .btn-back {
+    width: 42px;
+    height: 42px;
+  }
+
+  /* Info form (step 3) */
+  .info-form {
+    padding: 16px;
+  }
+
+  .slug-prefix {
+    font-size: 11px;
+    padding: 0 8px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 400px) {
+  .layout-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .new-card {
+    padding: 20px 14px;
+  }
 }
 </style>

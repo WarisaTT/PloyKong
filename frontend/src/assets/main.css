@@ -23,6 +23,7 @@ body.theme-dark,
   --border: rgba(255, 255, 255, 0.08);
   --border-2: rgba(255, 255, 255, 0.13);
   --sidebar-bg: rgba(8, 13, 31, 0.95);
+  --add-btn: rgb(19, 134, 221);
 
   --indigo: #4f46e5;
   --purple: #a855f7;
@@ -103,7 +104,8 @@ body.theme-light,
   --bg-2: #F0F0F8;
   --surface: #ffffff;
   --surface-2: #F4F4FB;
-  --surface-3: #EEEEF7;
+  --surface-3: #EEEEF7; 
+  --add-btn: rgb(10, 85, 142);
 
   --sidebar-bg: linear-gradient(to bottom, #f3e8ff, #e9d5ff);
 
@@ -254,6 +256,20 @@ body {
   box-shadow: 2px 0 20px rgba(168, 85, 247, 0.08);
 }
 
+/* ─── Dashboard Layouts ──────────────────────────────────────────────────── */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}
+
 /* ───────────────────────────────────────────────────────────── */
 /* TYPOGRAPHY */
 /* ───────────────────────────────────────────────────────────── */
@@ -335,6 +351,19 @@ h6 {
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.btn-add {
+  background: rgba(76, 186, 255, 0.27);
+  color: var(--add-btn);
+  border: 1px solid rgba(76, 186, 255, 0.3);
+}
+
+.btn-add:hover {
+  background: rgba(7, 89, 148, 0.992);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(76, 186, 255, 0.4);
 }
 
 .btn-secondary {
@@ -428,36 +457,74 @@ h6 {
 }
 
 .layout-left .section-header-wrapper {
-  align-items: left;
+  align-items: flex-start;
 }
 
 .layout-split {
   display: flex !important;
-  flex-direction: row;
+  flex-direction: row !important;
   align-items: flex-start;
   text-align: left;
+  gap: 40px;
 }
 
 .layout-split .section-header-wrapper {
   flex: 0 0 calc(25% + 60px);
   text-align: left;
   margin-bottom: 0;
+  position: sticky;
+  top: 40px;
 }
 
-.layout-split>div:not(.section-header-wrapper) {
+.layout-split .pub-section-content {
   flex: 1;
-  /* Content takes remainder */
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.layout-split>div:not(.section-header-wrapper):not(.pub-section-content) {
+  flex: 1;
+  text-align: left;
+}
+
+/* Force left alignment for common grid/flex content inside split layout */
+.layout-split .skills-grid,
+.layout-split .grid-tags,
+.layout-split .experience-list,
+.layout-split .proj-grid,
+.layout-split .cert-grid,
+.layout-split .stats-grid,
+.layout-split .social-grid,
+.layout-split .contact-grid {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  justify-content: flex-start !important;
+  max-width: 100% !important;
+  text-align: left !important;
+}
+
+.layout-split .tl-gallery {
+  justify-content: flex-start !important;
+}
+
+.layout-split .pub-section-content>* {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* Handle Mobile Split */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .layout-split {
-    flex-direction: column;
+    flex-direction: column !important;
+    gap: 24px;
   }
 
   .layout-split .section-header-wrapper {
-    flex: 1;
-    margin-bottom: 30px;
+    flex: 0 0 auto;
+    margin-bottom: 20px;
+    position: static;
   }
 }
 

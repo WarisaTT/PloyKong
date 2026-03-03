@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"ploykong-api/internal/middleware"
 	"ploykong-api/internal/models"
@@ -382,30 +383,57 @@ func (c *cv) measureW(font string, size int, s string) float64 {
 	return w
 }
 
-// wrapText draws word-wrapped text, returns final y after last line
+// wrapText draws word-wrapped text, handles newlines (\n), and returns final y after last line
 func (c *cv) wrapText(x, y float64, col [3]uint8, font string, size int, text string, maxW, lineH float64, maxLines int) float64 {
 	_ = c.p.SetFont(font, "", size)
-	words := strings.Fields(text)
-	line := ""
+
+	lines := strings.Split(text, "\n")
 	drawn := 0
-	for _, w := range words {
-		test := strings.TrimSpace(line + " " + w)
-		tw, _ := c.p.MeasureTextWidth(test)
-		if tw > maxW && line != "" {
+
+	for _, l := range lines {
+		if l == "" {
+			y += lineH
+			drawn++
 			if maxLines > 0 && drawn >= maxLines {
 				break
 			}
-			c.text(x, y, col, font, size, line)
+			continue
+		}
+
+		// Use Split(" ") instead of Fields() to preserve most spaces, though we TrimSpace at the end
+		rawWords := strings.Split(l, " ")
+		currentLine := ""
+
+		for _, w := range rawWords {
+			test := currentLine
+			if test != "" {
+				test += " "
+			}
+			test += w
+
+			tw, _ := c.p.MeasureTextWidth(test)
+			if tw > maxW && currentLine != "" {
+				if maxLines > 0 && drawn >= maxLines {
+					break
+				}
+				c.text(x, y, col, font, size, currentLine)
+				y += lineH
+				drawn++
+				currentLine = w
+			} else {
+				currentLine = test
+			}
+		}
+
+		if currentLine != "" && (maxLines <= 0 || drawn < maxLines) {
+			c.text(x, y, col, font, size, currentLine)
 			y += lineH
 			drawn++
-			line = w
-		} else {
-			line = test
 		}
-	}
-	if line != "" && (maxLines <= 0 || drawn < maxLines) {
-		c.text(x, y, col, font, size, line)
-		y += lineH
+
+		if maxLines > 0 && drawn >= maxLines {
+			break
+		}
 	}
 	return y
 }
@@ -699,6 +727,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	rightY := bodyTopY
 
 	// ── RIGHT: Skills ──────────────────────────────────────────────────────────
+	lastRightTitle := ""
 	for i, sec := range sections {
 		if !sec.IsVisible || sec.Type != "skills" {
 			continue
@@ -708,19 +737,12 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			continue
 		}
 
-		hideTitle := false
-		if b, ok := data[i]["hide_title"].(bool); ok && b {
-			hideTitle = true
-		}
+		title := firstOf(jstr(data[i], "title"), "Skills")
 
 		cv.y = rightY
-		if !hideTitle {
-			cv.sectionTitle(rx, "Skills")
-		}
-
-		hidePct := false
-		if b, ok := data[i]["hide_percentage"].(bool); ok && b {
-			hidePct = true
+		if title != lastRightTitle && !jbool(data[i], "hide_title") {
+			cv.sectionTitle(rx, title)
+			lastRightTitle = title
 		}
 
 		// Group by category
@@ -729,9 +751,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 		for _, item := range items {
 			im := toJMap(item)
 			cat := jstr(im, "category")
-			if cat == "" {
-				cat = "Other Skills"
-			}
+			// If no category is provided, treat it as empty instead of "Other Skills"
 			if _, exists := cats[cat]; !exists {
 				catNames = append(catNames, cat)
 			}
@@ -739,36 +759,30 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 		}
 
 		for _, cat := range catNames {
-			// Category Title
-			cv.y += 2
-			cv.text(rx, cv.y, cAccent, "THSarabun", 10, cat)
-			cv.y += 16
-
-			if hidePct {
-				tx := rx
-				for _, im := range cats[cat] {
-					name := jstr(im, "name")
-					if name == "" {
-						continue
-					}
-					// Measure pill width to handle word wrapping
-					tw := cv.measureW("THSarabun", 8, name) + 10
-					if tx+tw > rx+rw {
-						cv.y += 20 // line height for wrapped pills
-						tx = rx
-					}
-					tx = cv.skillPill(tx, cv.y, name) + 4 // 4px extra spacing
-				}
-				cv.y += 22 // Bottom padding after a category's pills
+			// Only show Category Title if it's not empty
+			if cat != "" {
+				cv.y += 2
+				cv.text(rx, cv.y, cAccent, "THSarabun", 10, cat)
+				cv.y += 16
 			} else {
-				for _, im := range cats[cat] {
-					name := jstr(im, "name")
-					pct := int(jfloat(im, "level", 70))
-					if name != "" {
-						cv.skillBar(rx, rw, name, pct, hidePct)
-					}
-				}
+				cv.y += 2 // Small spacer for uncategorized skills
 			}
+
+			// Use Pills/Chips by default as requested
+			tx := rx
+			for _, im := range cats[cat] {
+				name := jstr(im, "name")
+				if name == "" {
+					continue
+				}
+				tw := cv.measureW("THSarabun", 8, name) + 10
+				if tx+tw > rx+rw {
+					cv.y += 20
+					tx = rx
+				}
+				tx = cv.skillPill(tx, cv.y, name) + 4
+			}
+			cv.y += 22
 		}
 		rightY = cv.y + 8
 	}
@@ -783,14 +797,12 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			continue
 		}
 
-		hideTitle := false
-		if b, ok := data[i]["hide_title"].(bool); ok && b {
-			hideTitle = true
-		}
+		title := firstOf(jstr(data[i], "title"), "Education")
 
 		cv.y = rightY
-		if !hideTitle {
-			cv.sectionTitle(rx, "Education")
+		if title != lastRightTitle && !jbool(data[i], "hide_title") {
+			cv.sectionTitle(rx, title)
+			lastRightTitle = title
 		}
 		for _, item := range items {
 			im := toJMap(item)
@@ -825,6 +837,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 	// ── LEFT: Experience ───────────────────────────────────────────────────────
 	cv.y = bodyTopY
+	lastLeftTitle := ""
 	for i, sec := range sections {
 		if !sec.IsVisible || sec.Type != "experience" {
 			continue
@@ -834,13 +847,11 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			continue
 		}
 
-		hideTitle := false
-		if b, ok := data[i]["hide_title"].(bool); ok && b {
-			hideTitle = true
-		}
+		title := firstOf(jstr(data[i], "title"), "Experience")
 
-		if !hideTitle {
-			cv.sectionTitle(cv.ml, "Experience")
+		if title != lastLeftTitle && !jbool(data[i], "hide_title") {
+			cv.sectionTitle(cv.ml, title)
+			lastLeftTitle = title
 		}
 		for _, item := range items {
 			im := toJMap(item)
@@ -860,6 +871,8 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			if cv.needsNewPage(72) {
 				cv.drawFooter()
 				cv.addPage()
+				// Re-render title if page broke within the same group
+				cv.sectionTitle(cv.ml, title+" (cont.)")
 			}
 
 			// Position + dates on same row
@@ -875,7 +888,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			}
 			// Description
 			if desc != "" {
-				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 12, 3)
+				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 12, 0)
 			}
 			cv.y += 12
 		}
@@ -891,13 +904,11 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			continue
 		}
 
-		hideTitle := false
-		if b, ok := data[i]["hide_title"].(bool); ok && b {
-			hideTitle = true
-		}
+		title := firstOf(jstr(data[i], "title"), "Projects")
 
-		if !hideTitle {
-			cv.sectionTitle(cv.ml, "Projects")
+		if title != lastLeftTitle && !jbool(data[i], "hide_title") {
+			cv.sectionTitle(cv.ml, title)
+			lastLeftTitle = title
 		}
 		for _, item := range items {
 			im := toJMap(item)
@@ -924,7 +935,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			}
 			// Description
 			if desc != "" {
-				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 12, 2)
+				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 12, 0)
 			}
 			cv.y += 10
 		}
@@ -944,15 +955,13 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			cv.drawFooter()
 			cv.addPage()
 		}
-		hideTitle := false
-		if b, ok := data[i]["hide_title"].(bool); ok && b {
-			hideTitle = true
-		}
 
-		if !hideTitle {
-			cv.sectionTitle(cv.ml, "Note")
+		title := firstOf(jstr(data[i], "title"), "Note")
+		if title != lastLeftTitle && !jbool(data[i], "hide_title") {
+			cv.sectionTitle(cv.ml, title)
+			lastLeftTitle = title
 		}
-		cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 10, content, lw, 13, 6)
+		cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 10, content, lw, 13, 0)
 		cv.y += 10
 	}
 
@@ -980,10 +989,19 @@ func (h *PortfolioHandler) createStarterSections(portfolioID string) {
 		pos   int
 		data  interface{}
 	}{
-		{"hero", 0, models.HeroData{Name: "Your Name", Role: "Your Role", Tagline: "Welcome to my portfolio", ShowHireMe: true}},
-		{"skills", 1, models.SkillsData{Items: []models.SkillItem{{Name: "Go", Level: 80, Category: "Backend"}, {Name: "Vue.js", Level: 75, Category: "Frontend"}}}},
-		{"projects", 2, models.ProjectsData{Items: []models.ProjectItem{{Title: "My Project", Description: "Project description", Tags: []string{"Go", "Vue.js"}}}}},
-		{"contact", 3, map[string]string{"email": "you@example.com"}},
+		// Hero: empty — SectionEditor has placeholder="Your Name" / "Your Role" etc.
+		{"hero", 0, models.HeroData{ShowHireMe: true}},
+		// Skills: two empty slots as structure hints
+		{"skills", 1, models.SkillsData{Items: []models.SkillItem{
+			{Name: "", Level: 80, Category: ""},
+			{Name: "", Level: 70, Category: ""},
+		}}},
+		// Projects: one empty project slot
+		{"projects", 2, models.ProjectsData{Items: []models.ProjectItem{
+			{Title: "", Description: "", Tags: []string{}},
+		}}},
+		// Contact: empty email
+		{"contact", 3, map[string]string{"email": ""}},
 	}
 
 	for _, s := range starters {
@@ -1126,4 +1144,42 @@ func (h *PortfolioHandler) Duplicate(c *fiber.Ctx) error {
 			"id": newID,
 		},
 	})
+}
+
+// ─── AI Knowledge Center (Across all portfolios) ───────────────────────────
+
+func (h *PortfolioHandler) GetMyGaps(c *fiber.Ctx) error {
+	claims := middleware.GetUserClaims(c)
+
+	rows, err := h.db.Query(`
+		SELECT p.title as portfolio_title, u.content as question, a.content as response, a.created_at, p.id as portfolio_id
+		FROM ai_chat_logs a
+		JOIN ai_chat_logs u ON u.id = (
+			SELECT MAX(id) FROM ai_chat_logs 
+			WHERE session_id = a.session_id AND role = 'user' AND id < a.id
+		)
+		JOIN portfolios p ON a.portfolio_id = p.id
+		WHERE p.user_id = ? AND a.is_knowledge_gap = TRUE AND a.role = 'assistant' AND p.deleted_at IS NULL
+		ORDER BY a.created_at DESC
+	`, claims.UserID)
+	if err != nil {
+		return fiber.NewError(500, "failed to load central gaps")
+	}
+	defer rows.Close()
+
+	var gaps []fiber.Map
+	for rows.Next() {
+		var pTitle, q, r, pID string
+		var t time.Time
+		rows.Scan(&pTitle, &q, &r, &t, &pID)
+		gaps = append(gaps, fiber.Map{
+			"portfolio_title": pTitle,
+			"portfolio_id":    pID,
+			"question":        q,
+			"response":        r,
+			"time":            t,
+		})
+	}
+
+	return c.JSON(fiber.Map{"success": true, "data": gaps})
 }

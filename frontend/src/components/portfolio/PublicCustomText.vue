@@ -6,17 +6,19 @@
     <div v-if="data.title" class="section-header-wrapper">
       <h2 class="layered-title" :data-text="data.title">{{ data.title }}</h2>
     </div>
-    <div v-if="data.image_url" class="universal-section-img-container" style="margin-bottom: 24px;">
-      <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
-    </div>
-    <div
-      class="custom-content animate-slide-up"
-      v-intersect
-      :style="{ textAlign: data.alignment || 'left' }"
-    >
-      <template v-if="data.content">{{ data.content }}</template>
-      <div v-else-if="!data.title && !data.image_url" class="empty-hint">
-        <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+    <div class="pub-section-content">
+      <div v-if="data.image_url" class="universal-section-img-container" style="margin-bottom: 24px;">
+        <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
+      </div>
+      <div
+        class="custom-content animate-slide-up"
+        v-intersect
+        :style="{ textAlign: data.alignment || 'left' }"
+      >
+        <template v-if="data.content">{{ data.content }}</template>
+        <div v-else-if="!data.title && !data.image_url" class="empty-hint">
+          <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+        </div>
       </div>
     </div>
   </section>

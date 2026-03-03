@@ -71,6 +71,18 @@ defineProps<{
 .color-green .stat-change {
   color: var(--success);
 }
+.color-purple .stat-value {
+  color: var(--purple);
+}
+.color-purple .stat-change {
+  color: var(--purple);
+}
+.color-amber .stat-value {
+  color: var(--warning, #f59e0b);
+}
+.color-amber .stat-change {
+  color: var(--warning, #f59e0b);
+}
 
 .icon-inline {
   vertical-align: text-bottom;

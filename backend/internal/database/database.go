@@ -146,6 +146,7 @@ func Migrate(db *sql.DB) error {
 			session_id   VARCHAR(64),
 			role         ENUM('user','assistant') NOT NULL,
 			content      TEXT NOT NULL,
+			is_knowledge_gap BOOLEAN NOT NULL DEFAULT FALSE,
 			created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			INDEX idx_portfolio_session (portfolio_id, session_id)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
@@ -193,6 +194,19 @@ func Migrate(db *sql.DB) error {
 		if _, err := db.Exec(`ALTER TABLE users ADD COLUMN google_id VARCHAR(100) UNIQUE AFTER email`); err != nil {
 			return fmt.Errorf("failed to add google_id: %w", err)
 		}
+	}
+
+	// ─── AI Gap Migration ──────────────────────────────────────────
+	var gapColCount int
+	err = db.QueryRow(`
+		SELECT COUNT(*) 
+		FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_SCHEMA = DATABASE() 
+		  AND TABLE_NAME = 'ai_chat_logs' 
+		  AND COLUMN_NAME = 'is_knowledge_gap'
+	`).Scan(&gapColCount)
+	if err == nil && gapColCount == 0 {
+		db.Exec(`ALTER TABLE ai_chat_logs ADD COLUMN is_knowledge_gap BOOLEAN NOT NULL DEFAULT FALSE AFTER content`)
 	}
 
 	log.Println("✅ Migrations completed successfully")

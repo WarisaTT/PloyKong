@@ -6,42 +6,44 @@
     <div class="section-header-wrapper">
       <h2 class="layered-title" :data-text="data.title || 'Education'">{{ data.title || 'Education' }}</h2>
     </div>
-    <div v-if="data.image_url" class="universal-section-img-container">
-      <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
-    </div>
+    <div class="pub-section-content">
+      <div v-if="data.image_url" class="universal-section-img-container">
+        <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
+      </div>
 
-    <div class="education-list">
-      <div
-        v-for="(item, i) in data.items"
-        :key="i"
-        class="education-item animate-slide-in-right"
-        :class="{ 'has-timeline': data.items.length > 1 }"
-        v-intersect
-        :style="{ transitionDelay: `${Number(i) * 100}ms` }"
-      >
-        <div v-if="data.items.length > 1" class="timeline-dot"></div>
+      <div class="education-list">
         <div
-          class="timeline-line"
-          v-if="data.items.length > 1 && Number(i) < data.items.length - 1"
-        ></div>
-        <div class="timeline-content">
-          <div class="tl-header">
-            <div class="tl-position">{{ item.degree }} <span v-if="item.field">in {{ item.field }}</span></div>
-            <div class="tl-date">
-              {{ item.start_year }} – {{ item.end_year || "Present" }}
+          v-for="(item, i) in data.items"
+          :key="i"
+          class="education-item animate-slide-in-right"
+          :class="{ 'has-timeline': data.items.length > 1 }"
+          v-intersect
+          :style="{ transitionDelay: `${Number(i) * 100}ms` }"
+        >
+          <div v-if="data.items.length > 1" class="timeline-dot"></div>
+          <div
+            class="timeline-line"
+            v-if="data.items.length > 1 && Number(i) < data.items.length - 1"
+          ></div>
+          <div class="timeline-content">
+            <div class="tl-header">
+              <div class="tl-position">{{ item.degree }} <span v-if="item.field">in {{ item.field }}</span></div>
+              <div class="tl-date">
+                {{ item.start_year }} – {{ item.end_year || "Present" }}
+              </div>
             </div>
-          </div>
-          <div class="tl-company">
-            {{ item.school }}
-            <span v-if="item.gpa" class="tl-loc"
-              >· GPA: {{ item.gpa }}</span
-            >
+            <div class="tl-company">
+              {{ item.school }}
+              <span v-if="item.gpa" class="tl-loc"
+                >· GPA: {{ item.gpa }}</span
+              >
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
-      <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
+        <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      </div>
     </div>
   </section>
 </template>

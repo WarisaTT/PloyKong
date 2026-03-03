@@ -3,34 +3,37 @@
     <div class="section-header-wrapper">
       <h2 class="layered-title" :data-text="data.title || 'Certificates'">{{ data.title || 'Certificates & Awards' }}</h2>
     </div>
-    <div v-if="data.image_url" class="universal-section-img-container">
-      <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
-    </div>
+    
+    <div class="pub-section-content">
+      <div v-if="data.image_url" class="universal-section-img-container">
+        <img :src="data.image_url" class="universal-section-img" alt="Section Cover" />
+      </div>
 
-    <div class="certs-grid">
-      <div
-        v-for="(cert, i) in data.items"
-        :key="i"
-        class="cert-card animate-scale-up"
-        v-intersect
-        :style="{ transitionDelay: `${Number(i) * 100}ms` }"
-      >
-        <div v-if="cert.image_url" class="cert-img-wrapper">
-          <img :src="cert.image_url" :alt="cert.title" class="cert-img" loading="lazy" />
-        </div>
-        <div class="cert-content">
-          <h3 class="cert-title">{{ cert.title }}</h3>
-          <div class="cert-meta">
-            <span class="cert-issuer">{{ cert.issuer }}</span>
-            <span v-if="cert.date" class="cert-date">• {{ cert.date }}</span>
+      <div class="certs-grid">
+        <div
+          v-for="(cert, i) in data.items"
+          :key="i"
+          class="cert-card animate-scale-up"
+          v-intersect
+          :style="{ transitionDelay: `${Number(i) * 100}ms` }"
+        >
+          <div v-if="cert.image_url" class="cert-img-wrapper">
+            <img :src="cert.image_url" :alt="cert.title" class="cert-img" loading="lazy" />
           </div>
-          <p v-if="cert.description" class="cert-desc">{{ cert.description }}</p>
+          <div class="cert-content">
+            <h3 class="cert-title">{{ cert.title }}</h3>
+            <div class="cert-meta">
+              <span class="cert-issuer">{{ cert.issuer }}</span>
+              <span v-if="cert.date" class="cert-date">• {{ cert.date }}</span>
+            </div>
+            <p v-if="cert.description" class="cert-desc">{{ cert.description }}</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
-      <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      <div v-if="(!data.items || data.items.length === 0) && !data.image_url" style="text-align: center; padding: 20px;">
+        <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      </div>
     </div>
   </section>
 </template>

@@ -98,6 +98,15 @@
       </div>
     </header>
 
+    <!-- Mobile Backdrop -->
+    <Transition name="fade-backdrop">
+      <div 
+        v-if="(!isLeftCollapsed || !isRightCollapsed) && isMobile" 
+        class="mobile-backdrop"
+        @click="isLeftCollapsed = true; isRightCollapsed = true"
+      />
+    </Transition>
+
     <!-- ─── Main Builder Area ──────────────────────────────────────────── -->
     <div
       class="builder-main"
@@ -201,7 +210,7 @@
                 :theme-vars="themeVars"
                 :class="{ 'block-highlight': highlightedBlocks.has(section.id) }"
                 @select="selectSection(section.id)"
-                @delete="store.deleteSection(section.id)"
+                @delete="deleteSection(section.id)"
                 @toggle-visibility="store.toggleSectionVisibility(section.id)"
                 @toggle-column-span="store.toggleSectionColumnSpan(section.id)"
                 @move-up="moveSection(section.id, 'up')"
@@ -348,10 +357,120 @@
 
         <div class="props-section">
           <div class="props-label">Portfolio URL</div>
-          <div class="url-display">
+          <div class="url-display copyable-url" @click="copyPublicLink" :title="copied ? 'Copied!' : 'Click to copy'">
             <span class="url-prefix">pk.io/</span>
             <span class="url-slug">{{ store.activePortfolio?.slug }}</span>
+            <Copy v-if="!copied" :size="12" style="margin-left: auto; opacity: 0.5" />
+            <Check v-else :size="12" style="margin-left: auto; color: var(--success)" />
           </div>
+        </div>
+
+        <!-- AI Actions — above Section Editor, with inline preview -->
+        <div class="ai-panel">
+          <div class="ai-panel-title">
+            <Bot :size="14" class="icon-inline" /> AI Assistant
+          </div>
+          
+          <template v-if="!aiLoading && !aiResult">
+            <!-- Magic Fill Button -->
+            <button
+              class="btn btn-primary btn-sm btn-icon-text magic-fill-btn magic-fill-btn-inline"
+              style="width: 100%; margin-bottom: 12px"
+              :disabled="!isHeroComplete"
+              @click="aiMagicFill"
+            >
+              <Zap :size="14" /> Auto-fill Section 
+            </button>
+            <p v-if="!isHeroComplete" 
+               style="font-size: 10px; color: var(--danger); margin-bottom: 12px; text-align: center;">
+              *กรุณากรอกข้อมูลที่ส่วน Hero ให้ครบก่อน
+            </p>
+
+            <button
+              class="btn btn-secondary btn-sm btn-icon-text"
+              style="width: 100%; margin-bottom: 8px"
+              @click="aiScoreResume"
+            >
+              <BarChart2 :size="14" /> Score My Resume
+            </button>
+            <button
+              class="btn btn-secondary btn-sm btn-icon-text"
+              style="width: 100%"
+              @click="aiImproveContent"
+            >
+              <Sparkles :size="14" /> Improve Content
+            </button>
+          </template>
+
+          <!-- AI Loading Animation -->
+          <div v-if="aiLoading" class="ai-loading">
+            <div class="ai-pulse">
+              <Sparkles :size="24" class="sparkle-icon" />
+              <div class="pulse-ring"></div>
+            </div>
+            <p>AI กำลังวิเคราะห์พอร์ตของคุณ...</p>
+          </div>
+
+          <template v-else-if="aiResult">
+            <!-- Score result -->
+            <template v-if="isJson(aiResult) && lastAIAction === 'score'">
+              <div class="ai-result-wrap">
+                <AIAnalysisResult :result="aiResult" />
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                  <button @click="aiResult = null" class="btn btn-outline btn-xs" style="width: 100%">Close</button>
+                </div>
+              </div>
+            </template>
+
+            <!-- Improve / Magic — full diff preview inline in AI panel -->
+            <template v-else-if="lastAIAction === 'improve' || lastAIAction === 'magic'">
+              <Transition name="ai-preview">
+                <div class="ai-improve-preview">
+                  <div class="aip-header">
+                    <div class="aip-title">
+                      <Sparkles :size="14" class="icon-inline" /> AI Suggestion Preview
+                    </div>
+                    <span class="aip-badge">{{ lastAIAction === 'magic' ? 'Auto-fill' : 'Improved' }}</span>
+                  </div>
+
+                  <div class="aip-body">
+                    <div class="aip-col">
+                      <div class="aip-col-label">
+                        {{ lastAIAction === 'improve' ? '📄 ข้อความเดิม' : '📄 ข้อความเดิม / ตัวอย่างจากที่อื่นๆ' }}
+                      </div>
+                      <div class="aip-text aip-original" v-html="renderHumanReadable(aiSourceData)" />
+                    </div>
+                    <div class="aip-divider-v">
+                      <div class="aip-arrow">→</div>
+                    </div>
+                    <div class="aip-col">
+                      <div class="aip-col-label">✨ AI แนะนำ</div>
+                      <div class="aip-text aip-new" v-html="renderHumanReadable(parseAIResult(aiResult))" />
+                    </div>
+                  </div>
+
+                  <div class="aip-actions">
+                    <button @click="aiResult = null; lastAIAction = null" class="btn btn-secondary">
+                      Discard
+                    </button>
+                    <button @click="applyAIResult" class="btn btn-primary aip-apply-btn">
+                      <Check :size="16" /> Apply Changes
+                    </button>
+                  </div>
+                </div>
+              </Transition>
+            </template>
+
+            <!-- Fallback text result -->
+            <template v-else>
+              <div class="ai-result-wrap">
+                <div class="ai-text-result">{{ aiResult }}</div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                  <button @click="aiResult = null" class="btn btn-outline btn-xs" style="width: 100%">Close</button>
+                </div>
+              </div>
+            </template>
+          </template>
         </div>
 
         <!-- Section Editor (when section selected) -->
@@ -384,36 +503,61 @@
           <SectionEditor
             :section="selectedSection"
             :template="store.activePortfolio?.theme?.template || 'classic'"
+            :is-hero-complete="isHeroComplete"
             @update="handleSectionUpdate"
+            @magic-fill="aiMagicFill"
           />
-        </div>
-
-        <!-- AI Actions -->
-        <div class="ai-panel">
-          <div class="ai-panel-title">
-            <Bot :size="14" class="icon-inline" /> AI Assistant
-          </div>
-          <button
-            class="btn btn-secondary btn-sm btn-icon-text"
-            style="width: 100%; margin-bottom: 8px"
-            @click="aiScoreResume"
-          >
-            <BarChart2 :size="14" /> Score My Resume
-          </button>
-          <button
-            class="btn btn-secondary btn-sm btn-icon-text"
-            style="width: 100%"
-            @click="aiImproveContent"
-          >
-            <Sparkles :size="14" /> Improve Content
-          </button>
-          <div v-if="aiResult" class="ai-result">
-            <pre>{{ aiResult }}</pre>
-          </div>
         </div>
       </div>
     </aside>
     </div>
+
+    <!-- ─── Mobile Bottom Navigation Bar ─── -->
+    <nav class="mobile-bottom-nav">
+      <button 
+        class="mob-nav-btn" 
+        :class="{ active: !isLeftCollapsed }"
+        @click="openSidebar('left')"
+      >
+        <Blocks :size="22" />
+        <span>Blocks</span>
+      </button>
+      <button 
+        class="mob-nav-btn" 
+        :class="{ active: store.activePortfolio?.is_published }"
+        @click="previewPortfolio"
+        :disabled="!store.activePortfolio?.is_published"
+      >
+        <Eye :size="22" />
+        <span>Preview</span>
+      </button>
+      <button 
+        class="mob-nav-btn" 
+        :class="{ active: !isRightCollapsed && !selectedSectionId }"
+        @click="openSidebar('right')"
+      >
+        <Palette :size="22" />
+        <span>Design</span>
+      </button>
+      <button 
+        v-if="selectedSectionId"
+        class="mob-nav-btn pulse-hint" 
+        :class="{ active: !isRightCollapsed && !!selectedSectionId }"
+        @click="scrollToEditor"
+      >
+        <Pencil :size="22" />
+        <span>Edit</span>
+      </button>
+      <button 
+        class="mob-nav-btn"
+        :class="store.activePortfolio?.is_published ? 'btn-danger-mobile' : 'btn-primary-mobile'"
+        @click="togglePublish"
+      >
+        <Play v-if="store.activePortfolio?.is_published" :size="22" />
+        <Zap v-else :size="22" />
+        <span>{{ store.activePortfolio?.is_published ? 'Unpublish' : 'Publish' }}</span>
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -450,12 +594,30 @@ import SectionBlock from '@/components/builder/SectionBlock.vue'
 import SectionEditor from '@/components/builder/SectionEditor.vue'
 import { debounce } from 'lodash'
 import Sortable from 'sortablejs'
+import AIAnalysisResult from '@/components/builder/AIAnalysisResult.vue'
+import { toastError, toastSuccess } from '@/utils/alert'
 
 const route = useRoute()
 const store = usePortfolioStore()
 
 const selectedSectionId = ref<string | null>(null)
 const aiResult = ref<string | null>(null)
+const aiSourceData = ref<any>(null)      // snapshot of data when AI call was made
+const aiSourceSectionId = ref<string | null>(null) // section id (null = all sections)
+const lastAIAction = ref<'score' | 'improve' | 'magic' | null>(null)
+const aiLoading = ref(false)
+
+function isJson(str: string) {
+  try {
+    const trimmed = str.trim();
+    // Detect Object or Array, also handle markdown-wrapped if needed
+    const isWrapped = trimmed.startsWith('```json') && trimmed.endsWith('```');
+    const content = isWrapped ? trimmed.replace(/^```json/, '').replace(/```$/, '').trim() : trimmed;
+    
+    return (content.startsWith('{') && content.endsWith('}')) || 
+           (content.startsWith('[') && content.endsWith(']'));
+  } catch (e) { return false; }
+}
 const canvasRef = ref<HTMLElement | null>(null)
 const listRef = ref<any>(null)
 const editorRef = ref<HTMLElement | null>(null)
@@ -470,6 +632,7 @@ const copied = ref(false)
 
 // Resizing logic
 const isResizing = ref<'left' | 'right' | null>(null)
+const isMobile = ref(window.innerWidth <= 768)
 
 function startResizing(side: 'left' | 'right', e: MouseEvent) {
   isResizing.value = side
@@ -572,6 +735,12 @@ const sortedSections = computed(() =>
 const selectedSection = computed(() =>
   store.sections.find((s) => s.id === selectedSectionId.value)
 )
+
+const isHeroComplete = computed(() => {
+  const hero = store.sections.find(s => s.type === 'hero');
+  if (!hero || !hero.data) return false;
+  return !!hero.data.name && !!hero.data.role; // tagline is optional
+});
 
 onMounted(async () => {
   const portfolioId = route.params.id as string
@@ -806,6 +975,11 @@ function handleSectionUpdate(data: any) {
   debouncedSave(selectedSectionId.value, data)
 }
 
+function deleteSection(id: string) {
+  debouncedSave.cancel()
+  store.deleteSection(id)
+}
+
 function moveSection(id: string, direction: 'up' | 'down') {
   const idx = sortedSections.value.findIndex((s) => s.id === id)
   if (direction === 'up' && idx === 0) return
@@ -818,28 +992,324 @@ function moveSection(id: string, direction: 'up' | 'down') {
 }
 
 async function aiScoreResume() {
+  aiLoading.value = true
+  aiResult.value = null
+  lastAIAction.value = 'score'
   const content = JSON.stringify(store.sections.map((s) => s.data))
   try {
     const { data } = await aiAPI.scoreResume(content, 'Software Developer')
     aiResult.value = data.data.analysis
   } catch {
     aiResult.value = 'AI unavailable. Please check API key.'
+  } finally {
+    aiLoading.value = false
   }
 }
 
 async function aiImproveContent() {
-  const heroSection = store.sections.find((s) => s.type === 'hero')
-  if (!heroSection || !selectedSectionId.value) {
-    aiResult.value = 'Select a section first to improve its content.'
+  aiLoading.value = true
+  aiResult.value = null
+  lastAIAction.value = 'improve'
+
+  const selected = store.sections.find((s) => s.id === selectedSectionId.value)
+
+  if (selected) {
+    // Improve selected section
+    aiSourceSectionId.value = selected.id
+    aiSourceData.value = JSON.parse(JSON.stringify(selected.data)) // snapshot
+    const text = JSON.stringify(selected.data)
+    try {
+      const { data } = await aiAPI.improveText(text, `${selected.type} section`)
+      aiResult.value = data.data.improved_text
+    } catch {
+      aiResult.value = 'AI unavailable.'
+    } finally {
+      aiLoading.value = false
+    }
+  } else {
+    // No section selected — improve entire portfolio
+    aiSourceSectionId.value = null
+    const allData = store.sections.map(s => ({ type: s.type, data: s.data }))
+    aiSourceData.value = allData // snapshot of all
+    const text = JSON.stringify(allData)
+    try {
+      const { data } = await aiAPI.improveText(text, 'full portfolio resume')
+      aiResult.value = data.data.improved_text
+    } catch {
+      aiResult.value = 'AI unavailable.'
+    } finally {
+      aiLoading.value = false
+    }
+  }
+}
+
+const MAGIC_SKIP_TYPES = new Set(['ai_chat', 'custom_text', 'hero'])
+
+// Helper to clean AI response (remove markdown blocks)
+function getCleanJson(raw: string): string {
+  let clean = raw.trim();
+  if (clean.startsWith('```')) {
+    clean = clean.replace(/^```(json)?/, '').replace(/```$/, '').trim();
+  }
+  return clean;
+}
+
+// Helper to ensure list-based sections get an object { items: [] } if result is an array
+function wrapIfNeeded(data: any, sectionType: string): any {
+  if (Array.isArray(data)) {
+    const listTypes = ['skills', 'experience', 'projects', 'certificates', 'education', 'stats', 'social'];
+    if (listTypes.includes(sectionType)) {
+      return { items: data };
+    }
+  }
+  return data;
+}
+
+async function aiMagicFill() {
+  const selected = store.sections.find((s) => s.id === selectedSectionId.value)
+
+  // Context data always needed
+  const previousData = JSON.stringify(
+    store.portfolios
+      .filter(p => p.id !== store.activePortfolio?.id)
+      .map(p => ({ title: p.title, sections: p.sections?.map(s => s.data) }))
+      .slice(0, 3)
+  )
+  const heroData = JSON.stringify(store.sections.find(s => s.type === 'hero')?.data || {})
+  const template = store.activePortfolio?.theme?.template || 'classic'
+
+  // ── Case 1: selected section that can't be auto-filled ──
+  if (selected && MAGIC_SKIP_TYPES.has(selected.type)) {
+    toastError(`ไม่สามารถ Auto-fill Section ประเภท "${selected.type}" ได้`)
     return
   }
-  const text = heroSection.data?.tagline || ''
-  try {
-    const { data } = await aiAPI.improveText(text, 'portfolio tagline')
-    aiResult.value = data.data.improved_text
-  } catch {
-    aiResult.value = 'AI unavailable.'
+
+  // ── Case 2: single section fill (with preview) ──
+  if (selected) {
+    aiLoading.value = true
+    aiResult.value = null
+    lastAIAction.value = 'magic'
+    aiSourceSectionId.value = selected.id
+    aiSourceData.value = JSON.parse(JSON.stringify(selected.data))
+
+    try {
+      const { data } = await aiAPI.magicFill({ section_type: selected.type, previous_data: previousData, hero_data: heroData, template })
+      aiResult.value = typeof data.data === 'string' ? data.data : JSON.stringify(data.data, null, 2)
+    } catch (e: any) {
+      aiResult.value = 'AI Failed: ' + (e.response?.data?.error || e.message)
+    } finally {
+      aiLoading.value = false
+    }
+    return
   }
+
+  // ── Case 3: no section selected → fill ALL fillable sections directly ──
+  const fillable = store.sections.filter(s => !MAGIC_SKIP_TYPES.has(s.type))
+  if (fillable.length === 0) {
+    toastError('ไม่มี Section ที่สามารถ Auto-fill ได้')
+    return
+  }
+
+  aiLoading.value = true
+  aiResult.value = null
+  lastAIAction.value = null // no preview for batch fill
+  aiSourceSectionId.value = null
+  aiSourceData.value = null
+
+  let successCount = 0
+  try {
+    for (const sec of fillable) {
+      try {
+        const { data } = await aiAPI.magicFill({ section_type: sec.type, previous_data: previousData, hero_data: heroData, template })
+        const rawResult = typeof data.data === 'string' ? data.data : JSON.stringify(data.data, null, 2)
+
+        // Parse and apply immediately
+        let clean = getCleanJson(rawResult);
+        let parsed: any;
+        try { parsed = JSON.parse(clean) } catch { parsed = clean }
+
+        // Wrap if it's a list section but result is a raw array
+        const finalData = wrapIfNeeded(parsed, sec.type);
+
+        // Apply to section directly
+        const secRef = store.sections.find(s => s.id === sec.id)
+        if (secRef && typeof finalData === 'object' && finalData !== null) {
+          secRef.data = finalData;
+          debouncedSave(sec.id, finalData);
+          successCount++;
+        }
+      } catch {
+        // skip failed sections silently
+      }
+    }
+    toastSuccess(`✨ Auto-fill สำเร็จ ${successCount}/${fillable.length} Section`)
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+function applyAIResult() {
+  if (!aiResult.value) return;
+  
+  try {
+    let raw = aiResult.value;
+    let clean = getCleanJson(raw);
+    let resultToApply: any;
+
+    const targetSec = aiSourceSectionId.value ? store.sections.find(s => s.id === aiSourceSectionId.value) : null;
+
+    if (isJson(clean)) {
+      let parsed = JSON.parse(clean);
+      
+      // Smart field mapping for Stats (AI often uses 'name' or 'description' instead of 'label')
+      if (targetSec?.type === 'stats' || targetSec?.type === 'skills') {
+        const items = Array.isArray(parsed) ? parsed : (parsed.items || []);
+        if (Array.isArray(items)) {
+          items.forEach(it => {
+            if (!it.label && it.name) it.label = it.name;
+            if (!it.label && it.title) it.label = it.title;
+            if (!it.value && it.number) it.value = it.number;
+            if (!it.value && it.count) it.value = it.count;
+            if (!it.value && it.amount) it.value = it.amount;
+          });
+          if (!Array.isArray(parsed)) parsed.items = items;
+          else parsed = items;
+        }
+      }
+
+      // Merge with existing data to prevent losing fields like 'items' if AI only returns 'title'
+      if (aiSourceData.value && typeof aiSourceData.value === 'object' && !Array.isArray(parsed)) {
+        resultToApply = { ...aiSourceData.value, ...parsed };
+      } else {
+        resultToApply = wrapIfNeeded(parsed, targetSec?.type || '');
+      }
+    } else {
+      // Plain text result — merge into existing section data
+      const sourceSection = aiSourceSectionId.value 
+        ? store.sections.find(s => s.id === aiSourceSectionId.value)
+        : null;
+      
+      if (sourceSection && typeof aiSourceData.value === 'object' && aiSourceData.value !== null) {
+        const sectionType = sourceSection.type;
+        const currentData = { ...aiSourceData.value };
+
+        if (sectionType === 'custom_text') {
+          resultToApply = { ...currentData, content: clean };
+        } else if (sectionType === 'hero') {
+          resultToApply = { ...currentData, bio: clean };
+        } else if (['stats', 'skills', 'experience', 'projects'].includes(sectionType)) {
+          // List-based section got plain text: don't overwrite the structure
+          console.warn(`[AI] Section ${sectionType} received plain text. Keeping structure.`);
+          resultToApply = currentData; 
+        } else {
+          const descField = ['description', 'content', 'bio', 'tagline', 'text'].find(f => f in currentData);
+          if (descField) {
+            resultToApply = { ...currentData, [descField]: clean };
+          } else {
+            resultToApply = currentData; 
+          }
+        }
+      } else {
+        resultToApply = clean;
+      }
+    }
+
+    if (aiSourceSectionId.value) {
+      // Apply to specific section
+      selectedSectionId.value = aiSourceSectionId.value;
+      handleSectionUpdate(resultToApply);
+    } else if (Array.isArray(resultToApply)) {
+      // All-portfolio improve — apply each section
+      resultToApply.forEach((item: any) => {
+        const sec = store.sections.find(s => s.type === item.type);
+        if (sec && item.data) {
+          const sec2 = store.sections.find(s => s.id === sec.id);
+          const existingData = sec2 ? { ...sec2.data } : {};
+          const mergedData = (typeof item.data === 'object' && !Array.isArray(item.data)) 
+            ? { ...existingData, ...item.data } 
+            : wrapIfNeeded(item.data, sec.type);
+            
+          if (sec2) sec2.data = mergedData;
+          debouncedSave(sec.id, mergedData);
+        }
+      });
+    } else {
+      // Fallback: apply to currently selected section
+      if (!selectedSectionId.value) return;
+      handleSectionUpdate(resultToApply);
+    }
+
+    aiResult.value = null;
+    aiSourceData.value = null;
+    aiSourceSectionId.value = null;
+    lastAIAction.value = null;
+  } catch (e) {
+    console.error('Failed to parse AI result:', e);
+  }
+}
+
+// Parse AI result (might be JSON string or plain text)
+function parseAIResult(raw: string | null): any {
+  if (!raw) return null;
+  try {
+    let clean = raw.trim();
+    if (clean.startsWith('```json')) clean = clean.replace(/^```json/, '').replace(/```$/, '').trim();
+    else if (clean.startsWith('```')) clean = clean.replace(/^```/, '').replace(/```$/, '').trim();
+    return JSON.parse(clean);
+  } catch {
+    return raw; // return as plain string if not JSON
+  }
+}
+
+// Convert section data to readable HTML rows
+function renderHumanReadable(data: any, depth = 0): string {
+  if (data === null || data === undefined) return '<span class="aip-empty">—</span>';
+  if (typeof data === 'string') {
+    if (!data.trim()) return '<span class="aip-empty">—</span>';
+    return `<span class="aip-value">${escHtml(data)}</span>`;
+  }
+  if (typeof data === 'number' || typeof data === 'boolean') {
+    return `<span class="aip-value">${data}</span>`;
+  }
+  if (Array.isArray(data)) {
+    if (data.length === 0) return '<span class="aip-empty">— (ว่าง)</span>';
+    return data.map((item, i) => {
+      if (typeof item === 'object' && item !== null) {
+        return `<div class="aip-array-item"><div class="aip-item-num">${i + 1}</div><div class="aip-item-body">${renderHumanReadable(item, depth + 1)}</div></div>`;
+      }
+      return `<div class="aip-array-item"><div class="aip-item-num">${i + 1}</div><span class="aip-value">${escHtml(String(item))}</span></div>`;
+    }).join('');
+  }
+  if (typeof data === 'object') {
+    const SKIP_KEYS = new Set(['id', 'sectionId', 'prompt_hint', 'avatar_url']);
+    const LABELS: Record<string, string> = {
+      name: 'ชื่อ', role: 'ตำแหน่ง', bio: 'Bio', title: 'หัวข้อ',
+      description: 'คำอธิบาย', company: 'บริษัท', period: 'ช่วงเวลา',
+      location: 'สถานที่', skills: 'ทักษะ', projects: 'โปรเจกต์',
+      experiences: 'ประสบการณ์', items: 'รายการ', content: 'เนื้อหา',
+      url: 'URL', link: 'ลิงก์', email: 'อีเมล', phone: 'เบอร์โทร',
+      tech: 'เทคโนโลยี', level: 'ระดับ', category: 'หมวดหมู่',
+      degree: 'วุฒิการศึกษา', school: 'สถาบัน', gpa: 'เกรด',
+      tagline: 'Tagline', label: 'ป้ายข้อความ', value: 'ค่า',
+      highlight: 'ไฮไลท์', achievements: 'ผลงาน', responsibilities: 'หน้าที่'
+    };
+    const entries = Object.entries(data).filter(([k]) => !SKIP_KEYS.has(k));
+    if (entries.length === 0) return '<span class="aip-empty">—</span>';
+    return entries.map(([key, val]) => {
+      const label = LABELS[key] || key;
+      if (val === null || val === undefined || val === '') return '';
+      const isComplex = typeof val === 'object' || Array.isArray(val);
+      return `<div class="aip-field ${depth > 0 ? 'aip-field-nested' : ''}">
+        <div class="aip-field-key">${escHtml(label)}</div>
+        <div class="aip-field-val">${renderHumanReadable(val, depth + 1)}</div>
+      </div>`;
+    }).filter(Boolean).join('');
+  }
+  return escHtml(String(data));
+}
+
+function escHtml(str: string): string {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 
@@ -965,6 +1435,51 @@ async function aiImproveContent() {
   opacity: 0;
   pointer-events: none;
 }
+
+.magic-fill-btn-inline {
+  background: var(--primary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Hover */
+.magic-fill-btn-inline:hover:not(:disabled) {
+  background: var(--primary-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* Active (กดลง) */
+.magic-fill-btn-inline:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Disabled */
+.magic-fill-btn-inline:disabled {
+  background: var(--surface-muted, rgba(128,128,128,0.15));
+  color: var(--text-muted, rgba(128,128,128,0.7));
+  border-color: var(--border-muted, rgba(128,128,128,0.25));
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
 
 /* Resize Handles */
 .resize-handle {
@@ -1305,9 +1820,317 @@ async function aiImproveContent() {
   color: var(--indigo);
   font-weight: 600;
 }
+.copyable-url {
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+.copyable-url:hover {
+  background: rgba(79, 70, 229, 0.05);
+  border-color: var(--indigo);
+}
+.magic-fill-btn {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border: none;
+  animation: shimmer 2s infinite linear;
+  background-size: 200% auto;
+}
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
 
 .section-editor {
   margin-bottom: 3px;
+  position: relative;
+}
+
+/* ─── AI Improve Preview ────────────────────────── */
+.ai-improve-preview {
+  margin-top: 16px;
+  border: 1.5px solid var(--indigo);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(79,70,229,0.12);
+  container-type: inline-size; /* enables @container queries on children */
+}
+
+.aip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(79,70,229,0.08);
+  border-bottom: 1px solid var(--border);
+}
+
+.aip-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--indigo);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.3px;
+}
+
+.aip-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: rgba(79,70,229,0.15);
+  color: var(--indigo);
+  letter-spacing: 0.5px;
+}
+
+.aip-body {
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr;
+  gap: 0;
+  min-height: 200px;
+  max-height: 420px;
+  overflow: hidden; /* only col scrolls individually */
+}
+
+.aip-col {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 420px;
+}
+
+.aip-col-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.aip-text {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  max-height: 360px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.aip-text::-webkit-scrollbar {
+  width: 4px;
+}
+.aip-text::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.aip-text pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10.5px;
+  margin: 0;
+}
+
+/* Human-readable field rendering */
+.aip-text :deep(.aip-field) {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.aip-text :deep(.aip-field:last-child) {
+  border-bottom: none;
+}
+.aip-text :deep(.aip-field-key) {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+.aip-text :deep(.aip-field-val) {
+  font-size: 12px;
+  color: inherit;
+  line-height: 1.6;
+}
+.aip-text :deep(.aip-value) {
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.aip-text :deep(.aip-empty) {
+  opacity: 0.35;
+  font-style: italic;
+  font-size: 11px;
+}
+.aip-text :deep(.aip-array-item) {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.aip-text :deep(.aip-array-item:last-child) {
+  border-bottom: none;
+}
+.aip-text :deep(.aip-item-num) {
+  font-size: 10px;
+  font-weight: 800;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(79,70,229,0.15);
+  color: var(--indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.aip-text :deep(.aip-item-body) {
+  flex: 1;
+  min-width: 0;
+}
+.aip-text :deep(.aip-field-nested) {
+  padding: 4px 0 4px 8px;
+  border-bottom: none;
+  border-left: 2px solid var(--border);
+  margin-left: 4px;
+}
+
+.aip-original {
+  background: rgba(239,68,68,0.04);
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+}
+
+.aip-new {
+  background: rgba(79,70,229,0.05);
+  color: var(--text);
+}
+
+.aip-divider-v {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.aip-arrow {
+  font-size: 16px;
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+.aip-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.aip-actions .btn {
+  flex: 1;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+
+.aip-apply-btn {
+  background: linear-gradient(135deg, var(--indigo), var(--purple));
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+}
+
+.aip-apply-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79,70,229,0.45);
+}
+
+/* Hint in mini panel */
+.ai-preview-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 10px 12px;
+  background: rgba(79,70,229,0.06);
+  border-radius: 10px;
+  border: 1px dashed rgba(79,70,229,0.3);
+}
+
+/* Transition */
+.ai-preview-enter-active, .ai-preview-leave-active {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ai-preview-enter-from, .ai-preview-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+}
+
+/* Stack columns vertically when panel is too narrow (container query) */
+@container (max-width: 400px) {
+  .aip-body {
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+  }
+  .aip-divider-v {
+    height: 32px;
+    border-top: 1px solid var(--border);
+    border-left: none;
+    border-right: none;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg2);
+  }
+  .aip-arrow {
+    transform: rotate(90deg);
+    font-size: 14px;
+  }
+  .aip-original {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .aip-col {
+    max-height: 260px;
+    overflow: hidden;
+  }
+  .aip-col-label {
+    font-size: 9px;
+    padding: 6px 10px;
+  }
+  .aip-text {
+    max-height: 220px;
+    font-size: 10.5px;
+  }
+}
+
+/* Fallback for browsers without container query support */
+@media (max-width: 460px) {
+  .aip-body {
+    grid-template-columns: 1fr;
+  }
+  .aip-divider-v {
+    display: none;
+  }
+  .aip-original {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
 }
 
 .editor-divider {
@@ -1462,19 +2285,29 @@ input:checked + .slider:before {
   transform: translateX(18px);
 }
 
-/* Mobile Tabs at Top */
+/* Mobile Bottom Nav */
 .builder-mobile-tabs {
+  display: none; /* Hidden on all sizes — replaced by bottom nav on mobile */
+}
+
+.mobile-bottom-nav {
   display: none;
-  gap: 4px;
-  background: var(--surface);
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
 }
 
 @media (max-width: 768px) {
-  .builder-mobile-tabs {
+  .mobile-bottom-nav {
     display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--sidebar-bg);
+    border-top: 1px solid var(--border);
+    padding: 8px 4px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    z-index: 500;
+    gap: 4px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
   }
   .topbar-center {
     display: none !important;
@@ -1550,12 +2383,13 @@ input:checked + .slider:before {
   .block-palette, .props-panel {
     position: fixed !important;
     top: 0;
-    bottom: 0;
-    width: 280px !important;
-    z-index: 1000;
+    bottom: 60px; /* account for bottom nav */
+    width: 85vw !important;
+    max-width: 320px;
+    z-index: 600;
     margin: 0 !important;
     transform: none !important;
-    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    box-shadow: 0 0 50px rgba(0,0,0,0.4);
     background: var(--surface) !important;
   }
   
@@ -1565,7 +2399,6 @@ input:checked + .slider:before {
   
   .props-panel {
     right: 0;
-    width: 320px !important;
   }
 
   /* Overlay hidden state */
@@ -1577,13 +2410,26 @@ input:checked + .slider:before {
   }
 
   .builder-canvas {
-    padding: 16px;
+    padding: 12px;
+    padding-bottom: 80px; /* space for bottom nav */
   }
 
   .sections-grid {
     grid-template-columns: 1fr !important;
-    gap: 20px !important;
+    gap: 16px !important;
   }
+
+  /* Mobile Backdrop */
+  .mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    bottom: 60px;
+    background: rgba(0,0,0,0.5);
+    z-index: 599;
+    backdrop-filter: blur(2px);
+  }
+  .fade-backdrop-enter-active, .fade-backdrop-leave-active { transition: opacity 0.3s; }
+  .fade-backdrop-enter-from, .fade-backdrop-leave-to { opacity: 0; }
 }
 
 .pulse-hint {
@@ -1605,10 +2451,104 @@ input:checked + .slider:before {
   --divider-color: rgba(0, 0, 0, 0.15);
 }
 
+/* AI Panel Styles */
+.ai-panel {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+.ai-panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.ai-loading {
+  text-align: center;
+  padding: 20px 10px;
+}
+.ai-loading p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.ai-pulse {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sparkle-icon {
+  color: var(--indigo);
+  z-index: 2;
+}
+.pulse-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--indigo);
+  opacity: 0.3;
+  animation: ai-pulse-anim 1.5s infinite ease-out;
+}
+
+@keyframes ai-pulse-anim {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.ai-text-result {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg2);
+  padding: 12px;
+  border-radius: 10px;
+  white-space: pre-wrap;
+}
+
 /* Hide handles on mobile */
 @media (max-width: 768px) {
   .resize-handle {
     display: none !important;
   }
+}
+
+/* Mobile Bottom Nav Buttons */
+.mob-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 0;
+}
+.mob-nav-btn.active {
+  color: var(--indigo);
+}
+.mob-nav-btn.btn-primary-mobile {
+  color: var(--indigo);
+}
+.mob-nav-btn.btn-danger-mobile {
+  color: var(--danger);
+}
+.mob-nav-btn:disabled {
+  opacity: 0.3;
 }
 </style>

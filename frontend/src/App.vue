@@ -31,16 +31,21 @@ onMounted(async () => {
 </script>
 
 <style>
+#app {
+  min-height: 100vh;
+  /* Sync background with main theme variables */
+  background: var(--bg);
+  background-color: var(--bg-color);
+  color: var(--text);
+  transition: background-color 0.3s ease;
+}
+
 .page-enter-active,
 .page-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
+.page-enter-from,
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
 }
 </style>

@@ -48,11 +48,10 @@
 
       <div class="editor-field">
         <label class="form-label">Cover Image</label>
-        <div style="display: flex; gap: 15px">
+        <div class="image-input-row">
           <input
             v-model="form.image_url"
             class="form-input"
-            style="flex: 1"
             placeholder="https:// หรืออัปโหลดรูป..."
             @input="emitUpdate()"
           />
@@ -73,6 +72,14 @@
               ><Loader2 :size="14" class="spin" /> กำลังอัพโหลด...</template
             >
             <template v-else>Browse</template>
+          </button>
+          <button
+            v-if="form.image_url"
+            type="button"
+            class="btn btn-secondary btn-sm danger-light"
+            @click="form.image_url = ''; emitUpdate()"
+          >
+            <X :size="14" />
           </button>
         </div>
       </div>
@@ -112,18 +119,16 @@
     <template v-if="section.type === 'hero'">
       <div class="editor-field">
         <label class="form-label">Name</label>
-        <input
+        <AutoResizeTextarea
           v-model="form.name"
-          class="form-input"
           placeholder="Your Name"
           @input="emitUpdate()"
         />
       </div>
       <div class="editor-field">
         <label class="form-label">Position</label>
-        <input
+        <AutoResizeTextarea
           v-model="form.role"
-          class="form-input"
           placeholder="Full-Stack Developer"
           @input="emitUpdate()"
         />
@@ -140,11 +145,10 @@
       </div>
       <div class="editor-field">
         <label class="form-label">Profile Picture</label>
-        <div style="display: flex; gap: 8px">
+        <div class="image-input-row">
           <input
             v-model="form.avatar_url"
             class="form-input"
-            style="flex: 1"
             placeholder="https://..."
             @input="emitUpdate()"
           />
@@ -165,6 +169,14 @@
               ><Loader2 :size="14" class="spin" /> Uploading...</template
             >
             <template v-else>Upload</template>
+          </button>
+          <button
+            v-if="form.avatar_url"
+            type="button"
+            class="btn btn-secondary btn-sm danger-light"
+            @click="form.avatar_url = ''; emitUpdate()"
+          >
+            <X :size="14" />
           </button>
         </div>
       </div>
@@ -195,9 +207,7 @@
         </button>
       </div>
 
-      <button class="btn btn-secondary btn-sm ai-btn" @click="improveTagline" style="margin-top: 12px;">
-        <Sparkles :size="14" /> AI Improve Tagline
-      </button>
+
     </template>
 
     <!-- Skills Editor -->
@@ -209,17 +219,15 @@
           class="skill-row"
         >
           <div style="display: flex; flex-direction: column; gap: 8px; width: 100%">
-            <input
+            <AutoResizeTextarea
               v-model="skill.name"
-              class="form-input"
-              style="flex: 2"
+              :style="{ flex: 2 }"
               placeholder="Skill Name"
               @input="emitUpdate()"
             />
-            <input
+            <AutoResizeTextarea
               v-model="skill.category"
-              class="form-input"
-              style="flex: 1"
+              :style="{ flex: 1 }"
               placeholder="Type"
               @input="emitUpdate()"
             />
@@ -257,21 +265,18 @@
             <Trash2 :size="14" />
           </button>
         </div>
-        <input
+        <AutoResizeTextarea
           v-model="item.company"
-          class="form-input"
           placeholder="Company"
           @input="emitUpdate()"
         />
-        <input
+        <AutoResizeTextarea
           v-model="item.position"
-          class="form-input"
           placeholder="Position"
           @input="emitUpdate()"
         />
-        <input
+        <AutoResizeTextarea
           v-model="item.location"
-          class="form-input"
           placeholder="Location (e.g. Bangkok, Remote)"
           @input="emitUpdate()"
         />
@@ -356,9 +361,8 @@
             <Trash2 :size="14" />
           </button>
         </div>
-        <input
+        <AutoResizeTextarea
           v-model="proj.title"
-          class="form-input"
           placeholder="Project Title"
           @input="emitUpdate()"
         />
@@ -411,19 +415,27 @@
             <Trash2 :size="14" />
           </button>
         </div>
-        <input v-model="cert.title" class="form-input" placeholder="Certificate Title" @input="emitUpdate()" />
-        <input v-model="cert.issuer" class="form-input" placeholder="Issuer (e.g. Coursera, Google)" @input="emitUpdate()" />
+        <AutoResizeTextarea v-model="cert.title" placeholder="Certificate Title" @input="emitUpdate()" />
+        <AutoResizeTextarea v-model="cert.issuer" placeholder="Issuer (e.g. Coursera, Google)" @input="emitUpdate()" />
         <input v-model="cert.date" class="form-input" placeholder="Issue Date (e.g. 2023)" @input="emitUpdate()" />
         <PopupTextEditor v-model="cert.description" title="Description (Optional)" placeholder="Additional details..." :rows="3" @update:modelValue="emitUpdate()" />
         
         <div class="editor-field" style="margin-top: 8px;">
           <label class="form-label">รูปใบประกาศ</label>
-          <div style="display: flex; gap: 8px">
-            <input v-model="cert.image_url" class="form-input" style="flex: 1" placeholder="https://..." @input="emitUpdate()" />
+          <div class="image-input-row">
+            <input v-model="cert.image_url" class="form-input" placeholder="https://..." @input="emitUpdate()" />
             <input type="file" :ref="el => setCertInputRef(el, Number(i))" accept="image/*" style="display: none" @change="e => uploadCertImage(e, Number(i))" />
             <button type="button" class="btn btn-secondary btn-sm" @click="triggerCertUpload(Number(i))" :disabled="uploadingCert === Number(i)">
               <template v-if="uploadingCert === Number(i)"><Loader2 :size="14" class="spin" /></template>
               <template v-else>Browse</template>
+            </button>
+            <button
+              v-if="cert.image_url"
+              type="button"
+              class="btn btn-secondary btn-sm danger-light"
+              @click="cert.image_url = ''; emitUpdate()"
+            >
+              <X :size="14" />
             </button>
           </div>
         </div>
@@ -563,6 +575,30 @@
       </div>
 
       <div class="editor-field" style="margin-top: 12px">
+        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>AI Knowledge Center (คำถามที่ AI ตอบไม่ได้)</span>
+          <button class="btn-text btn-sm" @click="fetchGaps" :disabled="loadingGaps">
+            <Loader2 v-if="loadingGaps" :size="12" class="spin" />
+            <RefreshCw v-else :size="12" /> Refresh
+          </button>
+        </label>
+        
+        <div class="gaps-container" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px; border: 1px dashed var(--border);">
+          <div v-if="gaps.length === 0" style="text-align: center; color: var(--muted); padding: 12px; font-size: 13px;">
+            <CheckCircle :size="24" style="margin-bottom: 8px; opacity: 0.5;" />
+            <p>ยังไม่มีคำถามที่ AI ตอบไม่ได้ เยี่ยมมาก!</p>
+          </div>
+          <div v-for="(gap, i) in gaps" :key="i" class="gap-item" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 13px; font-weight: 600; color: var(--primary);">Q: {{ gap.question }}</div>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+               <input v-model="gap.answer" class="form-input" style="font-size: 12px;" placeholder="เพิ่มข้อมูลสำหรับตอบคำถามนี้..." />
+               <button class="btn btn-primary btn-sm" @click="addTrainingData(gap)" :disabled="!gap.answer">Learn</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-field" style="margin-top: 16px">
         <label class="form-label">Example Questions (คำถามตัวอย่าง)</label>
         <div v-for="(q, i) in (form.example_questions || [])" :key="i" class="q-row" style="display: flex; gap: 8px; margin-bottom: 6px">
           <input
@@ -585,9 +621,8 @@
     <template v-else-if="section.type === 'custom_text'">
       <div class="editor-field" style="margin-bottom: 8px;">
         <label class="form-label">หัวข้อ (Layered-title / Optional)</label>
-        <input
+        <AutoResizeTextarea
           v-model="form.title"
-          class="form-input"
           placeholder="ใส่ชื่อหัวข้อที่ต้องการ..."
           @input="emitUpdate()"
         />
@@ -613,10 +648,10 @@
             <Trash2 :size="14" />
           </button>
         </div>
-        <input v-model="edu.school" class="form-input" placeholder="School / University" @input="emitUpdate()" />
+        <AutoResizeTextarea v-model="edu.school" placeholder="School / University" @input="emitUpdate()" />
         <div style="display: flex; gap: 8px;">
-          <input v-model="edu.degree" class="form-input" style="flex: 1" placeholder="Degree (e.g. B.S.)" @input="emitUpdate()" />
-          <input v-model="edu.field" class="form-input" style="flex: 2" placeholder="Field of Study" @input="emitUpdate()" />
+          <AutoResizeTextarea v-model="edu.degree" :style="{ flex: 1 }" placeholder="Degree (e.g. B.S.)" @input="emitUpdate()" />
+          <AutoResizeTextarea v-model="edu.field" :style="{ flex: 2 }" placeholder="Field of Study" @input="emitUpdate()" />
         </div>
         <div style="display: flex; gap: 8px;">
           <input v-model="edu.start_year" class="form-input" style="flex: 1" placeholder="Start Year" @input="emitUpdate()" />
@@ -692,11 +727,22 @@ import { reactive, watch, ref, computed } from "vue";
 import type { Section } from "@/types";
 import { aiAPI, uploadAPI } from "@/api";
 import PopupTextEditor from "./PopupTextEditor.vue";
-import { Sparkles, X, Plus, Trash2, Loader2 } from "lucide-vue-next";
-import { toastError } from "@/utils/alert";
+import AutoResizeTextarea from "./AutoResizeTextarea.vue";
+import { X, Plus, Trash2, Loader2, RefreshCw, CheckCircle } from "lucide-vue-next";
+import { toastError, toastSuccess } from "@/utils/alert";
+import { useRoute } from "vue-router";
+import { portfolioAPI } from "@/api";
 
-const props = defineProps<{ section: Section, template?: string }>();
-const emit = defineEmits<{ update: [data: any] }>();
+const props = defineProps<{ 
+  section: Section, 
+  template?: string,
+  isHeroComplete?: boolean
+}>();
+const emit = defineEmits<{ 
+  update: [data: any],
+  'magic-fill': []
+}>();
+const route = useRoute();
 
 // Wrapper to prevent emitting the Vue Proxy directly, which causes infinite update loops in the parent
 function emitUpdate() {
@@ -730,15 +776,53 @@ function getDefaultTitle(type: string) {
 
 // Deep clone section data into reactive form
 const initialData = JSON.parse(JSON.stringify(props.section.data || {}));
-// Explicitly safeguard undefined booleans to ensure deep Vue 3 tracking
-if (initialData.hide_percentage === undefined) initialData.hide_percentage = false;
-if (initialData.hide_title === undefined) initialData.hide_title = false;
-if (initialData.hide_divider === undefined) initialData.hide_divider = false;
-if (props.section.type !== 'hero' && !initialData.title) {
-  initialData.title = getDefaultTitle(props.section.type);
+if (props.section.type === 'hero') {
+  if (initialData.show_resume === undefined) initialData.show_resume = false;
+  if (initialData.show_hire_me === undefined) initialData.show_hire_me = false;
+  if (!initialData.name) initialData.name = "";
+  if (!initialData.role) initialData.role = "";
+  if (!initialData.tagline) initialData.tagline = "";
 }
 
 const form = reactive(initialData);
+
+// --- AI Knowledge Center ---
+const gaps = ref<any[]>([]);
+const loadingGaps = ref(false);
+
+async function fetchGaps() {
+  if (props.section.type !== 'ai_chat') return;
+  const portfolioId = route.params.id as string;
+  if (!portfolioId) return;
+  
+  loadingGaps.value = true;
+  try {
+    const { data } = await portfolioAPI.getKnowledgeGaps(portfolioId);
+    gaps.value = data.data.map((g: any) => ({ ...g, answer: "" }));
+  } catch (e) {
+    console.error("Failed to fetch gaps", e);
+  } finally {
+    loadingGaps.value = false;
+  }
+}
+
+function addTrainingData(gap: any) {
+  if (!gap.answer) return;
+  
+  const trainingEntry = `\nQ: ${gap.question}\nA: ${gap.answer}`;
+  if (!form.prompt_hint) form.prompt_hint = "";
+  form.prompt_hint += trainingEntry;
+  
+  // Remove from local list
+  gaps.value = gaps.value.filter(g => g.question !== gap.question);
+  toastSuccess("เพิ่มข้อมูลการตอบคำถามเรียบร้อย!");
+  emitUpdate();
+}
+
+// Fetch gaps on load if it's an AI Chat section
+if (props.section.type === 'ai_chat') {
+  fetchGaps();
+}
 
 // Only overwrite local form if the selected section ID actually changes
 watch(
@@ -750,7 +834,13 @@ watch(
     if (newData.hide_percentage === undefined) newData.hide_percentage = false;
     if (newData.hide_title === undefined) newData.hide_title = false;
     if (newData.hide_divider === undefined) newData.hide_divider = false;
-    if (props.section.type !== 'hero' && !newData.title) {
+    if (props.section.type === 'hero') {
+      if (newData.show_resume === undefined) newData.show_resume = false;
+      if (newData.show_hire_me === undefined) newData.show_hire_me = false;
+      if (!newData.name) newData.name = "";
+      if (!newData.role) newData.role = "";
+      if (!newData.tagline) newData.tagline = "";
+    } else if (!newData.title) {
       newData.title = getDefaultTitle(props.section.type);
     }
     
@@ -968,18 +1058,7 @@ function removeSocial(i: number) {
   emitUpdate();
 }
 
-// AI improve tagline
-async function improveTagline() {
-  if (!form.tagline) return;
-  try {
-    const { data } = await aiAPI.improveText(
-      form.tagline,
-      "portfolio tagline for " + form.role,
-    );
-    form.tagline = data.data.improved_text;
-    emitUpdate();
-} catch {}
-}
+
 
 // AI Chat helpers
 function addExampleQuestion() {
@@ -1071,6 +1150,32 @@ function removeExampleQuestion(i: number) {
   margin-bottom: 4px;
 }
 
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-text:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+  border-color: var(--border);
+  border-width: 1px;
+  border-style: solid;
+}
+.btn-text.btn-sm {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
 .ai-btn {
   margin-top: 4px;
   background: rgba(168, 85, 247, 0.1);
@@ -1079,6 +1184,16 @@ function removeExampleQuestion(i: number) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.magic-fill-btn-inline {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border: none;
+  animation: shimmer 2s infinite linear;
+  background-size: 200% auto;
+  color: #fff;
+}
+@keyframes shimmer {
+  to { background-position: 200% center; }
 }
 .btn-icon-text {
   display: inline-flex;
@@ -1147,5 +1262,33 @@ function removeExampleQuestion(i: number) {
 }
 .exp-img-thumbnail:hover .delete-btn {
   opacity: 1;
+}
+
+.danger-light {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+  color: #ef4444 !important;
+}
+.danger-light:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+}
+
+.image-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .image-input-row {
+    flex-wrap: wrap;
+  }
+  .image-input-row input {
+    width: 100%;
+    order: 1;
+  }
+  .image-input-row .btn {
+    flex: 1;
+    order: 2;
+  }
 }
 </style>

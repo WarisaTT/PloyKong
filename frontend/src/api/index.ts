@@ -132,6 +132,8 @@ export const portfolioAPI = {
   publish: (id: string) => api.post(`/portfolios/${id}/publish`),
   unpublish: (id: string) => api.post(`/portfolios/${id}/unpublish`),
   duplicate: (id: string) => api.post(`/portfolios/${id}/duplicate`),
+  listGaps: () => api.get(`/ai/knowledge-center`),
+  getKnowledgeGaps: (id: string) => api.get(`/portfolios/${id}/gaps`),
 };
 
 // ─── Section ──────────────────────────────────────────────────────────────────
@@ -167,6 +169,8 @@ export const aiAPI = {
     }),
   suggestSkills: (role: string, currentSkills: string[]) =>
     api.post("/ai/suggest-skills", { role, current_skills: currentSkills }),
+  magicFill: (data: { section_type: string, previous_data: string, hero_data: string, template: string }) =>
+    api.post("/ai/magic-fill", data),
 };
 
 // ─── Upload ───────────────────────────────────────────────────────────────────

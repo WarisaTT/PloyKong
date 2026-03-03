@@ -1,94 +1,6 @@
 <template>
   <div class="dashboard-layout">
-    <!-- Mobile Header -->
-    <header class="mobile-nav">
-      <div class="sidebar-logo">
-        <div class="logo-pk">
-          <img src="/favicon.png" alt="PloyKong Logo" class="logo-img" />
-        </div>
-        <span class="logo-text">Ploy<em>Kong</em></span>
-      </div>
-      <div class="mobile-nav-actions">
-        <button 
-          class="mobile-icon-btn" 
-          @click="themeStore.setMode(themeStore.mode === 'dark' ? 'light' : 'dark')"
-          :title="themeStore.mode === 'dark' ? 'Switch to Light' : 'Switch to Dark'"
-        >
-          <Sun v-if="themeStore.mode === 'dark'" :size="20" />
-          <Moon v-else :size="20" />
-        </button>
-        <RouterLink to="/settings" class="mobile-icon-btn" title="Settings">
-          <Settings :size="20" />
-        </RouterLink>
-        <button class="mobile-icon-btn logout-btn" @click="handleLogout" title="Logout">
-          <LogOut :size="20" />
-        </button>
-      </div>
-    </header>
-
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-pk">
-          <img src="/favicon.png" alt="PloyKong Logo" class="logo-img" />
-        </div>
-        <span class="logo-text">Ploy<em>Kong</em></span>
-      </div>
-      <nav class="sidebar-nav">
-        <RouterLink
-          to="/dashboard"
-          class="nav-item"
-          exact-active-class="active"
-        >
-          <BarChart2 :size="16" /> Dashboard
-        </RouterLink>
-        <RouterLink
-          to="/portfolios/new"
-          class="nav-item"
-          exact-active-class="active"
-        >
-          <Plus :size="16" /> สร้างพอร์ตใหม่
-        </RouterLink>
-        <RouterLink to="/settings" class="nav-item" exact-active-class="active">
-          <Settings :size="16" /> Settings
-        </RouterLink>
-
-        <div class="sidebar-theme-toggle">
-          <div class="theme-label">Theme</div>
-          <div class="theme-toggle-group">
-            <button
-              :class="['theme-btn', { active: themeStore.mode === 'dark' }]"
-              @click="themeStore.setMode('dark')"
-              title="Dark Mode"
-            >
-              <Moon :size="16" />
-            </button>
-            <button
-              :class="['theme-btn', { active: themeStore.mode === 'light' }]"
-              @click="themeStore.setMode('light')"
-              title="Light Mode"
-            >
-              <Sun :size="16" />
-            </button>
-            <button
-              :class="['theme-btn', { active: themeStore.mode === 'auto' }]"
-              @click="themeStore.setMode('auto')"
-              title="System Setting"
-            >
-              <Monitor :size="16" />
-            </button>
-          </div>
-        </div>
-      </nav>
-      <div class="sidebar-user" @click="handleLogout">
-        <div class="user-avatar">{{ userInitial }}</div>
-        <div>
-          <div class="user-name">{{ authStore.user?.name }}</div>
-          <div class="user-plan">{{ authStore.user?.plan }} plan</div>
-        </div>
-        <LogOut :size="16" class="logout-icon" title="Logout" />
-      </div>
-    </aside>
+    <AppSidebar />
 
     <!-- Main Content -->
     <main class="dashboard-main">
@@ -113,13 +25,6 @@
           color="indigo"
         />
         <StatCard
-          label="PDF Downloads"
-          :icon="FileDown"
-          :value="totalPDF"
-          change=""
-          color="cyan"
-        />
-        <StatCard
           label="Hire Me Clicks"
           :icon="Briefcase"
           :value="totalHire"
@@ -127,10 +32,26 @@
           color="pink"
         />
         <StatCard
-          label="Portfolios"
+          label="AI Answered"
+          :icon="Sparkles"
+          :value="totalAIChat"
+          change="จากทุกพอร์ต"
+          color="purple"
+        />
+        <StatCard
+          label="Knowledge Gaps"
+          :icon="Lightbulb"
+          :value="gapCount"
+          :change="gapCount > 0 ? 'รอการสอนเพิ่ม' : 'ครบถ้วน'"
+          color="amber"
+          @click="router.push('/ai-center')"
+          style="cursor: pointer"
+        />
+        <StatCard
+          label="Active Portfolios"
           :icon="LayoutGrid"
           :value="portfolioStore.portfolios.length"
-          :change="`${activeCount} active`"
+          :change="`${activeCount} published`"
           color="green"
         />
       </div>
@@ -182,7 +103,6 @@ import { RouterLink, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { usePortfolioStore } from "@/stores/portfolio";
 import { useThemeStore } from "@/stores/theme";
-import { analyticsAPI } from "@/api";
 import StatCard from "@/components/dashboard/StatCard.vue";
 import PortfolioListItem from "@/components/dashboard/PortfolioListItem.vue";
 import {
@@ -198,9 +118,13 @@ import {
   FileDown,
   Briefcase,
   Layers,
+  Sparkles,
+  Lightbulb,
 } from "lucide-vue-next";
 import Swal from "sweetalert2";
+import { portfolioAPI, analyticsAPI } from "@/api";
 import { showSuccess, toastError } from "@/utils/alert";
+import AppSidebar from "@/components/layout/AppSidebar.vue";
 
 const authStore = useAuthStore();
 const portfolioStore = usePortfolioStore();
@@ -211,11 +135,10 @@ const totalViews = ref(0);
 const todayViews = ref(0);
 const totalPDF = ref(0);
 const totalHire = ref(0);
+const totalAIChat = ref(0);
+const gapCount = computed(() => portfolioStore.gapCount);
 
 const firstName = computed(() => authStore.user?.name.split(" ")[0] || "คุณ");
-const userInitial = computed(
-  () => authStore.user?.name?.[0]?.toUpperCase() || "U",
-);
 const activeCount = computed(
   () => portfolioStore.portfolios.filter((p) => p.is_published).length,
 );
@@ -227,6 +150,9 @@ onMounted(async () => {
     totalViews.value += p.view_count || 0;
   });
 
+  // Fetch gap count for the stat card
+  portfolioStore.fetchGapCount();
+
   // Fetch detailed analytics (PDFs, Hire Me)
   await Promise.allSettled(
     portfolioStore.portfolios.map(async (p) => {
@@ -236,6 +162,7 @@ onMounted(async () => {
           totalPDF.value += res.data.data.pdf_downloads || 0;
           totalHire.value += res.data.data.hire_clicks || 0;
           todayViews.value += res.data.data.today_views || 0;
+          totalAIChat.value += res.data.data.ai_chat_count || 0;
         }
       } catch (e) {
         console.error("Failed to load analytics for", p.id);
@@ -274,161 +201,6 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-.dashboard-layout {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  min-height: 100vh;
-  background: var(--bg);
-}
-
-/* Sidebar */
-.sidebar {
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-}
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 36px;
-  padding: 0 8px;
-}
-.logo-pk {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--indigo), var(--purple));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 800;
-  color: #fff;
-}
-.logo-text {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.logo-text em{ font-style: normal; background: var(--grad-pk); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
-
-.sidebar-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  text-decoration: none;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-.nav-item:hover,
-.nav-item.active {
-  background: rgba(79, 70, 229, 0.1);
-  color: var(--indigo);
-}
-
-.sidebar-theme-toggle {
-  margin-top: auto;
-  padding: 12px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.theme-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.theme-toggle-group {
-  display: flex;
-  background: var(--bg2);
-  border-radius: 8px;
-  padding: 4px;
-  gap: 4px;
-}
-.theme-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  border-radius: 6px;
-  padding: 6px 0;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.theme-btn:hover {
-  background: var(--surface);
-  color: var(--text);
-}
-.theme-btn.active {
-  background: var(--surface);
-  color: var(--indigo);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all 0.15s;
-  margin-top: 16px;
-  background: var(--surface);
-}
-.sidebar-user:hover {
-  background: var(--bg2);
-}
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--indigo), var(--purple));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-}
-.user-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-.user-plan {
-  font-size: 11px;
-  color: var(--neon-purple);
-}
-.logout-icon {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 16px;
-}
-
 /* Main */
 .dashboard-main {
   padding: 36px;
@@ -518,45 +290,6 @@ async function handleLogout() {
 }
 
 @media (max-width: 768px) {
-  .dashboard-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-  }
-  .sidebar {
-    display: none;
-  }
-  .mobile-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  }
-  .mobile-nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .mobile-icon-btn {
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    transition: all 0.2s;
-  }
-  .mobile-icon-btn:hover {
-    background: var(--bg-2);
-    color: var(--text);
-  }
   .logout-btn {
     color: var(--danger, #f87171);
   }

@@ -12,6 +12,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
   const loading = ref(false);
   const saving = ref(false);
   const error = ref<string | null>(null);
+  const gapCount = ref(0);
 
 
   // ─── Portfolio CRUD ───────────────────────────────────────────────────────
@@ -103,6 +104,15 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     }
   }
 
+  async function fetchGapCount() {
+    try {
+      const { data } = await portfolioAPI.listGaps();
+      gapCount.value = data.data?.length || 0;
+    } catch (e) {
+      console.error("Failed to load gaps");
+    }
+  }
+
   // ─── Section CRUD ─────────────────────────────────────────────────────────
   async function addSection(type: string) {
     if (!activePortfolio.value) return;
@@ -136,6 +146,31 @@ export const usePortfolioStore = defineStore("portfolio", () => {
       await sectionAPI.update(sectionId, { data: sectionData });
       const idx = sections.value.findIndex((s) => s.id === sectionId);
       if (idx !== -1) sections.value[idx].data = sectionData;
+    } catch (e: any) {
+      if (e.response?.status === 404) {
+        // Section missing from DB — try to re-persist it
+        const lost = sections.value.find(s => s.id === sectionId);
+        if (lost && activePortfolio.value) {
+          try {
+            console.warn(`[store] Re-creating lost section: ${sectionId} (${lost.type})`);
+            const { data } = await sectionAPI.create(activePortfolio.value.id, {
+              type: lost.type,
+              position: lost.position,
+              data: sectionData,
+            });
+            // Update the local section to use the new DB-assigned ID
+            const idx = sections.value.findIndex(s => s.id === sectionId);
+            if (idx !== -1) {
+              sections.value[idx].id = data.data.id;
+              sections.value[idx].data = sectionData;
+            }
+          } catch (createErr) {
+            console.error('[store] Failed to re-create section:', createErr);
+          }
+        }
+        return;
+      }
+      throw e;
     } finally {
       saving.value = false;
     }
@@ -170,14 +205,19 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     await sectionAPI.reorder(order);
   }
 
-  function toggleSectionVisibility(sectionId: string) {
+  async function toggleSectionVisibility(sectionId: string) {
     const section = sections.value.find((s) => s.id === sectionId);
     if (!section || !activePortfolio.value) return;
     section.is_visible = !section.is_visible;
-    sectionAPI.update(sectionId, { is_visible: section.is_visible });
+    try {
+      await sectionAPI.update(sectionId, { is_visible: section.is_visible });
+    } catch (e: any) {
+      if (e.response?.status === 404) return;
+      throw e;
+    }
   }
 
-  function toggleSectionColumnSpan(sectionId: string) {
+  async function toggleSectionColumnSpan(sectionId: string) {
     const section = sections.value.find((s) => s.id === sectionId);
     if (!section || !activePortfolio.value) return;
 
@@ -237,5 +277,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     reorderSections,
     toggleSectionVisibility,
     toggleSectionColumnSpan,
+    gapCount,
+    fetchGapCount,
   };
 });

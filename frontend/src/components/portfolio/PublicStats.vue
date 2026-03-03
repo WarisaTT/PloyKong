@@ -7,21 +7,23 @@
       <h2 class="layered-title" :data-text="data.title || 'Stats'">{{ data.title || 'Stats & Numbers' }}</h2>
     </div>
     
-    <div class="stats-grid">
-      <div 
-        v-for="(stat, i) in data.items" 
-        :key="i"
-        class="stat-box animate-scale-up"
-        v-intersect
-        :style="{ transitionDelay: `${Number(i) * 100}ms` }"
-      >
-        <div class="stat-value">{{ stat.value }}</div>
-        <div class="stat-label">{{ stat.label }}</div>
+    <div class="pub-section-content">
+      <div class="stats-grid">
+        <div 
+          v-for="(stat, i) in data.items" 
+          :key="i"
+          class="stat-box animate-scale-up"
+          v-intersect
+          :style="{ transitionDelay: `${Number(i) * 100}ms` }"
+        >
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
+        </div>
       </div>
-    </div>
 
-    <div v-if="!data.items || data.items.length === 0" style="text-align: center; padding: 20px;">
-      <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      <div v-if="!data.items || data.items.length === 0" style="text-align: center; padding: 20px;">
+        <span class="generic-hint">คลิกเพื่อ edit ใน Properties panel &rarr;</span>
+      </div>
     </div>
   </section>
 </template>
