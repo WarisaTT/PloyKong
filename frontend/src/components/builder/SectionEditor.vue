@@ -25,7 +25,7 @@
         </button>
       </div>
 
-      <div v-if="section.type !== 'hero'" class="editor-field toggle-row" style="margin-bottom: 12px">
+      <div v-if="section.type !== 'hero' && template !== 'firstjobber'" class="editor-field toggle-row" style="margin-bottom: 12px">
         <label class="form-label" style="margin: 0">ซ่อนขีดคั่น</label>
         <button
           class="toggle"
@@ -798,7 +798,11 @@ async function fetchGaps() {
   loadingGaps.value = true;
   try {
     const { data } = await portfolioAPI.getKnowledgeGaps(portfolioId);
-    gaps.value = data.data.map((g: any) => ({ ...g, answer: "" }));
+    // Filter out gaps that are already in the training data (prompt_hint)
+    const hint = form.prompt_hint || "";
+    gaps.value = data.data
+      .filter((g: any) => !hint.includes(g.question))
+      .map((g: any) => ({ ...g, answer: "" }));
   } catch (e) {
     console.error("Failed to fetch gaps", e);
   } finally {
@@ -819,10 +823,12 @@ function addTrainingData(gap: any) {
   emitUpdate();
 }
 
-// Fetch gaps on load if it's an AI Chat section
-if (props.section.type === 'ai_chat') {
-  fetchGaps();
-}
+// Watch for section changes to refresh gaps
+watch(() => props.section.id, () => {
+  if (props.section.type === 'ai_chat') {
+    fetchGaps();
+  }
+}, { immediate: true });
 
 // Only overwrite local form if the selected section ID actually changes
 watch(
@@ -847,6 +853,10 @@ watch(
     // Clear and replace local form deeply
     Object.keys(form).forEach(key => delete (form as any)[key]);
     Object.assign(form, newData);
+
+    if (props.section.type === 'ai_chat') {
+      fetchGaps();
+    }
   }
 );
 

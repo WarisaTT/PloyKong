@@ -250,8 +250,8 @@ const themeVars = computed(() => {
     "--primary": primary,
     "--primary-glow": `${primary}${glowHex}`,
     "--secondary": secondary ? secondary : `${primary}${glowHex}`,
-    "--font-display": font,
-    "--font-body": font,
+    "--font-display": `"${font}", sans-serif`,
+    "--font-body": `"${font}", sans-serif`,
     "--text": isLight ? "#0f172a" : "#ffffff",
     "--muted": isLight ? "#64748b" : "#94a3b8",
     "--surface": isLight ? "#ffffff" : "#111827",
@@ -557,7 +557,7 @@ onMounted(() => loadPortfolio());
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 20px;
   width: 100%;
-  max-width: 1200px; /* Constrain wide screens */
+  max-width: 1200px;
   padding-bottom: 40px;
   align-items: stretch;
 }
@@ -566,7 +566,22 @@ onMounted(() => loadPortfolio());
 }
 .section-wrapper.span-half {
   grid-column: span 1;
-  padding: 0 !important; /* Remove excessive bloat */
+  padding: 0 !important;
+}
+
+/* Business template: 30/70 split instead of default 50/50 */
+.tpl-business .sections-grid {
+  grid-template-columns: 3fr 7fr !important;
+  gap: 0 !important;
+  max-width: 100% !important;
+  padding-bottom: 0 !important;
+  background-color: var(--bg);
+}
+@media (max-width: 768px) {
+  .tpl-business .sections-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
 }
 
 /* Animations */
@@ -822,10 +837,29 @@ onMounted(() => loadPortfolio());
     right: 12px;
     left: 12px;
     width: auto;
+    bottom: 80px; /* Bring it down a bit to not feel too high */
   }
   .chat-fab {
     bottom: 16px;
     right: 16px;
+  }
+  /* Fix send button on mobile */
+  .chat-input-row {
+    padding: 10px;
+    gap: 8px;
+    background: rgba(var(--bg-rgb), 0.5); /* Semi-transparent background for input row */
+  }
+  .chat-input-row .form-input {
+    flex: 1;
+    min-width: 0; /* Important for flex-grow on mobile */
+    height: 40px;
+  }
+  .chat-input-row .btn {
+    width: auto !important;
+    padding: 0 20px !important;
+    height: 40px !important;
+    flex-shrink: 0;
+    margin: 0 !important;
   }
 }
 </style>

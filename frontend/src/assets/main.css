@@ -46,8 +46,8 @@ body.theme-dark,
   --warning: #f59e0b;
   --danger: #ef4444;
 
-  --font-display: "Kanit", "Syne", sans-serif;
-  --font-body: "Anuphan", "Inter", sans-serif;
+  --font-display: "Sarabun", "Prompt", "Kanit", sans-serif;
+  --font-body: "Sarabun", "Prompt", "Anuphan", sans-serif;
 
   --radius: 12px;
   --radius-lg: 20px;
@@ -92,6 +92,30 @@ body.theme-dark,
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
 }
 
+/* ════════════════════════════════════════════════════════════
+   BUSINESS TEMPLATE — Dynamic Theme Tokens
+   --bg ของ template ถูก override ให้ follow .theme-dark / light
+   ════════════════════════════════════════════════════════════ */
+
+/* ── LIGHT MODE (default, ไม่มี .theme-dark) ──────────────── */
+.tpl-business {
+  --bg: #F4F5FA;
+  --surface: #FFFFFF;
+  --text: #1A1D2E;
+  --muted: #6B7280;
+  --border: rgba(0, 0, 0, 0.08);
+}
+
+/* ── DARK MODE (.theme-dark บน wrapper/ancestor) ──────────── */
+.theme-dark .tpl-business,
+.theme-dark.tpl-business {
+  --bg: #0B0C17;
+  --surface: #0F1120;
+  --text: #EEF0FF;
+  --muted: #7B83B4;
+  --border: rgba(255, 255, 255, 0.07);
+}
+
 /* ───────────────────────────────────────────────────────────── */
 /* LIGHT THEME – Soft Lavender */
 /* ───────────────────────────────────────────────────────────── */
@@ -104,7 +128,7 @@ body.theme-light,
   --bg-2: #F0F0F8;
   --surface: #ffffff;
   --surface-2: #F4F4FB;
-  --surface-3: #EEEEF7; 
+  --surface-3: #EEEEF7;
   --add-btn: rgb(10, 85, 142);
 
   --sidebar-bg: linear-gradient(to bottom, #f3e8ff, #e9d5ff);

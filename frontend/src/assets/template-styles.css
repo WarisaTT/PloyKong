@@ -38,6 +38,22 @@
 
 /* Base sections styling */
 
+/* Skills: Global grid for category groups across all templates */
+.skills-groups {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 40px !important;
+    width: 100% !important;
+    align-items: flex-start !important;
+}
+
+@media (max-width: 768px) {
+    .skills-groups {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+    }
+}
+
 .tpl-programmer {
     font-family: var(--font-body) !important;
 }
@@ -47,6 +63,15 @@
     background: none !important;
     align-items: stretch !important;
     gap: 20px !important;
+}
+
+.tpl-business .sections-grid {
+    gap: 0 !important;
+}
+
+.tpl-business .section-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .sections-grid>.section-wrapper.span-half {
@@ -70,6 +95,8 @@
     flex-direction: column !important;
 }
 
+
+
 /* Ensure sections inside stretches to full height of parent grid cell */
 .pub-section {
     height: 100% !important;
@@ -82,7 +109,22 @@
 
 /* Global Row Divider Logic */
 .section-wrapper {
-    position: relative;
+    position: relative !important;
+    width: 100% !important;
+}
+
+/* Enable line breaks for all multi-line text fields */
+.hero-tagline,
+.proj-desc,
+.tl-desc,
+.custom-content,
+.contact-val,
+.stat-label,
+.proj-title,
+.tl-position,
+.tl-company {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
 }
 
 /* Hide divider if user opted-out via hide_divider in data */
@@ -113,9 +155,6 @@
 
 }
 
-.tpl-business .section-wrapper.is-row-start::before {
-    height: 2px;
-}
 
 .tpl-creative .section-wrapper.is-row-start::before {
     background: linear-gradient(90deg, var(--primary), var(--secondary), transparent);
@@ -273,7 +312,7 @@
 
 .tpl-programmer .hero-role-badge {
     border-radius: 2px !important;
-    font-size: 10px !important;
+    font-size: 15px !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
     background: transparent !important;
@@ -416,28 +455,7 @@
 
 }
 
-.tpl-programmer .pub-section .skills-groups {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 40px !important;
-    justify-content: center !important;
-}
-
-.tpl-programmer .pub-section .skills-grid {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px 16px !important;
-    width: 100% !important;
-}
-
-/* Skills: massive text */
-.tpl-programmer .pub-section .skills-groups {
-    max-width: 100%;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, auto));
-    gap: 20px;
-    justify-content: flex-start;
-}
+/* Experience: terminal bordered cards */
 
 /* Experience: terminal bordered cards */
 .tpl-programmer .experience-list {
@@ -645,7 +663,7 @@
     background: transparent !important;
     border: none !important;
     color: var(--muted) !important;
-    font-size: 10px !important;
+    font-size: 15px !important;
     font-weight: 400 !important;
     letter-spacing: 5px !important;
     text-transform: uppercase !important;
@@ -881,16 +899,15 @@
 }
 
 
-/* ── Hero Text: CSS Grid layout ── */
+/* ── Hero Text: Clean layout ── */
 .tpl-firstjobber .hero-text {
     flex: 1 !important;
     min-width: 0 !important;
-    display: grid !important;
-    grid-template-columns: 1fr auto !important;
-    grid-template-rows: auto auto 1fr !important;
-    column-gap: 20px !important;
-    row-gap: 6px !important;
-    align-items: start !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 8px !important;
 }
 
 /* Badge — row 1 left */
@@ -1073,12 +1090,7 @@
     padding: 5px 14px !important;
 }
 
-.tpl-firstjobber .pub-section .skills-groups {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 40px !important;
-    justify-content: center !important;
-}
+/* ── Experience: flat list with horizontal separators ── */
 
 
 /* ── Experience: flat list with horizontal separators ── */
@@ -1092,17 +1104,25 @@
     box-shadow: none !important;
 }
 
-/* --- Mobile Overrides for FirstJobber (Placed at end for correct override) --- */
+/* --- Mobile Overrides for FirstJobber --- */
 @media (max-width: 768px) {
+    .tpl-firstjobber .pub-hero {
+        margin-top: -10px !important;
+        margin-bottom: 10px !important;
+        padding: 12px !important;
+    }
+
     .tpl-firstjobber .pub-hero-inner {
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
         padding: 24px 16px !important;
+        gap: 16px !important;
+        border-radius: 12px !important;
     }
 
     .tpl-firstjobber .hero-avatar-wrap {
-        margin: 0 auto 16px !important;
+        margin: 0 0 4px 0 !important;
         width: 100px !important;
         height: 100px !important;
         align-self: center !important;
@@ -1113,37 +1133,47 @@
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
-        gap: 12px !important;
+        gap: 8px !important;
         width: 100% !important;
+        padding: 0 !important;
     }
 
-    .tpl-firstjobber .hero-role-badge,
-    .tpl-firstjobber .hero-name,
-    .tpl-firstjobber .hero-tagline {
+    .tpl-firstjobber .hero-name {
+        font-size: 24px !important;
+        margin-bottom: 0 !important;
         text-align: center !important;
-        justify-content: center !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+    }
+
+    .tpl-firstjobber .hero-role-badge {
+        font-size: 15px !important;
+        padding: 4px 12px !important;
+        margin-bottom: 2px !important;
     }
 
     .tpl-firstjobber .hero-tagline {
-        border-top: none !important;
-        padding-top: 0 !important;
+        font-size: 13px !important;
+        margin-bottom: 4px !important;
+        line-height: 1.4 !important;
     }
 
     .tpl-firstjobber .hero-cta {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
+        margin-top: 12px !important;
         width: 100% !important;
-        margin-top: 16px !important;
-        gap: 12px !important;
+        gap: 8px !important;
+    }
+
+    .tpl-firstjobber .hero-btn {
+        width: 100% !important;
+        height: 38px !important;
+        font-size: 11px !important;
     }
 
     /* Global stack for all template skills groups */
+
+
     .tpl-programmer .pub-section .skills-groups,
     .tpl-creative .pub-section .skills-groups,
-    .tpl-business .pub-section .skills-groups,
+    .pub-section .skills-groups,
     .tpl-classic .pub-section .skills-groups,
     .tpl-firstjobber .pub-section .skills-groups {
         grid-template-columns: 1fr !important;
@@ -1308,22 +1338,219 @@
     box-shadow: none !important;
 }
 
+/* ════════════════════════════════════════════════════════════
+   BUSINESS  ·  Formal / Corporate
+   Dynamic Theme: .theme-dark / .theme-light
+   LEFT = var(--primary) | RIGHT = var(--tpl-bg)
+   ════════════════════════════════════════════════════════════ */
 
 /* ════════════════════════════════════════════════════════════
    BUSINESS  ·  Formal / Corporate
-   Syne · sidebar avatar · small-caps labels · tight list
+   Dynamic Theme: .theme-dark / .theme-light
+   LEFT = var(--primary) | RIGHT = var(--tpl-bg)
    ════════════════════════════════════════════════════════════ */
 
+/* ── Step 1: Token Injection ───────────────────────────────── */
 .tpl-business {
-    font-family: var(--font-body) !important;
+    --tpl-bg: var(--bg-2, #F0F0F8);
+    --tpl-surface: var(--surface-2, #F4F4FB);
+    --tpl-text: var(--text, #1A1D2E);
+    --tpl-muted: var(--muted, #6B7280);
+    --tpl-border: var(--border, rgba(0, 0, 0, 0.08));
+    font-family: 'Sarabun', sans-serif !important;
+    background: var(--tpl-bg) !important;
+    min-height: 100vh;
 }
 
-.tpl-business .pub-hero {
-    background: none !important;
-    padding: 0 !important;
-    border-bottom: 2px solid var(--primary) !important;
-    max-height: max-content !important;
+.theme-dark .tpl-business,
+body.theme-dark .tpl-business {
+    --tpl-bg: var(--bg-2, #0C0D17);
+    --tpl-surface: var(--surface-2, #161827);
+    --tpl-text: var(--text, #e2e8f0);
+    --tpl-muted: var(--muted, #94a3b8);
+    --tpl-border: var(--border, rgba(255, 255, 255, 0.08));
+}
 
+@media (prefers-color-scheme: light) {
+    .theme-system .tpl-business {
+        --tpl-bg: #F0F0F8;
+        --tpl-surface: #F4F4FB;
+        --tpl-text: #1e1b4b;
+        --tpl-muted: #6b7280;
+        --tpl-border: rgba(15, 23, 42, 0.14);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .theme-system .tpl-business {
+        --tpl-bg: #0C0D17;
+        --tpl-surface: #161827;
+        --tpl-text: #e2e8f0;
+        --tpl-muted: #94a3b8;
+        --tpl-border: rgba(255, 255, 255, 0.08);
+    }
+}
+
+/* ── Step 2: Containers ────────────────────────────────────── */
+.tpl-business .sections-container,
+.tpl-business .pub-container,
+.tpl-business .section-group-wrap,
+.tpl-business .full-bleed-section {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    background: transparent !important;
+}
+
+.tpl-business .sections-grid {
+    display: grid !important;
+    grid-template-columns: 3fr 7fr !important;
+    gap: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: stretch !important;
+    background: transparent !important;
+}
+
+/* ── Step 3: Section Wrappers ──────────────────────────────── */
+
+/* Default = RIGHT col */
+.tpl-business .section-wrapper {
+    background: var(--tpl-bg) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    overflow: hidden !important;
+}
+
+/* LEFT col = primary */
+.tpl-business .section-wrapper.is-row-start:not(.span-full) {
+    background: var(--primary) !important;
+    background-color: var(--primary) !important;
+    color: var(--tpl-bg) !important;
+    position: relative;
+    z-index: 10;
+}
+
+/* RIGHT col */
+.tpl-business .sections-grid>.section-wrapper.is-right:not(.span-full) {
+    background: var(--tpl-bg) !important;
+}
+
+/* SPAN-FULL: gradient 30% primary | 70% tpl-bg */
+.tpl-business .section-wrapper.span-full {
+    grid-column: 1 / -1 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: linear-gradient(to right,
+            var(--primary) 0%,
+            var(--primary) 30%,
+            var(--tpl-bg) 30%,
+            var(--tpl-bg) 100%) !important;
+    color: var(--tpl-text) !important;
+}
+
+.tpl-business .section-wrapper.span-full::before {
+    display: none !important;
+}
+
+/* ── Step 4: Builder Chrome Transparency ───────────────────── */
+
+/* Sidebar: ล้างทุก child ให้ transparent */
+.tpl-business .section-wrapper.is-row-start:not(.span-full) *:not(img):not(svg):not(.hero-img):not(video) {
+    background: var(--primary) !important;
+    background-color: var(--primary) !important;
+}
+
+/* span-full: ล้าง chrome wrapper */
+.tpl-business .section-wrapper.span-full .section-block,
+.tpl-business .section-wrapper.span-full .section-preview,
+.tpl-business .section-wrapper.span-full .section-inner,
+.tpl-business .section-wrapper.span-full>div:not(.section-controls):not(.section-toolbar) {
+    background: transparent !important;
+    background-color: transparent !important;
+    width: 100% !important;
+}
+
+/* RIGHT section chrome */
+.tpl-business .section-wrapper.is-right .section-block,
+.tpl-business .section-wrapper.is-right .section-preview,
+.tpl-business .section-wrapper.is-right .section-inner {
+    background: var(--tpl-bg) !important;
+}
+
+/* ── Step 5: pub-section padding ───────────────────────────── */
+.tpl-business .pub-section {
+    background: var(--tpl-bg) !important;
+    border: none !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+.tpl-business .section-wrapper.is-row-start .pub-section {
+    padding: 32px 24px !important;
+}
+
+
+
+/* span-full: content offset ไปอยู่ 30% ขวา */
+.tpl-business .section-wrapper.span-full .pub-section {
+    flex-direction: column !important;
+    margin-left: 30% !important;
+    padding: 48px 40px !important;
+    background: var(--tpl-bg) !important;
+    color: var(--tpl-text) !important;
+    position: relative;
+    z-index: 1;
+}
+
+.tpl-business .experience-list,
+.tpl-business .proj-grid {
+    max-width: 100% !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+/* ───────── */
+/* ── Step 6: layered-title ─────────────────────────────────── */
+.tpl-business .layered-title {
+    font-size: 25px !important;
+    font-weight: 800 !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: var(--tpl-text) !important;
+    -webkit-text-fill-color: var(--tpl-text) !important;
+    margin-bottom: 10px !important;
+    width: 100% !important;
+    position: relative;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--tpl-border);
+}
+
+.tpl-business .layered-title::before,
+.tpl-business .layered-title::after {
+    display: none !important;
+}
+
+/* Sidebar title = white */
+.tpl-business .is-row-start .layered-title {
+    color: var(--secondary) !important;
+    -webkit-text-fill-color: var(--secondary) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ── Step 7: Hero ──────────────────────────────────────────── */
+.tpl-business .pub-hero {
+    padding: 0 !important;
+    border-bottom: none !important;
+    max-height: 100%;
 }
 
 .tpl-business .pub-hero-inner {
@@ -1331,91 +1558,92 @@
     align-items: stretch !important;
     text-align: left !important;
     gap: 0 !important;
-    padding: 0 24px !important;
-    max-width: 1200px !important;
-    margin: 0 auto !important;
+    background: var(--tpl-bg) !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+
 }
 
-@media (max-width: 768px) {
-    .tpl-business .pub-hero-inner {
-        flex-direction: column !important;
-        padding: 0 !important;
-    }
-
-    .tpl-business .hero-avatar-wrap {
-        width: 100% !important;
-        border-right: none !important;
-        border-bottom: 1px solid var(--border) !important;
-        padding: 32px 16px !important;
-        min-height: auto !important;
-    }
-
-    .tpl-business .hero-text {
-        padding: 32px 16px !important;
-        text-align: center !important;
-        align-items: center !important;
-    }
-
-    .tpl-business .hero-name,
-    .tpl-business .hero-tagline {
-        text-align: center !important;
-    }
-
-    .tpl-business .hero-cta {
-        justify-content: center !important;
-    }
-}
-
+/* Hero LEFT = primary */
 .tpl-business .hero-avatar-wrap {
     width: 30% !important;
-    min-height: 280px;
+    min-height: 100%;
     flex-shrink: 0;
     margin: 0 !important;
     border-radius: 0 !important;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 12%, transparent), color-mix(in srgb, var(--secondary) 10%, transparent)) !important;
-    border-right: 1px solid var(--border) !important;
+    background: var(--primary) !important;
+    background-color: var(--primary) !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 24px 12px !important;
-    max-height: max-content !important;
+    padding: 32px 24px !important;
+    position: relative;
+    overflow: hidden;
+    z-index: 10;
+}
 
+.tpl-business .hero-avatar-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.1) 100%) !important;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Hero RIGHT = tpl-bg */
+.tpl-business .hero-text {
+    flex: 1 !important;
+    width: 70% !important;
+    background: var(--tpl-bg) !important;
+    background-color: var(--tpl-bg) !important;
+    padding: 48px 48px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center;
+    text-align: left !important;
+    align-items: flex-start !important;
 }
 
 .tpl-business .hero-img,
 .tpl-business .hero-avatar-fallback {
-    width: 200px !important;
-    height: 200px !important;
-    border-radius: 8px !important;
+    width: 220px !important;
+    height: 220px !important;
+    border-radius: 4px !important;
     margin-bottom: 0 !important;
+    z-index: 1;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
+    border: 4px solid rgba(255, 255, 255, 0.2) !important;
+    object-fit: cover;
+}
+
+.tpl-business .hero-avatar-fallback {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: var(--tpl-text) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    font-weight: 800;
 }
 
 .tpl-business .hero-ring {
     display: none !important;
 }
 
-.tpl-business .hero-text {
-    flex: 1 !important;
-    padding: 40px 48px !important;
-    text-align: left !important;
-    align-items: flex-start !important;
-    display: flex !important;
-    flex-direction: column !important;
-    max-width: 100% !important;
-}
-
 .tpl-business .hero-role-badge {
-    background: transparent !important;
-    border: 1px solid var(--border) !important;
-    color: var(--muted) !important;
+    background: var(--tpl-bg) !important;
+    border: 3px solid var(--tpl-border) !important;
+    color: var(--tpl-muted) !important;
     border-radius: 3px !important;
-    font-size: 9px !important;
+    font-size: 15px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 3px !important;
     padding: 3px 10px !important;
-    margin-bottom: 10px !important;
 }
 
 .tpl-business .hero-name {
@@ -1423,7 +1651,8 @@
     font-weight: 900 !important;
     letter-spacing: -1px !important;
     background: none !important;
-    -webkit-text-fill-color: var(--text) !important;
+    color: var(--tpl-text) !important;
+    -webkit-text-fill-color: var(--tpl-text) !important;
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
     text-align: left !important;
@@ -1434,7 +1663,8 @@
     font-size: 13px !important;
     font-style: italic !important;
     text-align: left !important;
-    -webkit-text-fill-color: var(--muted) !important;
+    color: var(--tpl-muted) !important;
+    -webkit-text-fill-color: var(--tpl-muted) !important;
     background: none !important;
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
@@ -1458,147 +1688,246 @@
     background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
     box-shadow: none !important;
     border: none !important;
-    color: #fff !important;
+    color: black !important;
 }
 
-.tpl-business .pub-section {
-    padding: 80px 0 !important;
-}
+/* ── Step 8: Desktop Sidebar (≥769px) ─────────────────────── */
+@media (min-width: 769px) {
 
-.tpl-business .layered-title {
-    font-size: 36px !important;
-    font-weight: 800 !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-    color: var(--text) !important;
-    background: none !important;
-    -webkit-text-fill-color: var(--text) !important;
-    -webkit-background-clip: unset !important;
-    background-clip: unset !important;
-    margin-bottom: 32px !important;
-    opacity: 0.95;
-}
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .pub-section {
+        padding: 64px 32px !important;
+    }
 
-.tpl-business .layered-title::before,
-.tpl-business .layered-title::after {
-    display: none !important;
-}
+    .tpl-business .sections-grid>.section-wrapper.is-right:not(.span-full) .pub-section {
+        padding: 64px 48px !important;
+    }
 
-.tpl-business .skill-tag {
-    border-radius: 4px !important;
-    border: 1px solid var(--border) !important;
-    background: color-mix(in srgb, var(--surface) 50%, transparent) !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    padding: 8px 16px !important;
-    color: var(--text) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    display: inline-flex !important;
-}
+    /* Sidebar text = white */
+    .tpl-business .is-row-start .layered-title,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .layered-title {
+        color: var(--secondary) !important;
+        -webkit-text-fill-color: var(--secondary) !important;
+    }
 
-.tpl-business .experience-item {
-    padding: 24px 0 !important;
-    border-bottom: 1px solid var(--border) !important;
-    border-left: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    margin-bottom: 0 !important;
-    display: grid !important;
-    grid-template-columns: 140px 1fr !important;
-    gap: 32px !important;
-}
+    .tpl-business .is-row-start .tl-position,
+    .tpl-business .is-row-start .tl-company,
+    .tpl-business .is-row-start .tl-desc,
+    .tpl-business .is-row-start .tl-date,
+    .tpl-business .is-row-start .group-title,
+    .tpl-business .is-row-start .stat-label,
+    .tpl-business .is-row-start .stat-value,
+    .tpl-business .is-row-start .proj-title,
+    .tpl-business .is-row-start .proj-desc,
+    .tpl-business .is-row-start .contact-label,
+    .tpl-business .is-row-start .contact-val,
+    .tpl-business .is-row-start .skill-name,
+    .tpl-business .is-row-start .custom-content,
+    .tpl-business .is-row-start p {
+        color: rgba(255, 255, 255, 0.85) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
+    }
 
-@media (max-width: 640px) {
-    .tpl-business .experience-item {
+    .tpl-business .is-row-start .stat-value {
+        color: var(--tpl-bg) !important;
+        -webkit-text-fill-color: var(--tpl-bg) !important;
+    }
+
+
+    /* Sidebar cards/tags */
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .skill-tag {
+        border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .tpl-business .is-row-start .skills-groups {
         grid-template-columns: 1fr !important;
-        gap: 8px !important;
+        gap: 20px !important;
+        background-color: var(--tpl-bg) !important;
+    }
+
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .stat-box {
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-card {
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-icon {
+        color: var(--tpl-bg) !important;
+    }
+
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .proj-tag {
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    /* Sidebar experience: compact list */
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 24px 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item.has-timeline {
+        padding-left: 0 !important;
+    }
+
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .timeline-dot,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .timeline-line {
+        display: none !important;
     }
 }
 
-.tpl-business .timeline-dot,
-.tpl-business .timeline-line {
+/* ── Step 9: RIGHT side text tokens ───────────────────────── */
+.tpl-business .sections-grid>.section-wrapper:not(.is-row-start) .tl-position,
+.tpl-business .sections-grid>.section-wrapper:not(.is-row-start) .proj-title {
+    color: var(--tpl-text) !important;
+}
+
+.tpl-business .sections-grid>.section-wrapper:not(.is-row-start) .tl-company {
+    color: var(--primary) !important;
+}
+
+.tpl-business .sections-grid>.section-wrapper:not(.is-row-start) .tl-date,
+.tpl-business .sections-grid>.section-wrapper:not(.is-row-start) .tl-desc,
+.tpl-business .sections-grid>.section-wrapper:not(.is-row-start) .proj-desc,
+.tpl-business .sections-grid>.section-wrapper:not(.is-row-start) .contact-label {
+    color: var(--tpl-muted) !important;
+}
+
+/* ── Step 10: Skills ───────────────────────────────────────── */
+.tpl-business .skills-groups {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 32px 24px !important;
+    margin-bottom: 24px !important;
+    background-color: var(--tpl-bg) !important;
+}
+
+.tpl-business .group-title {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    color: var(--primary) !important;
+    margin-bottom: 24px !important;
+    line-height: 1;
+}
+
+.tpl-business .skills-grid {
+    display: block !important;
+    column-count: 2 !important;
+    column-gap: 24px !important;
+    width: 100% !important;
+}
+
+@media (max-width: 1200px) {
+    .tpl-business .skills-grid {
+        column-count: 1 !important;
+    }
+}
+
+.tpl-business .skill-tag {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--tpl-border) !important;
+    padding: 16px 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    margin: 0 !important;
+    break-inside: avoid-column;
+    transition: all 0.25s ease;
+}
+
+.tpl-business .skill-tag:hover {
+    padding-left: 12px !important;
+    border-bottom-color: var(--primary) !important;
+}
+
+.tpl-business .skill-tag::before {
     display: none !important;
 }
 
-.tpl-business .tl-position {
-    font-size: 15px !important;
-    font-weight: 800 !important;
-}
-
-.tpl-business .tl-company {
-    font-size: 13px !important;
-    font-style: normal !important;
-    font-weight: 600 !important;
-    color: var(--primary) !important;
-}
-
-.tpl-business .tl-date {
-    font-size: 11px !important;
+.tpl-business .skill-name {
+    font-size: 14px !important;
     font-weight: 700 !important;
-    color: var(--muted) !important;
     text-transform: uppercase !important;
     letter-spacing: 1px !important;
+    color: var(--tpl-text) !important;
 }
 
-.tpl-business .tl-desc {
-    font-size: 14px !important;
-    color: var(--text-secondary, var(--text)) !important;
-    margin-top: 12px !important;
+/* Sidebar Specific Skills */
+.tpl-business .is-row-start .group-title {
+    color: var(--tpl-bg) !important;
+    border-left-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.tpl-business .is-row-start .skill-tag {
+    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.tpl-business .is-row-start .skill-tag::before {
+    color: var(--tpl-bg) !important;
     opacity: 0.8;
 }
 
-/* Stats for Business */
-.tpl-business .stat-box {
-    background: color-mix(in srgb, var(--surface) 50%, transparent) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 4px !important;
-    padding: 20px !important;
-    text-align: left !important;
+.tpl-business .is-row-start .skill-name {
+    color: var(--tpl-bg) !important;
 }
 
-.tpl-business .stat-value {
-    font-size: 32px !important;
-    font-weight: 900 !important;
-    color: var(--primary) !important;
-    margin-bottom: 4px !important;
-}
-
-.tpl-business .stat-label {
-    font-size: 10px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 2px !important;
-    color: var(--muted) !important;
-}
-
-/* Projects for Business */
+/* ── Step 11: Projects ─────────────────────────────────────── */
 .tpl-business .proj-card {
     background: transparent !important;
     border: none !important;
-    border-bottom: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--tpl-border) !important;
     border-radius: 0 !important;
     padding: 24px 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     display: grid !important;
-    grid-template-columns: 240px 1fr !important;
-    gap: 32px !important;
-    transition: background 0.2s !important;
+    grid-template-columns: 400px 1fr !important;
+    gap: 56px !important;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+.tpl-business .is-row-start .proj-card {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 32px 0 !important;
 }
 
 .tpl-business .proj-card:hover {
-    background: color-mix(in srgb, var(--surface) 20%, transparent) !important;
-    transform: none !important;
-    box-shadow: none !important;
+    background: color-mix(in srgb, var(--tpl-text) 3%, transparent) !important;
+    padding-left: 16px !important;
+    transform: translateX(4px);
+}
+
+.tpl-business .proj-card:last-child {
+    border-bottom: none !important;
+}
+
+.tpl-business .proj-img-wrap {
+    overflow: hidden !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--tpl-border) !important;
 }
 
 .tpl-business .proj-img {
     width: 100% !important;
-    aspect-ratio: 16/9 !important;
+    aspect-ratio: 16/10 !important;
     height: auto !important;
-    border-radius: 4px !important;
-    border: 1px solid var(--border) !important;
+    object-fit: cover !important;
+    transition: transform 0.6s ease !important;
+}
+
+.tpl-business .proj-card:hover .proj-img {
+    transform: scale(1.05);
 }
 
 .tpl-business .proj-body {
@@ -1607,334 +1936,459 @@
 }
 
 .tpl-business .proj-title {
-    font-size: 18px !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.5px !important;
+    font-size: 24px !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 12px !important;
+    color: var(--tpl-text) !important;
+}
+
+.tpl-business .proj-desc {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 24px !important;
+    opacity: 0.9;
+    max-width: 800px;
 }
 
 .tpl-business .proj-tag {
-    background: transparent !important;
-    border: 1px solid var(--border) !important;
-    color: var(--muted) !important;
-    text-transform: uppercase !important;
-    font-size: 9px !important;
+    background: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent) !important;
+    color: var(--primary) !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    padding: 6px 14px !important;
+    border-radius: 4px !important;
 }
 
-@media (max-width: 768px) {
+.tpl-business .proj-links {
+    margin-top: 32px !important;
+    display: flex !important;
+    gap: 24px !important;
+}
+
+.tpl-business .proj-link {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    color: var(--tpl-text) !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    opacity: 0.8;
+}
+
+.tpl-business .proj-link:hover {
+    color: var(--primary) !important;
+    opacity: 1;
+}
+
+/* ── Step 12: Experience ───────────────────────────────────── */
+.tpl-business .experience-item {
+    padding: 32px 0 !important;
+    border-bottom: 1px solid var(--tpl-border) !important;
+    display: block !important;
+    width: 100% !important;
+    transition: background 0.3s ease;
+}
+
+.tpl-business .experience-item:hover {
+    background: color-mix(in srgb, var(--tpl-text) 2%, transparent) !important;
+}
+
+.tpl-business .experience-item.has-timeline {
+    padding-left: 0 !important;
+}
+
+.tpl-business .experience-item:last-child {
+    border-bottom: none !important;
+}
+
+.tpl-business .timeline-dot,
+.tpl-business .timeline-line {
+    display: none !important;
+}
+
+/* ── Step 13: Widgets ─────────────────────────────────────── */
+.tpl-business .stat-box {
+    border: none !important;
+    border-left: 4px solid var(--primary) !important;
+    background: var(--tpl-surface) !important;
+    padding: 24px !important;
+    border-radius: 0 !important;
+    margin-bottom: 16px !important;
+}
+
+.tpl-business .stat-value {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    color: var(--tpl-text) !important;
+    margin-bottom: 4px !important;
+}
+
+.tpl-business .stat-label {
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    font-weight: 700 !important;
+    color: var(--tpl-muted) !important;
+}
+
+.tpl-business .is-row-start .stat-box {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-left-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.tpl-business .is-row-start .stat-value,
+.tpl-business .is-row-start .stat-label {
+    color: var(--tpl-bg) !important;
+}
+
+.tpl-business .contact-card {
+    background: var(--tpl-surface) !important;
+    border: 1px solid var(--tpl-border) !important;
+    padding: 20px !important;
+    border-radius: 4px !important;
+    margin-bottom: 12px !important;
+}
+
+.tpl-business .tl-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    width: 100% !important;
+    margin-bottom: 12px !important;
+}
+
+.tpl-business .is-row-start .tl-header {
+    flex-direction: column !important;
+    gap: 4px !important;
+}
+
+.tpl-business .tl-position {
+    font-size: 22px !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.02em !important;
+    color: var(--tpl-text) !important;
+    margin: 0 !important;
+}
+
+.tpl-business .tl-date {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    color: var(--primary) !important;
+    opacity: 0.8;
+}
+
+.tpl-business .tl-company {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    margin-bottom: 16px !important;
+    color: var(--tpl-text) !important;
+    opacity: 0.6;
+}
+
+.tpl-business .tl-desc {
+    font-size: 16px !important;
+    line-height: 1.7 !important;
+    color: var(--tpl-muted) !important;
+    max-width: 850px !important;
+}
+
+.tpl-business .contact-label {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    margin-bottom: 4px !important;
+    color: var(--tpl-muted) !important;
+}
+
+.tpl-business .contact-val {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--tpl-text) !important;
+}
+
+.tpl-business .is-row-start .contact-card {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.tpl-business .is-row-start .contact-label {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.tpl-business .is-row-start .contact-val {
+    color: var(--tpl-bg) !important;
+}
+
+/* ── Step 14: Content widths ───────────────────────────────── */
+.tpl-business .pub-section-content,
+.tpl-business .experience-list,
+.tpl-business .contact-grid,
+.tpl-business .social-grid,
+.tpl-business .stats-grid,
+.tpl-business .skills-grid,
+.tpl-business .proj-grid,
+.tpl-business .education-list,
+.tpl-business .custom-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* ── Step 15: layout-split & Responsive ────────────────────── */
+
+/* ── Step 14: layout-split ─────────────────────────────────── */
+.tpl-business .pub-section.layout-split {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 16px !important;
+    align-items: flex-start !important;
+    padding: 24px !important;
+}
+
+.tpl-business .pub-section.layout-split .section-header-wrapper {
+    flex: 0 0 auto !important;
+    min-width: 80px !important;
+    max-width: 30% !important;
+}
+
+.tpl-business .pub-section.layout-split .pub-section-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+/* ── Step 15: Responsive Tablet (≤1024px) ──────────────────── */
+@media (max-width: 1024px) {
+    .tpl-business .sections-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Reset span-full gradient */
+    .tpl-business .section-wrapper.span-full {
+        background: var(--tpl-bg) !important;
+    }
+
+    .tpl-business .section-wrapper.span-full .pub-section,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .pub-section,
+    .tpl-business .sections-grid>.section-wrapper.is-right:not(.span-full) .pub-section {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 48px 32px !important;
+    }
+
+    .tpl-business .skills-groups {
+        grid-template-columns: 1fr !important;
+        gap: 32px !important;
+    }
+
+    .tpl-business .hero-text {
+        padding: 48px !important;
+    }
+
     .tpl-business .proj-card {
         grid-template-columns: 1fr !important;
-        gap: 16px !important;
+        gap: 24px !important;
     }
 }
 
-/* Contact for Business */
-.tpl-business .contact-card {
-    border-radius: 4px !important;
-    border: 1px solid var(--border) !important;
-    padding: 24px !important;
-    background: color-mix(in srgb, var(--surface) 30%, transparent) !important;
+/* ── Step 16: Responsive Mobile (≤768px) ───────────────────── */
+@media (max-width: 768px) {
+    .tpl-business .sections-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+        padding: 0 !important;
+    }
+
+    .tpl-business .section-wrapper {
+        border-radius: 0 !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
+    .tpl-business .section-wrapper.is-row-start:not(.span-full) {
+        background: var(--primary) !important;
+        background-color: var(--primary) !important;
+    }
+
+    .tpl-business .section-wrapper:not(.is-row-start):not(.span-full),
+    .tpl-business .section-wrapper.span-full {
+        background: var(--tpl-bg) !important;
+    }
+
+    .tpl-business .section-wrapper.span-full .pub-section {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 24px 16px !important;
+    }
+
+    /* Mobile Hero */
+    .tpl-business .pub-hero-inner {
+        flex-direction: column !important;
+        min-height: auto;
+    }
+
+    .tpl-business .hero-avatar-wrap {
+        width: 100% !important;
+        min-height: auto !important;
+        padding: 40px 20px !important;
+    }
+
+    .tpl-business .hero-text {
+        width: 100% !important;
+        background: var(--tpl-bg) !important;
+        padding: 40px 24px !important;
+        text-align: center !important;
+        align-items: center !important;
+    }
+
+    .tpl-business .hero-name {
+        font-size: 26px !important;
+        text-align: center !important;
+        color: var(--tpl-text) !important;
+        -webkit-text-fill-color: var(--tpl-text) !important;
+    }
+
+    .tpl-business .hero-tagline {
+        font-size: 12px !important;
+        text-align: center !important;
+        margin: 0 auto 12px !important;
+    }
+
+    .tpl-business .hero-cta {
+        justify-content: center !important;
+    }
+
+    .tpl-business .hero-btn {
+        height: 44px !important;
+        font-size: 11px !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    /* Mobile sidebar text adjustments */
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .tl-position,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .tl-company,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .tl-desc,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .tl-date,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .group-title,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .stat-label,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .proj-title,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .proj-desc,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-label,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-val,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .custom-content {
+        color: rgba(255, 255, 255, 0.9) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    /* Skills Mobile Flow */
+    .tpl-business .skills-grid {
+        column-count: 1 !important;
+    }
+
+    .tpl-business .skill-tag {
+        padding: 14px 0 !important;
+    }
+
+    .tpl-business .proj-card {
+        grid-template-columns: 1fr !important;
+        gap: 24px !important;
+        padding: 40px 0 !important;
+    }
+
+    .tpl-business .proj-title {
+        font-size: 20px !important;
+    }
+
+    .tpl-business .proj-desc {
+        font-size: 14px !important;
+    }
+
+    .tpl-business .experience-item {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 44px 0 !important;
+    }
+
+    .tpl-business .tl-position {
+        font-size: 18px !important;
+    }
+
+    .tpl-business .tl-company {
+        font-size: 12px !important;
+    }
 }
 
-
 /* ════════════════════════════════════════════════════════════
-   CREATIVE  ·  Bold / Expressive
-   Impact font · diagonal hero clip · gradient everything
+   OTHER TEMPLATES (untouched)
    ════════════════════════════════════════════════════════════ */
 
 .tpl-creative {
-    font-family: var(--font-display) !important;
+    font-family: 'Sarabun', sans-serif !important;
+    --tpl-bg: transparent;
 }
 
 .tpl-creative .pub-hero {
-    min-height: 55vh !important;
-    padding: 60px 0 110px !important;
-    clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%) !important;
-    background:
-        radial-gradient(circle at 25% 40%, var(--primary-glow), transparent 55%),
-        radial-gradient(circle at 80% 65%, color-mix(in srgb, var(--secondary) 25%, transparent), rgba(var(--bg-rgb), 0.6) 50%) !important;
-}
-
-.tpl-creative .hero-ring {
-    display: none !important;
-}
-
-.tpl-creative .pub-hero-inner {
-    flex-direction: column !important;
-    text-align: left !important;
-    align-items: flex-start !important;
-    padding: 0 !important;
-    gap: 0 !important;
-}
-
-.tpl-creative .hero-avatar-wrap {
-    width: 72px !important;
-    height: 72px !important;
-    margin: 0 0 20px !important;
-}
-
-.tpl-creative .hero-img,
-.tpl-creative .hero-avatar-fallback {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 0 !important;
-    border: 3px solid var(--primary) !important;
-}
-
-.tpl-creative .hero-role-badge {
-    background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
-    border: none !important;
-    color: #000 !important;
-    font-size: 9px !important;
-    font-weight: 900 !important;
-    border-radius: 2px !important;
-    padding: 4px 12px !important;
-    margin-bottom: 10px !important;
-    letter-spacing: 3px !important;
-    text-transform: uppercase !important;
+    min-height: 80vh !important;
+    display: flex !important;
+    align-items: center !important;
+    background: radial-gradient(circle at 70% 30%, var(--primary-glow), transparent 40%),
+        radial-gradient(circle at 30% 70%, var(--secondary-glow, var(--primary-glow)), transparent 40%) !important;
 }
 
 .tpl-creative .hero-name {
-    font-size: clamp(48px, 15vw, 110px) !important;
-    font-weight: 900 !important;
-    line-height: 0.88 !important;
-    letter-spacing: -2px !important;
-    margin-bottom: 18px !important;
-    text-align: left !important;
+    font-size: clamp(60px, 10vw, 120px) !important;
+    line-height: 0.9 !important;
+    letter-spacing: -4px !important;
+    font-weight: 800 !important;
     text-transform: uppercase !important;
-    background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
+    margin-bottom: 30px !important;
 }
 
-.tpl-creative .hero-tagline {
-    font-family: var(--font-body) !important;
-    font-size: 13px !important;
-    font-weight: 300 !important;
-    text-align: left !important;
-    margin: 0 0 28px !important;
-    max-width: 480px;
-    -webkit-text-fill-color: var(--text) !important;
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    background-clip: unset !important;
-}
-
-.tpl-creative .hero-cta {
-    justify-content: flex-start !important;
-}
-
-.tpl-creative .hero-btn {
-    border-radius: 2px !important;
-    font-family: inherit !important;
-    font-size: 11px !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-    height: 48px !important;
-    font-weight: 900 !important;
-}
-
-.tpl-creative .hero-btn.primary {
-    background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
-    box-shadow: 0 8px 32px var(--primary-glow) !important;
-    color: #000 !important;
+.tpl-creative .hero-avatar-wrap {
+    width: 350px !important;
+    height: 350px !important;
     border: none !important;
+    box-shadow: 0 40px 100px var(--primary-glow) !important;
+    transform: rotate(-3deg) !important;
+    border-radius: 40px !important;
+    overflow: hidden !important;
 }
 
-.tpl-creative .hero-btn:not(.primary) {
-    background: transparent !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    color: var(--text) !important;
+.tpl-creative .hero-img {
+    border-radius: 0 !important;
+    transform: rotate(3deg) scale(1.1) !important;
 }
 
-.tpl-creative .pub-section {
-    padding: 60px 0 !important;
-    /* border-top removed - handled by wrapper */
-}
-
-.tpl-creative .pub-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, var(--primary), var(--secondary), transparent);
+.tpl-creative .section-header-wrapper {
+    margin-bottom: 80px !important;
 }
 
 .tpl-creative .layered-title {
-    font-size: clamp(36px, 5vw, 60px) !important;
-    font-weight: 900 !important;
+    font-size: clamp(40px, 8vw, 80px) !important;
     letter-spacing: -2px !important;
-    line-height: 0.9 !important;
-    text-transform: uppercase !important;
-    background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    margin-bottom: 36px !important;
 }
 
-.tpl-creative .layered-title::before,
-.tpl-creative .layered-title::after {
-    display: none !important;
-}
-
-.tpl-creative .skill-tag {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 2px !important;
-    width: max-content !important;
-    background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
-    color: #000 !important;
-    border: none !important;
-    border-radius: 2px !important;
-    font-family: var(--font-body) !important;
-    font-size: 11px !important;
-    font-weight: 800 !important;
-    padding: 6px 14px !important;
-    letter-spacing: 1px !important;
-    text-transform: uppercase !important;
-}
-
-/* ── Skills ── */
-.tpl-creative .pub-section .skills-grid .skill-tag {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    width: max-content !important;
-
-}
-
-.tpl-creative .pub-section .skills-groups {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 40px !important;
-    justify-content: center !important;
-}
-
-.tpl-creative .pub-section .skills-grid {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px 16px !important;
-    width: 100% !important;
-}
-
-/* Skills: massive text */
-.tpl-creative .pub-section .skills-groups {
-    max-width: 100%;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, auto));
-    gap: 20px;
-    justify-content: flex-start;
-}
-
-/* ── Skills ── */
-.tpl-creative .pub-section .skills-grid .skill-tag {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    width: max-content !important;
-
-}
-
-.tpl-creative .pub-section .skills-groups {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 40px !important;
-    justify-content: center !important;
-}
-
-.tpl-creative .pub-section .skills-grid {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px 16px !important;
-    width: 100% !important;
-}
-
-/* Skills: massive text */
-.tpl-creative .pub-section .skills-groups {
-    max-width: 100%;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, auto));
-    gap: 20px;
-    justify-content: flex-start;
-}
-
-
-.tpl-creative .experience-item {
-    padding-left: 24px !important;
-    border-left: 3px solid var(--primary) !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    margin-bottom: 28px !important;
-}
-
-.tpl-creative .timeline-dot {
-    background: var(--primary) !important;
-    box-shadow: 0 0 12px var(--primary) !important;
-    border: none !important;
-}
-
-.tpl-creative .tl-position {
-    font-size: 18px !important;
-    font-weight: 900 !important;
-    text-transform: uppercase !important;
-    letter-spacing: -0.5px !important;
-    background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-}
-
-.tpl-creative .tl-company {
-    font-family: var(--font-body) !important;
-    font-size: 12px !important;
-    font-weight: 300 !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-}
-
-.tpl-creative .tl-date {
-    font-family: var(--font-body) !important;
-    font-size: 11px !important;
-    color: var(--muted) !important;
-}
-
-.tpl-creative .tl-desc {
-    font-family: var(--font-body) !important;
-    font-size: 13px !important;
-    color: var(--muted) !important;
-    margin-top: 8px !important;
-}
-
-/* ════════════════════════════════════════════════════════════
-   FIRST JOBBER GRID ALIGNMENT & CUT-OFF FIXES
-   ════════════════════════════════════════════════════════════ */
-
-/* ให้ grid cell สูงเท่ากัน */
 .tpl-firstjobber .sections-grid {
     align-items: stretch !important;
 }
 
-/* ให้ wrapper ยืดเต็ม cell */
 .tpl-firstjobber .sections-grid>.section-wrapper.span-half {
-    height: 100% !important;
-}
-
-/* ห้ามบังคับ section เป็น flex */
-.tpl-firstjobber .sections-grid>.section-wrapper.span-half>section {
     height: 100% !important;
 }
 
 .tpl-firstjobber .pub-section {
     min-height: 100% !important;
-    /* Changed from height to min-height to prevent cut-off */
-}
-
-/* Fix for centered layout content overflow */
-.tpl-firstjobber .layout-centered .proj-desc {
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
 }

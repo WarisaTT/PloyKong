@@ -309,26 +309,61 @@ var (
 	cGray400 = [3]uint8{156, 163, 175} // #9ca3af
 	cGray200 = [3]uint8{229, 231, 235} // #e5e7eb
 	cGray50  = [3]uint8{249, 250, 251} // #f9fafb
-	cAccent  = [3]uint8{114, 17, 218}  // #7211daff  — single blue accent
-	cAccentL = [3]uint8{239, 246, 255} // #eff6ff  — accent light bg
-	cAccentB = [3]uint8{191, 219, 254} // #bfdbfe  — accent border
 	cWhite   = [3]uint8{255, 255, 255}
 )
+
+func hexToRGB(hex string, def [3]uint8) [3]uint8 {
+	if hex == "" {
+		return def
+	}
+	hex = strings.TrimPrefix(hex, "#")
+	if len(hex) == 3 {
+		hex = string([]byte{hex[0], hex[0], hex[1], hex[1], hex[2], hex[2]})
+	}
+	if len(hex) != 6 {
+		return def
+	}
+	var r, g, b uint8
+	fmt.Sscanf(hex, "%02x%02x%02x", &r, &g, &b)
+	return [3]uint8{r, g, b}
+}
+
+func mixWhite(c [3]uint8, amount float64) [3]uint8 {
+	return [3]uint8{
+		uint8(float64(c[0])*(1-amount) + 255*amount),
+		uint8(float64(c[1])*(1-amount) + 255*amount),
+		uint8(float64(c[2])*(1-amount) + 255*amount),
+	}
+}
 
 // ─── PDF Canvas wrapper ───────────────────────────────────────────────────────
 
 type cv struct {
-	p    *gopdf.GoPdf
-	w    float64 // page width
-	h    float64 // page height
-	ml   float64 // margin left
-	mr   float64 // margin right
-	y    float64 // current y cursor (top-down: 0 = top)
-	page int
+	p        *gopdf.GoPdf
+	w        float64 // page width
+	h        float64 // page height
+	ml       float64 // margin left
+	mr       float64 // margin right
+	y        float64 // current y cursor (top-down: 0 = top)
+	page     int
+	cAccent  [3]uint8
+	cAccentL [3]uint8
+	cAccentB [3]uint8
 }
 
-func newCV() *cv {
-	return &cv{p: &gopdf.GoPdf{}, w: 595.28, h: 841.89, ml: 50, mr: 50, page: 0}
+func newCV(primary string) *cv {
+	accent := hexToRGB(primary, [3]uint8{114, 17, 218})
+	return &cv{
+		p:        &gopdf.GoPdf{},
+		w:        595.28,
+		h:        841.89,
+		ml:       50,
+		mr:       50,
+		page:     0,
+		cAccent:  accent,
+		cAccentL: mixWhite(accent, 0.92),
+		cAccentB: mixWhite(accent, 0.70),
+	}
 }
 
 func (c *cv) bodyW() float64 { return c.w - c.ml - c.mr }
@@ -456,7 +491,7 @@ func (c *cv) needsNewPage(h float64) bool {
 func (c *cv) sectionTitle(x float64, title string) {
 	c.text(x, c.y, cBlack, "THSarabun", 11, strings.ToUpper(title))
 	tw := c.measureW("THSarabun", 11, strings.ToUpper(title))
-	c.hline(x, c.y+14, x+tw, cAccent, 1.5)
+	c.hline(x, c.y+14, x+tw, c.cAccent, 1.5)
 	c.y += 20
 }
 
@@ -471,7 +506,7 @@ func (c *cv) skillBar(x float64, colW float64, name string, pct int, hidePct boo
 		c.rect(x, c.y, colW, 5, cGray200)
 		// Fill
 		fillW := colW * float64(pct) / 100
-		c.rect(x, c.y, fillW, 5, cAccent)
+		c.rect(x, c.y, fillW, 5, c.cAccent)
 		c.y += 16
 	} else {
 		// Just a bit of spacing if there's no progress bar
@@ -483,8 +518,8 @@ func (c *cv) skillBar(x float64, colW float64, name string, pct int, hidePct boo
 
 func (c *cv) rolePill(x, y float64, role string) {
 	tw := c.measureW("THSarabun", 10, role) + 16
-	c.rectS(x, y, tw, 20, cAccentL, cAccentB, 0.5)   // Increased height from 16 to 20
-	c.text(x+8, y+3, cAccent, "THSarabun", 10, role) // Shifted down from y+3 to y+5
+	c.rectS(x, y, tw, 20, c.cAccentL, c.cAccentB, 0.5) // Increased height from 16 to 20
+	c.text(x+8, y+3, c.cAccent, "THSarabun", 10, role) // Shifted down from y+3 to y+5
 }
 
 // ─── Inline tag pill ──────────────────────────────────────────────────────────
@@ -498,8 +533,8 @@ func (c *cv) tagPill(x, y float64, tag string) float64 {
 
 func (c *cv) skillPill(x, y float64, tag string) float64 {
 	tw := c.measureW("THSarabun", 8, tag) + 10
-	c.rectS(x, y, tw, 14, cAccentL, cAccentL, 0.5)  // Increased height from 13 to 17
-	c.text(x+5, y+1, cGray600, "THSarabun", 8, tag) // Shifted down from y+2 to y+4
+	c.rectS(x, y, tw, 14, c.cAccentL, c.cAccentL, 0.5) // Increased height from 13 to 17
+	c.text(x+5, y+1, cGray600, "THSarabun", 8, tag)    // Shifted down from y+2 to y+4
 	return x + tw + 5
 }
 
@@ -596,16 +631,18 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 	// 1. Fetch portfolio ───────────────────────────────────────────────────────
 	var port models.Portfolio
+	var themeRaw []byte
 	err := h.db.QueryRow(
-		`SELECT id, title FROM portfolios WHERE id = ? AND deleted_at IS NULL`,
+		`SELECT id, title, theme FROM portfolios WHERE id = ? AND deleted_at IS NULL`,
 		id,
-	).Scan(&port.ID, &port.Title)
+	).Scan(&port.ID, &port.Title, &themeRaw)
 	if err == sql.ErrNoRows {
 		return fiber.NewError(fiber.StatusNotFound, "portfolio not found")
 	}
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
+	port.ScanTheme(themeRaw)
 
 	// 2. Fetch sections ────────────────────────────────────────────────────────
 	sections, err := h.loadSections(id)
@@ -622,7 +659,11 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	}
 
 	// 4. Init PDF ──────────────────────────────────────────────────────────────
-	cv := newCV()
+	var pColor string
+	if port.Theme != nil {
+		pColor = port.Theme.PrimaryColor
+	}
+	cv := newCV(pColor)
 	cv.p.Start(gopdf.Config{PageSize: gopdf.Rect{W: cv.w, H: cv.h}})
 	if err := loadFont(cv.p); err != nil {
 		log.Printf("❌ GeneratePDF: %v", err)
@@ -657,7 +698,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	}
 
 	// Top accent bar (4px)
-	cv.rect(0, 0, cv.w, 4, cAccent)
+	cv.rect(0, 0, cv.w, 4, cv.cAccent)
 	cv.y = 30 // Moved down for more top spacing
 
 	contactStartY := cv.y
@@ -665,7 +706,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	cv.text(cv.ml, cv.y, cBlack, "THSarabun", 24, heroName)
 	cv.y += 26
 
-	cv.rect(0, 0, cv.w, 4, cAccent)
+	cv.rect(0, 0, cv.w, 4, cv.cAccent)
 	// Role pill
 	if heroRole != "" {
 		cv.y += 3
@@ -762,7 +803,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			// Only show Category Title if it's not empty
 			if cat != "" {
 				cv.y += 2
-				cv.text(rx, cv.y, cAccent, "THSarabun", 10, cat)
+				cv.text(rx, cv.y, cv.cAccent, "THSarabun", 10, cat)
 				cv.y += 16
 			} else {
 				cv.y += 2 // Small spacer for uncategorized skills
@@ -818,7 +859,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			if degree != "" || school != "" {
 				cv.text(rx, cv.y, cBlack, "THSarabun", 10, degree)
 				cv.y += 13
-				cv.text(rx, cv.y, cAccent, "THSarabun", 9, school)
+				cv.text(rx, cv.y, cv.cAccent, "THSarabun", 9, school)
 				cv.y += 12
 				if dates != "" {
 					cv.text(rx, cv.y, cGray400, "THSarabun", 9, dates)
@@ -883,7 +924,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			cv.y += 14
 			// Company
 			if company != "" {
-				cv.text(cv.ml, cv.y, cAccent, "THSarabun", 9, company)
+				cv.text(cv.ml, cv.y, cv.cAccent, "THSarabun", 9, company)
 				cv.y += 13
 			}
 			// Description

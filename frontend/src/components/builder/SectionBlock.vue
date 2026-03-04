@@ -6,19 +6,20 @@
       { selected: isSelected, hidden: !section.is_visible },
     ]"
     @click="$emit('select')"
+    :style="themeVars"
   >
     <!-- Section Header -->
     <div class="section-header">
       <div class="section-left">
         <span class="drag-handle" title="ลาก">⠿</span>
-        <component :is="icon" class="section-icon" :size="16" />
+        <component :is="icon" class="section-icon" :size="14" />
         <span class="section-type-label">{{ label }}</span>
         <span v-if="!section.is_visible" class="visibility-badge">Hidden</span>
       </div>
       <div class="section-actions" @click.stop>
         <!-- Move Up -->
         <button class="icon-btn" title="Move Up" @click="$emit('move-up')">
-          <ArrowUp :size="14" />
+          <ArrowUp :size="12" />
         </button>
 
         <!-- Toggle List/Grid Column Span -->
@@ -28,13 +29,13 @@
           :title="section.column_span === 'half' ? 'Make Full Width' : 'Make Half Width'"
           @click="$emit('toggle-column-span')"
         >
-          <Columns v-if="section.column_span === 'half'" :size="14" />
-          <Square v-else :size="14" />
+          <Columns v-if="section.column_span === 'half'" :size="12" />
+          <Square v-else :size="12" />
         </button>
 
         <!-- Move Down -->
         <button class="icon-btn" title="Move Down" @click="$emit('move-down')">
-          <ArrowDown :size="14" />
+          <ArrowDown :size="12" />
         </button>
 
         <!-- Toggle Visibility -->
@@ -43,18 +44,18 @@
           :title="section.is_visible ? 'Hide' : 'Show'"
           @click="$emit('toggle-visibility')"
         >
-          <Eye v-if="section.is_visible" :size="14" />
-          <EyeOff v-else :size="14" />
+          <Eye v-if="section.is_visible" :size="12" />
+          <EyeOff v-else :size="12" />
         </button>
 
         <!-- Duplicate -->
         <button class="icon-btn" title="Duplicate" @click="$emit('duplicate')">
-          <Copy :size="14" />
+          <Copy :size="12" />
         </button>
 
         <!-- Delete -->
         <button class="icon-btn danger" title="Delete" @click="confirmDelete">
-          <Trash2 :size="14" />
+          <Trash2 :size="12" />
         </button>
       </div>
     </div>
@@ -63,7 +64,7 @@
     <div
       class="section-preview"
       :class="[themeClass, templateClass, { 'is-half-split': isHalfSplit }]"
-      :style="{ ...themeVars, pointerEvents: 'none' }"
+      :style="{pointerEvents: 'none' }"
     >
       <div 
         class="section-preview-inner"
@@ -108,11 +109,6 @@
         />
         <GenericPreview v-else :section="section" />
       </div>
-    </div>
-
-    <!-- Selected Indicator -->
-    <div v-if="isSelected" class="selected-indicator">
-      <span>✏️ Click Properties panel to edit</span>
     </div>
   </div>
 </template>
@@ -202,53 +198,30 @@ async function confirmDelete() {
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1.5px solid var(--section-border);
+  border-radius: 20px;
   overflow: hidden;
   position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.section-block.is-half-split {
-  width: 100%;
-  height: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .section-block:hover {
-  border-color: var(--borderPurple);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.section-block.theme-dark:hover {
-  --borderPurple: rgba(79, 70, 229, 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.section-block.theme-light:hover {
-  --borderPurple: rgba(79, 70, 229, 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(var(--primary-glow), 0.1);
 }
 
 .section-block.selected {
-  border-color: var(--borderPurple);
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+  border-color: var(--primary);
+  border-width: 2px;
+  box-shadow: 0 0 0 4px rgba(var(--primary-glow), 0.1), 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-.section-block.theme-dark.selected {
-  --borderPurple: rgba(79, 70, 229, 0.4);
-  box-shadow: 0 0 0 2px rgba(132, 0, 255, 0.2);
+:global(.theme-dark) .section-block {
+  background: #0f172a;
 }
-
-.section-block.theme-light.selected {
-  --borderPurple2: rgba(171, 155, 177, 0.4);
-  box-shadow: 0 0 0 5px rgba(15, 13, 16, 0.7);
-}
-
 
 .section-block.hidden {
   opacity: 0.5;
@@ -260,45 +233,53 @@ async function confirmDelete() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  background: rgba(var(--bg-rgb), 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--section-border);
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.section-block:hover .section-header,
+.section-block.selected .section-header {
+  opacity: 1;
 }
 
 .section-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .drag-handle {
   color: var(--muted);
   cursor: grab;
-  font-size: 16px;
-  padding: 4px;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-  color: var(--indigo);
+  font-size: 14px;
+  padding: 2px;
 }
 
 .section-icon {
-  font-size: 16px;
+  color: var(--primary);
+  opacity: 0.8;
 }
 
 .section-type-label {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .visibility-badge {
-  font-size: 10px;
-  padding: 2px 8px;
+  font-size: 9px;
+  padding: 1px 6px;
   border-radius: 100px;
-  background: rgba(148, 163, 184, 0.1);
-  color: var(--muted);
-  border: 1px solid var(--border);
+  background: rgba(var(--primary-glow), 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(var(--primary-glow), 0.2);
 }
 
 .section-actions {
@@ -307,66 +288,90 @@ async function confirmDelete() {
 }
 
 .icon-btn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
-  border: none;
-  background: var(--surface);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--muted);
-  font-size: 12px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .icon-btn:hover {
-  background: var(--bg);
-  color: var(--text);
+  background: rgba(var(--primary-glow), 0.1);
+  color: var(--primary);
+  border-color: rgba(var(--primary-glow), 0.2);
 }
 
 .icon-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .section-preview {
   flex: 1;
   background: var(--bg);
-  border-radius: 0 0 11px 11px;
+  border-radius: 0 0 16px 16px;
   color: var(--text);
   font-family: var(--font-body);
   padding: 0;
   min-height: 60px;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
+.tpl-business .pub-section.is-row-start{
+  background: var(--primary) !important;
+  border-radius: 20px !important;
+}
+
+/* Business: no longer transparent */
+
 .tpl-firstjobber .section-preview > div {
-  height: 100% !important;
   display: flex;
   flex-direction: column;
+  color: var(--text);
 }
 
 .tpl-firstjobber .section-preview > div > section {
-  height: 100% !important;
   flex: 1;
-}
-
-.selected-indicator {
-  padding: 6px 14px;
-  background: rgba(168, 85, 247, 0.08);
-  /* fine for both themes as an accent */
-  border-top: 1px solid rgba(168, 85, 247, 0.2);
-  font-size: 11px;
-  color: var(--neon-purple);
-  text-align: center;
+  color: var(--text);
 }
 
 .pub-container {
-  max-width: 900px;
   margin: 0 auto;
   padding: 0 24px;
 }
+
+/* Business template: match others */
+
+.tpl-business.section-preview.inner-section {
+  background: var(--bg) !important;
+  color: var(--text);
+}
+.tpl-business .pub-container {
+  padding: 5px !important;
+  margin: 5px !important;
+}
+
+/* Force all inner content to fill width */
+.tpl-business :deep(.pub-section),
+.tpl-business :deep(.pub-section-content),
+.tpl-business :deep(.experience-list),
+.tpl-business :deep(.contact-grid),
+.tpl-business :deep(.skills-groups),
+.tpl-business :deep(.skills-grid),
+.tpl-business :deep(.proj-grid),
+.tpl-business :deep(.education-list),
+.tpl-business :deep(.custom-content) {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="new-portfolio-page" :style="pageBackground">
+  <div class="new-portfolio-page">
     <div class="new-card">
       <div class="back-btn-wrap">
         <RouterLink to="/dashboard" class="back-btn" title="Back to Dashboard">
@@ -207,11 +207,15 @@ const selectedPaletteObj = computed(() => PALETTES.find(p => p.id === form.palet
 
 // Using global theme CSS variables (themeStore.mode influences data-theme)
 const pageBackground = computed(() => {
-  return {}; // Use default CSS var(--bg) defined in style
+  return {
+    background: isDark.value ? '#0A0E1A' : '#F8FAFC',
+    color: isDark.value ? '#FFFFFF' : '#0F172A'
+  };
 });
 
 const resolvedTheme = computed(() => {
   const p = form.primary_color || "#7B61FF";
+  const palette = selectedPaletteObj.value;
   return {
     isDark: isDark.value,
     bg: isDark.value ? '#0A0E1A' : '#FFFFFF',
@@ -221,7 +225,7 @@ const resolvedTheme = computed(() => {
     text: isDark.value ? '#FFFFFF' : '#0F172A',
     muted: isDark.value ? '#94A3B8' : '#64748B',
     primary: p,
-    secondary: PALETTES[0].colors[1], // mock secondary
+    secondary: palette && palette.colors[1] ? palette.colors[1] : p,
   };
 });
 

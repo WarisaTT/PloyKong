@@ -114,28 +114,35 @@ export const usePortfolioStore = defineStore("portfolio", () => {
   }
 
   // ─── Section CRUD ─────────────────────────────────────────────────────────
-  async function addSection(type: string) {
+  async function addSection(type: string, afterSectionId?: string | null) {
     if (!activePortfolio.value) return;
 
-    // Ensure we always append to the very bottom, beneath any existing blocks
-    const maxPos = sections.value.length > 0
-      ? Math.max(...sections.value.map(s => s.position))
-      : -1;
-    const position = maxPos + 1;
+    let position = 0;
+    if (afterSectionId) {
+      const selectedIdx = sections.value.findIndex(s => s.id === afterSectionId);
+      if (selectedIdx !== -1) {
+        position = sections.value[selectedIdx].position + 1;
+      } else {
+        const maxPos = sections.value.length > 0
+          ? Math.max(...sections.value.map(s => s.position))
+          : -1;
+        position = maxPos + 1;
+      }
+    } else {
+      const maxPos = sections.value.length > 0
+        ? Math.max(...sections.value.map(s => s.position))
+        : -1;
+      position = maxPos + 1;
+    }
 
     const { data } = await sectionAPI.create(activePortfolio.value.id, {
       type,
       position,
       data: getDefaultSectionData(type),
     });
-    sections.value.push({
-      id: data.data.id,
-      portfolio_id: activePortfolio.value.id,
-      type,
-      position,
-      data: getDefaultSectionData(type),
-      is_visible: true,
-    } as Section);
+
+    // Reload portfolio to sync all shifted positions from backend
+    await loadPortfolio(activePortfolio.value.id);
     return data.data.id;
   }
 

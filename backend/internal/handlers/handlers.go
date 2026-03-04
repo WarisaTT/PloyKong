@@ -75,12 +75,28 @@ func (h *SectionHandler) Create(c *fiber.Ctx) error {
 		req.ColumnSpan = "full"
 	}
 
-	_, err := h.db.Exec(
+	tx, err := h.db.Begin()
+	if err != nil {
+		return fiber.NewError(500, "failed to start transaction")
+	}
+	defer tx.Rollback()
+
+	// Shift positions of subsequent sections down by 1 to make room for the new one at req.Position
+	_, err = tx.Exec("UPDATE sections SET position = position + 1 WHERE portfolio_id = ? AND position >= ?", portfolioID, req.Position)
+	if err != nil {
+		return fiber.NewError(500, "failed to shift sections")
+	}
+
+	_, err = tx.Exec(
 		"INSERT INTO sections (id, portfolio_id, type, position, data, column_span) VALUES (?, ?, ?, ?, ?, ?)",
 		id, portfolioID, req.Type, req.Position, string(req.Data), req.ColumnSpan,
 	)
 	if err != nil {
 		return fiber.NewError(500, "failed to create section")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fiber.NewError(500, "failed to commit transaction")
 	}
 
 	return c.Status(201).JSON(fiber.Map{"success": true, "data": fiber.Map{"id": id}})
@@ -841,23 +857,32 @@ func (h *PublicHandler) GetKnowledgeGaps(c *fiber.Ctx) error {
 
 	// Verify ownership
 	var ownerID string
-	h.db.QueryRow("SELECT user_id FROM portfolios WHERE id = ?", id).Scan(&ownerID)
+	err := h.db.QueryRow("SELECT user_id FROM portfolios WHERE id = ?", id).Scan(&ownerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fiber.NewError(404, "portfolio not found")
+		}
+		return fiber.NewError(500, "failed to verify ownership")
+	}
+
 	if ownerID != claims.UserID {
 		return fiber.NewError(403, "forbidden")
 	}
 
+	// Optimized query to get gaps: Join the assistant response (gap) with the last user message in the same session before it
 	rows, err := h.db.Query(`
 		SELECT u.content as question, a.content as response, a.created_at
 		FROM ai_chat_logs a
 		JOIN ai_chat_logs u ON u.id = (
-			SELECT MAX(id) FROM ai_chat_logs 
+			SELECT id FROM ai_chat_logs 
 			WHERE session_id = a.session_id AND role = 'user' AND id < a.id
+			ORDER BY id DESC LIMIT 1
 		)
 		WHERE a.portfolio_id = ? AND a.is_knowledge_gap = TRUE AND a.role = 'assistant'
 		ORDER BY a.created_at DESC
 	`, id)
 	if err != nil {
-		return fiber.NewError(500, "failed to load gaps")
+		return fiber.NewError(500, "failed to load gaps: "+err.Error())
 	}
 	defer rows.Close()
 
@@ -865,7 +890,9 @@ func (h *PublicHandler) GetKnowledgeGaps(c *fiber.Ctx) error {
 	for rows.Next() {
 		var q, r string
 		var t time.Time
-		rows.Scan(&q, &r, &t)
+		if err := rows.Scan(&q, &r, &t); err != nil {
+			continue
+		}
 		gaps = append(gaps, fiber.Map{
 			"question": q,
 			"response": r,

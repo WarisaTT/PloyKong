@@ -173,7 +173,7 @@
         </button>
 
         <main class="builder-canvas" ref="canvasRef">
-          <div class="canvas-content-limiter">
+          <div class="canvas-content-limiter" :class="[templateClass, themeClass]" :style="{ 'background-color': 'transparent !important', border: 'none !important' }">
           <!-- Canvas Loading and Empty states -->
           <div v-if="store.loading" class="canvas-loading">...</div>
           <div v-else-if="store.sections.length === 0" class="canvas-empty">...</div>
@@ -183,7 +183,7 @@
             name="section-list"
             v-else
             class="sections-list sections-grid"
-            :class="[templateClass, { 'has-divider': theme.show_divider }]"
+            :class="{ 'has-divider': theme.show_divider }"
             ref="listRef"
           >
             <div
@@ -191,6 +191,7 @@
               :key="section.id"
               :data-id="section.id"
               class="section-wrapper drag-item"
+              :style="themeVars"
               :class="{ 
                 'span-half': section.column_span === 'half', 
                 'span-full': section.column_span !== 'half', 
@@ -206,8 +207,8 @@
                 :is-selected="selectedSectionId === section.id"
                 :theme-class="themeClass"
                 :template-class="templateClass"
-                :is-half-split="section.column_span === 'half'"
                 :theme-vars="themeVars"
+                :is-half-split="section.column_span === 'half'"
                 :class="{ 'block-highlight': highlightedBlocks.has(section.id) }"
                 @select="selectSection(section.id)"
                 @delete="deleteSection(section.id)"
@@ -481,8 +482,43 @@
             {{ selectedSection.type }}
           </div>
 
+          <!-- Section Toolbar -->
+          <div class="section-toolbar">
+            <div class="toolbar-group">
+              <button class="toolbar-btn" @click="moveSection(selectedSection.id, 'up')" title="Move Up">
+                <ChevronUp :size="16" />
+              </button>
+              <button class="toolbar-btn" @click="moveSection(selectedSection.id, 'down')" title="Move Down">
+                <ChevronDown :size="16" />
+              </button>
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+              <button 
+                class="toolbar-btn" 
+                @click="store.toggleSectionColumnSpan(selectedSection.id)"
+                :title="selectedSection.column_span === 'half' ? 'Full Width' : 'Half Width'"
+                v-if="selectedSection.type !== 'hero'"
+              >
+                <Columns v-if="selectedSection.column_span === 'half'" :size="16" />
+                <Square v-else :size="16" />
+              </button>
+              <button class="toolbar-btn" @click="handleDuplicate(selectedSection)" title="Duplicate">
+                <Copy :size="16" />
+              </button>
+            </div>
+
+            <div class="toolbar-divider"></div>
+
+            <button class="toolbar-btn btn-danger-soft" @click="deleteSection(selectedSection.id)" title="Delete">
+              <Trash2 :size="16" />
+            </button>
+          </div>
+
           <!-- Column Divider Toggle: Only show for half-width sections -->
-          <div v-if="selectedSection.column_span === 'half'" class="props-section" style="background: rgba(var(--primary-glow), 0.05); padding: 12px; border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 20px;">
+          <div v-if="selectedSection.column_span === 'half' && theme.template !== 'firstjobber'" class="props-section" style="background: rgba(var(--primary-glow), 0.05); padding: 12px; border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 20px;">
             <label class="toggle-row" style="cursor: pointer;">
               <span class="props-label" style="margin: 0; font-size: 11px;">
                 <LayoutGrid :size="12" class="icon-inline" /> Show Vertical Divider
@@ -586,6 +622,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  ChevronDown,
+  Columns,
+  Square,
+  Trash2,
   X,
   Copy,
   Check
@@ -624,8 +664,8 @@ const editorRef = ref<HTMLElement | null>(null)
 const propsScrollRef = ref<HTMLElement | null>(null)
 const highlightedBlocks = ref<Set<string>>(new Set())
 
-const isLeftCollapsed = ref(false)
-const isRightCollapsed = ref(false)
+const isLeftCollapsed = ref(true)
+const isRightCollapsed = ref(true)
 const leftSidebarWidth = ref(260)
 const rightSidebarWidth = ref(320)
 const copied = ref(false)
@@ -708,7 +748,7 @@ const theme = reactive({
   template: 'classic',
   bg_color: '',
   border_color: '',
-  font: 'Plus Jakarta Sans',
+  font: 'Sarabun',
   layout: 'centered' as 'centered' | 'left' | 'split',
   show_divider: false
 })
@@ -841,14 +881,15 @@ const themeVars = computed(() => {
   const glowHex = isLight ? '25' : '40'
   const vars: Record<string, string> = {
     '--primary': primary,
-    '--primary-glow': `${primary}${glowHex}`,
-    '--secondary': secondary ? secondary : `${primary}${glowHex}`,
-    '--font-display': font,
-    '--font-body': font,
+    '--primary-glow': hexToRgb(primary),
+    '--secondary': secondary ? secondary : primary,
+    '--font-display': `"${font}", sans-serif`,
+    '--font-body': `"${font}", sans-serif`,
     '--text': isLight ? '#0f172a' : '#ffffff',
     '--muted': isLight ? '#64748b' : '#94a3b8',
     '--surface': isLight ? '#ffffff' : '#111827',
     '--border': isLight ? '#e2e8f0' : '#1f2937'
+    
   }
   if (theme.bg_color) {
     vars['--bg'] = theme.bg_color
@@ -859,6 +900,9 @@ const themeVars = computed(() => {
   }
   if (theme.border_color) {
     vars['--avatar-border'] = theme.border_color
+    vars['--section-border'] = theme.border_color
+  } else {
+    vars['--section-border'] = `rgba(${hexToRgb(primary)}, 0.2)`
   }
   return vars
 })
@@ -907,16 +951,27 @@ function scrollToEditor() {
 }
 
 async function addBlock(type: SectionType) {
-  const newSectionId = await store.addSection(type)
+  // Lock Hero and AI Chat: only one allowed per portfolio
+  if (type === 'hero' || type === 'ai_chat') {
+    const exists = store.sections.some(s => s.type === type);
+    if (exists) {
+      toastError(`สามารถเพิ่มส่วน ${type === 'hero' ? 'Hero' : 'AI Chat'} ได้เพียงอันเดียวต่อพอร์ตโฟลิโอ`);
+      return;
+    }
+  }
+
+  const newSectionId = await store.addSection(type, selectedSectionId.value)
   if (!newSectionId) return
 
-  // Auto-scroll to bottom
-  await nextTick()
-  if (canvasRef.value) {
-    canvasRef.value.scrollTo({
-      top: canvasRef.value.scrollHeight,
-      behavior: 'smooth'
-    })
+  // Auto-scroll to bottom only if no section was selected (appending to end)
+  if (!selectedSectionId.value) {
+    await nextTick()
+    if (canvasRef.value) {
+      canvasRef.value.scrollTo({
+        top: canvasRef.value.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
   }
 
   // Highlight effect
@@ -989,6 +1044,15 @@ function moveSection(id: string, direction: 'up' | 'down') {
   const swapIdx = direction === 'up' ? idx - 1 : idx + 1
   ;[newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]]
   store.reorderSections(newOrder)
+}
+
+function handleDuplicate(section: any) {
+  if (!section) return;
+  if (section.type === 'hero' || section.type === 'ai_chat') {
+    toastError(`สามารถมีส่วน ${section.type === 'hero' ? 'Hero' : 'AI Chat'} ได้เพียงอันเดียวต่อพอร์ตโฟลิโอ`);
+    return;
+  }
+  store.duplicateSection(section.id);
 }
 
 async function aiScoreResume() {
@@ -1599,6 +1663,7 @@ function escHtml(str: string): string {
   padding: 32px 16px;
   padding-bottom: 10px; /* Reduced from 500px for better balance */
   background: var(--bg) fixed;
+  font-family: var(--font-body) !important;
 }
 
 .canvas-content-limiter {
@@ -1671,12 +1736,199 @@ function escHtml(str: string): string {
 .tpl-firstjobber.sections-grid {
   gap: 20px !important;
 }
+/* Redundant rules removed — now handled by template-styles.css */
+
+@media (max-width: 768px) {
+  .sections-grid.tpl-business {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    background: transparent !important;
+  }
+  
+  .sections-grid.tpl-business > .section-wrapper.is-row-start:not(.span-full),
+  .sections-grid.tpl-business > .section-wrapper.is-right:not(.span-full) {
+    width: 100% !important;
+  }
+
+  .sections-grid.tpl-business > .section-wrapper.span-full {
+    background: var(--bg) !important; /* Stacked, no need for horizontal gradient */
+  }
+
+  .sections-grid.tpl-business > .section-wrapper.span-full :deep(.pub-section) {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 24px 16px !important;
+  }
+
+  /* Reset layout-split on mobile */
+  .sections-grid.tpl-business > .section-wrapper :deep(.pub-section.layout-split) {
+    flex-direction: column !important;
+  }
+  .sections-grid.tpl-business > .section-wrapper :deep(.pub-section.layout-split .section-header-wrapper) {
+    max-width: 100% !important;
+    margin-bottom: 20px !important;
+  }
+}
+
+/* Business Builder: style cards */
+.tpl-business.sections-grid > .section-wrapper {
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+.tpl-business.sections-grid > .section-wrapper :deep(.section-block) {
+  border-radius: 12px !important;
+}
+.tpl-business.sections-grid > .section-wrapper :deep(.section-preview) {
+  border-radius: 0 0 12px 12px !important;
+}
+
+/* Business Builder: make section-block transparent in sidebar area to show wrapper bg */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.section-block),
+.tpl-business.sections-grid > .section-wrapper.span-full :deep(.section-block) {
+  background: transparent !important;
+}
+
+/* 
+   REMOVED: Portfolio theme dependent section-header styling. 
+   SectionBlock now manages its own stable editor chrome colors.
+*/
+
+
+/* Business Builder: span-full → content in right 70% */
+.tpl-business.sections-grid > .section-wrapper.span-full :deep(.pub-section) {
+  margin-left: 30% !important;
+  width: 70% !important;
+  padding: 40px 40px 40px 40px !important;
+  background: transparent !important;
+}
+
+/* Business Builder: is-row-start → white title */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.layered-title) {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* Business Builder: is-right → primary title */
+.tpl-business.sections-grid > .section-wrapper.is-right:not(.span-full) :deep(.layered-title) {
+  color: var(--primary) !important;
+  -webkit-text-fill-color: var(--primary) !important;
+}
+
+/* Business Builder: sidebar contact color */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.contact-val),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.contact-label),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.custom-content) {
+  color: #000 !important;
+}
+
+/* Business Builder: force all content to full width */
+.tpl-business.sections-grid > .section-wrapper :deep(.pub-section-content),
+.tpl-business.sections-grid > .section-wrapper :deep(.experience-list),
+.tpl-business.sections-grid > .section-wrapper :deep(.contact-grid),
+.tpl-business.sections-grid > .section-wrapper :deep(.skills-groups),
+.tpl-business.sections-grid > .section-wrapper :deep(.skills-grid),
+.tpl-business.sections-grid > .section-wrapper :deep(.proj-grid),
+.tpl-business.sections-grid > .section-wrapper :deep(.education-list),
+.tpl-business.sections-grid > .section-wrapper :deep(.custom-content) {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+/* Business Builder: 30% column - skills single column for bars */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.skills-grid:not(.grid-tags)) {
+  grid-template-columns: 1fr !important;
+}
+
+/* Business Builder: 30% column - tags flex wrap */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.grid-tags) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.skill-tag) {
+  width: auto !important;
+  flex: none !important;
+}
+
+/* Business Builder: 30% column - skills-groups single column */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.skills-groups) {
+  grid-template-columns: 1fr !important;
+}
+
+/* Business Builder: 30% column - pub-section padding */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.pub-section) {
+  padding: 24px 16px !important;
+  overflow: hidden !important;
+}
+
+/* Business Builder: 30% column - experience single column & centered */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.experience-item) {
+  grid-template-columns: 1fr !important;
+  gap: 4px !important;
+  text-align: center !important;
+}
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.tl-header) {
+  align-items: center !important;
+}
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.timeline-content) {
+  text-align: center !important;
+}
+
+/* Business Builder: 30% column - white text for contrast */
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.tl-position),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.tl-company),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.tl-desc),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.tl-date),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.group-title),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.stat-label),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.contact-label),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.contact-value),
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.custom-content) {
+  color: rgba(255,255,255,0.85) !important;
+}
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.skill-tag) {
+  border-color: rgba(255,255,255,0.3) !important;
+  background: rgba(255,255,255,0.1) !important;
+  color: #fff !important;
+}
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.contact-card) {
+  border-color: rgba(255,255,255,0.2) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+.tpl-business.sections-grid > .section-wrapper.is-row-start:not(.span-full) :deep(.contact-icon) {
+  color: #fff !important;
+}
+
+/* Business Builder: layout-split inside sections */
+.tpl-business.sections-grid > .section-wrapper :deep(.pub-section.layout-split) {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px !important;
+  align-items: flex-start !important;
+}
+.tpl-business.sections-grid > .section-wrapper :deep(.pub-section.layout-split .section-header-wrapper) {
+  flex: 0 0 auto !important;
+  max-width: 30% !important;
+}
+.tpl-business.sections-grid > .section-wrapper :deep(.pub-section.layout-split .pub-section-content) {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
 .section-wrapper.span-full {
   grid-column: 1 / -1;
   width: 100%;
 }
 .section-wrapper.span-half {
   grid-column: span 1;
+}
+.tpl-business.sections-grid > .section-wrapper.span-half {
+  overflow: hidden !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 
 /* Animations */
@@ -1843,6 +2095,58 @@ function escHtml(str: string): string {
 .section-editor {
   margin-bottom: 3px;
   position: relative;
+}
+
+.section-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.toolbar-group {
+  display: flex;
+  gap: 4px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.toolbar-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: rgba(var(--primary-glow), 0.1);
+  color: var(--primary);
+}
+
+.toolbar-btn.btn-danger-soft {
+  color: #ef4444;
+}
+
+.toolbar-btn.btn-danger-soft:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 /* ─── AI Improve Preview ────────────────────────── */
@@ -2143,6 +2447,10 @@ function escHtml(str: string): string {
 :global(.theme-dark) .editor-divider {
   background: rgba(255, 255, 255, 0.08);
 }
+/* Dark */
+:global(.theme-dark) .editor-divider {
+  background: rgba(255, 255, 255, 0.08);
+}
 
 /* Light */
 :global(.theme-light) .editor-divider {
@@ -2414,9 +2722,42 @@ input:checked + .slider:before {
     padding-bottom: 80px; /* space for bottom nav */
   }
 
-  .sections-grid {
+  .sections-grid,
+  .sections-grid.tpl-business {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
+    gap: 12px !important;
+  }
+
+  .section-wrapper.span-half,
+  .sections-grid.tpl-business .section-wrapper.span-half,
+  .sections-grid.tpl-business .section-wrapper.span-full {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+
+  /* SectionBlock mobile header compacting */
+  :deep(.section-header) {
+    padding: 6px 10px !important;
+  }
+  :deep(.section-actions) {
+    gap: 4px !important;
+  }
+  :deep(.icon-btn) {
+    padding: 4px !important;
+  }
+  
+  /* Reset span-full sidebar area on mobile */
+  .sections-grid.tpl-business > .section-wrapper.span-full :deep(.pub-section) {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 20px 12px !important;
+  }
+  .sections-grid.tpl-business > .section-wrapper.span-full :deep(.section-header-wrapper) {
+    text-align: center !important;
+    padding-left: 0 !important;
+  }
+  .sections-grid.tpl-business > .section-wrapper.span-full :deep(.pub-section-content) {
+    padding-left: 0 !important;
   }
 
   /* Mobile Backdrop */
@@ -2551,4 +2892,70 @@ input:checked + .slider:before {
 .mob-nav-btn:disabled {
   opacity: 0.3;
 }
+
+/* ── Business Hero: ล้าง builder chrome ให้ hero เต็มความกว้าง ── */
+.tpl-business.sections-grid > .section-wrapper.span-full :deep(.section-block) {
+    border-radius: 0 !important;
+    border: none !important;
+    overflow: visible !important;
+}
+
+/* Hero section-block ไม่มี border/radius */
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.section-block),
+.tpl-business.sections-grid > .section-wrapper .type-hero {
+    border-radius: 0 !important;
+    border: 1px solid var(--border) !important;
+    overflow: hidden !important;
+}
+
+/* Hero preview เต็ม width ไม่มี padding */
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.section-preview) {
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.section-preview-inner) {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+/* pub-hero-inner ต้องเต็ม width ใน builder ด้วย */
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.pub-hero-inner) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 380px;
+}
+
+/* hero-avatar-wrap ใน builder: fixed 30% */
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.hero-avatar-wrap) {
+    width: 30% !important;
+    min-width: 30% !important;
+    flex-shrink: 0 !important;
+    min-height: 380px !important;
+}
+
+/* hero-text ใน builder: 70% */
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.hero-text) {
+    width: 70% !important;
+    flex: 1 !important;
+    min-height: 380px !important;
+    padding: 48px 40px !important;
+}
+
+/* avatar image ย่อลงนิดนึงใน builder view */
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.hero-img),
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.hero-avatar-fallback) {
+    width: 140px !important;
+    height: 140px !important;
+    font-size: 48px !important;
+}
+
+/* hero-name ย่อลงใน builder */
+.tpl-business.sections-grid > .section-wrapper .type-hero :deep(.hero-name) {
+    font-size: 28px !important;
+}
+
 </style>
