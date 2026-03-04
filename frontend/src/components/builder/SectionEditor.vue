@@ -860,6 +860,23 @@ watch(
   }
 );
 
+// SYNC: Watch for external changes to section data (e.g. from BuilderView quick-pickers)
+// This prevents the editor from overwriting new data with stale local state
+watch(
+  () => props.section.data,
+  (newData) => {
+    if (!newData) return;
+    
+    // Only update fields that are actually different to avoid input cursor jumps
+    Object.keys(newData).forEach(key => {
+      if (JSON.stringify(newData[key]) !== JSON.stringify((form as any)[key])) {
+        (form as any)[key] = JSON.parse(JSON.stringify(newData[key]));
+      }
+    });
+  },
+  { deep: true }
+);
+
 // Skills helpers
 function addSkill() {
   if (!form.items) form.items = [];

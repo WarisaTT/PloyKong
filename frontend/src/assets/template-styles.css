@@ -1371,6 +1371,7 @@
     --tpl-border: var(--border, rgba(0, 0, 0, 0.08));
     font-family: 'Sarabun', sans-serif !important;
     background: var(--tpl-bg) !important;
+    background: linear-gradient(to right, var(--primary) 30%, var(--tpl-bg) 30%) !important;
     min-height: 100vh;
 }
 
@@ -1426,7 +1427,7 @@ body.theme-light .tpl-business .layered-title,
     margin: 0 !important;
     padding: 0 !important;
     max-width: 100% !important;
-    background: transparent !important;
+    background: transparent;
 }
 
 .tpl-business .sections-grid {
@@ -1438,7 +1439,7 @@ body.theme-light .tpl-business .layered-title,
     padding: 0 !important;
     margin: 0 !important;
     align-items: stretch !important;
-    background: transparent !important;
+    background: linear-gradient(to right, var(--primary) 3fr, transparent 3fr) !important;
 }
 
 /* ── Step 3: Section Wrappers ──────────────────────────────── */
@@ -1524,11 +1525,19 @@ body.theme-light .tpl-business .layered-title,
 .tpl-business .section-wrapper.span-full .pub-section {
     flex-direction: column !important;
     margin-left: 30% !important;
-    padding: 48px 40px !important;
-    background: var(--tpl-bg) !important;
+    padding: 64px 64px !important;
+    background: var(--item-bg, var(--tpl-bg));
     color: var(--tpl-text) !important;
     position: relative;
     z-index: 1;
+    min-height: 100px;
+}
+
+/* Ensure inner content takes full width in span-full */
+.tpl-business .section-wrapper.span-full .pub-section-content {
+    width: 100% !important;
+    max-width: 1000px !important;
+    margin: 0 auto !important;
 }
 
 .tpl-business .experience-list,
@@ -1550,10 +1559,9 @@ body.theme-light .tpl-business .layered-title,
     background-clip: unset !important;
     color: var(--text) !important;
     -webkit-text-fill-color: var(--text) !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 3px !important;
     width: 100% !important;
     position: relative;
-    padding-bottom: 8px;
     border-bottom: 1px solid var(--tpl-border);
 }
 
@@ -1657,7 +1665,7 @@ body.theme-light .tpl-business .layered-title,
 }
 
 .tpl-business .hero-role-badge {
-    background: var(--tpl-bg) !important;
+    background: transparent !important;
     border: 3px solid var(--tpl-border) !important;
     color: var(--tpl-muted) !important;
     border-radius: 3px !important;
@@ -1700,7 +1708,7 @@ body.theme-light .tpl-business .layered-title,
     background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
     box-shadow: none !important;
     border: none !important;
-    color: black !important;
+    color: #fff !important;
 }
 
 /* ── Step 8: Desktop Sidebar (≥769px) ─────────────────────── */
@@ -1750,9 +1758,50 @@ body.theme-light .tpl-business .layered-title,
         border-bottom-color: var(--tpl-border) !important;
     }
 
-    .tpl-business .is-row-start .section-wrapper.span-half .skills-groups {
+    /* Formal Sidebar Skills Style */
+    .tpl-business .is-row-start .skills-groups {
         grid-template-columns: 1fr !important;
-        gap: 20px !important;
+        gap: 32px !important;
+    }
+
+    .tpl-business .is-row-start .group-title {
+        font-family: var(--font-display) !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        color: var(--primary) !important;
+        border-left: 2px solid var(--primary) !important;
+        padding-left: 10px !important;
+        margin-bottom: 20px !important;
+        letter-spacing: 1.5px !important;
+    }
+
+    .tpl-business .is-row-start .skills-grid.grid-tags {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .tpl-business .is-row-start .skill-tag {
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 1px solid var(--tpl-border) !important;
+        border-radius: 0 !important;
+        padding: 4px 0 8px 0 !important;
+        color: var(--tpl-text) !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .tpl-business .is-row-start .skill-tag::after {
+        content: '\2022';
+        /* Bullet point indicator */
+        color: var(--primary);
+        font-size: 10px;
+        opacity: 0.5;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .stat-box {
@@ -1760,13 +1809,48 @@ body.theme-light .tpl-business .layered-title,
         background: var(--tpl-surface) !important;
     }
 
-    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-card {
-        border-color: var(--tpl-border) !important;
-        background: var(--tpl-surface) !important;
+    /* Formal Sidebar Contact Style */
+    .tpl-business .is-row-start .contact-card {
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 1px solid var(--tpl-border) !important;
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+        padding: 16px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 16px !important;
     }
 
-    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-icon {
-        color: var(--primary) !important;
+    .tpl-business .is-row-start .contact-card:last-child {
+        border-bottom: none !important;
+    }
+
+    .tpl-business .is-row-start .contact-icon {
+        width: 32px !important;
+        height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
+    }
+
+    .tpl-business .is-row-start .contact-label {
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        letter-spacing: 1.5px !important;
+        text-transform: uppercase !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        margin-bottom: 2px !important;
+    }
+
+    .tpl-business .is-row-start .contact-val {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .proj-tag {
@@ -1774,21 +1858,53 @@ body.theme-light .tpl-business .layered-title,
         color: var(--tpl-muted) !important;
     }
 
-    /* Sidebar experience: compact list */
-    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item {
+    /* Sidebar experience & education: compact list */
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .education-item {
         grid-template-columns: 1fr !important;
-        gap: 12px !important;
-        padding: 24px 0 !important;
+        gap: 8px !important;
+        padding: 20px 0 !important;
         border-bottom: 1px solid var(--tpl-border) !important;
+        transition: padding-left 0.3s ease !important;
     }
 
-    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item.has-timeline {
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item:hover,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .education-item:hover {
+        padding-left: 8px !important;
+        border-left: 2px solid var(--primary) !important;
+        background: transparent !important;
+    }
+
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item.has-timeline,
+    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .education-item.has-timeline {
         padding-left: 0 !important;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .timeline-dot,
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .timeline-line {
         display: none !important;
+    }
+
+    /* Sidebar specific text hierarchy */
+    .tpl-business .is-row-start .education-item .tl-position {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: var(--primary) !important;
+        margin-bottom: 2px !important;
+    }
+
+    .tpl-business .is-row-start .education-item .tl-company {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: var(--tpl-text) !important;
+        opacity: 0.9 !important;
+    }
+
+    .tpl-business .is-row-start .education-item .tl-date {
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        color: var(--tpl-muted) !important;
+        opacity: 0.7 !important;
     }
 }
 
@@ -1910,19 +2026,38 @@ body.theme-light .tpl-business .layered-title,
     border: none !important;
     border-bottom: 1px solid var(--tpl-border) !important;
     border-radius: 0 !important;
-    padding: 24px 0 !important;
+    padding: 48px 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     display: grid !important;
-    grid-template-columns: 400px 1fr !important;
-    gap: 56px !important;
+    grid-template-columns: 1fr 480px !important;
+    /* Image on the right, content on the left */
+    gap: 64px !important;
+    align-items: center !important;
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+.tpl-business .proj-card .proj-img {
+    order: 2 !important;
+    /* Move image to second column */
+}
+
+.tpl-business .proj-card .proj-body {
+    order: 1 !important;
+    /* Move body to first column */
 }
 
 .tpl-business .is-row-start .proj-card {
     grid-template-columns: 1fr !important;
     gap: 24px !important;
     padding: 32px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.tpl-business .is-row-start .proj-card .proj-img {
+    order: 1 !important;
+    /* Image on top for sidebar */
 }
 
 .tpl-business .proj-card:hover {
@@ -1943,10 +2078,13 @@ body.theme-light .tpl-business .layered-title,
 
 .tpl-business .proj-img {
     width: 100% !important;
-    aspect-ratio: 16/10 !important;
+    aspect-ratio: 16/9 !important;
     height: auto !important;
     object-fit: cover !important;
-    transition: transform 0.6s ease !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.6s ease !important;
+    border: 1px solid var(--tpl-border) !important;
 }
 
 .tpl-business .proj-card:hover .proj-img {
@@ -2011,7 +2149,8 @@ body.theme-light .tpl-business .layered-title,
 }
 
 /* ── Step 12: Experience ───────────────────────────────────── */
-.tpl-business .experience-item {
+.tpl-business .experience-item,
+.tpl-business .education-item {
     padding: 32px 0 !important;
     border-bottom: 1px solid var(--tpl-border) !important;
     display: block !important;
@@ -2019,15 +2158,18 @@ body.theme-light .tpl-business .layered-title,
     transition: background 0.3s ease;
 }
 
-.tpl-business .experience-item:hover {
+.tpl-business .experience-item:hover,
+.tpl-business .education-item:hover {
     background: color-mix(in srgb, var(--tpl-text) 2%, transparent) !important;
 }
 
-.tpl-business .experience-item.has-timeline {
+.tpl-business .experience-item.has-timeline,
+.tpl-business .education-item.has-timeline {
     padding-left: 0 !important;
 }
 
-.tpl-business .experience-item:last-child {
+.tpl-business .experience-item:last-child,
+.tpl-business .education-item:last-child {
     border-bottom: none !important;
 }
 
@@ -2145,18 +2287,7 @@ body.theme-light .tpl-business .layered-title,
     color: var(--tpl-text) !important;
 }
 
-.tpl-business .is-row-start .contact-card {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
-}
-
-.tpl-business .is-row-start .contact-label {
-    color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.tpl-business .is-row-start .contact-val {
-    color: var(--tpl-bg) !important;
-}
+/* (Redundant definition removed) */
 
 /* ── Step 14: Content widths ───────────────────────────────── */
 .tpl-business .pub-section-content,
