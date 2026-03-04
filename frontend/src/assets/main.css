@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Anuphan:wght@200;300;400;500;600;700&family=Kanit:wght@700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Anuphan:wght@200;300;400;500;600;700&family=Kanit:wght@700;800;900&family=Sarabun:wght@300;400;500;600;700;800&display=swap");
 
 @import "tailwindcss/base";
 @import "tailwindcss/components";
@@ -32,22 +32,22 @@ body.theme-dark,
   --neon-cyan: #22d3ee;
   --neon-purple: #c084fc;
 
-  --text: #e2e8f0 !important;
-  --text-2: #8B92B4;
-  --text-3: #4F567A;
-  --muted: #94a3b8;
+  --text: #F8FAFC;
+  --text-2: #CBD5E1;
+  --text-3: #94A3B8;
+  --muted: #94A3B8;
 
-  --accent: #7C6FE0;
-  --accent-2: #9D8CF5;
-  --accent-subtle: rgba(124, 111, 224, 0.12);
-  --accent-glow: rgba(124, 111, 224, 0.25);
+  --accent: #818CF8;
+  --accent-2: #A5B4FC;
+  --accent-subtle: rgba(129, 140, 248, 0.12);
+  --accent-glow: rgba(129, 140, 248, 0.25);
 
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
 
-  --font-display: "Sarabun", "Prompt", "Kanit", sans-serif;
-  --font-body: "Sarabun", "Prompt", "Anuphan", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Sarabun", "Inter", sans-serif;
+  --font-body: "Inter", "Sarabun", "Plus Jakarta Sans", sans-serif;
 
   --radius: 12px;
   --radius-lg: 20px;
@@ -99,21 +99,21 @@ body.theme-dark,
 
 /* ── LIGHT MODE (default, ไม่มี .theme-dark) ──────────────── */
 .tpl-business {
-  --bg: #F4F5FA;
+  --bg: #F8FAFC;
   --surface: #FFFFFF;
-  --text: #1A1D2E;
-  --muted: #6B7280;
-  --border: rgba(0, 0, 0, 0.08);
+  --text: #0F172A;
+  --muted: #475569;
+  --border: rgba(15, 23, 42, 0.08);
 }
 
 /* ── DARK MODE (.theme-dark บน wrapper/ancestor) ──────────── */
 .theme-dark .tpl-business,
 .theme-dark.tpl-business {
-  --bg: #0B0C17;
-  --surface: #0F1120;
-  --text: #EEF0FF;
-  --muted: #7B83B4;
-  --border: rgba(255, 255, 255, 0.07);
+  --bg: #030712;
+  --surface: #0F172A;
+  --text: #F8FAFC;
+  --muted: #94A3B8;
+  --border: rgba(255, 255, 255, 0.1);
 }
 
 /* ───────────────────────────────────────────────────────────── */
@@ -141,15 +141,15 @@ body.theme-light,
   --pink: #db2777;
   --cyan: #0891b2;
 
-  --text: #000000;
-  --text-2: #4A4D6E;
-  --text-3: #8486A8;
-  --muted: #6b7280;
+  --text: #0F172A;
+  --text-2: #334155;
+  --text-3: #64748B;
+  --muted: #64748B;
 
-  --accent: #6355CC;
-  --accent-2: #7B6FE0;
-  --accent-subtle: rgba(99, 85, 204, 0.1);
-  --accent-glow: rgba(99, 85, 204, 0.18);
+  --accent: #4F46E5;
+  --accent-2: #6366F1;
+  --accent-subtle: rgba(79, 70, 229, 0.08);
+  --accent-glow: rgba(79, 70, 229, 0.15);
 
   --success: #059669;
   --warning: #d97706;
@@ -188,7 +188,7 @@ body.theme-light,
     --pink: #db2777;
     --cyan: #0891b2;
 
-    --text: #1e1b4b;
+    --text: #000000;
     --muted: #6b7280;
 
     --success: #059669;
@@ -220,7 +220,7 @@ body.theme-light,
     --pink: #ec4899;
     --cyan: #06b6d4;
 
-    --text: #e2e8f0;
+    --text: #ffffff;
     --muted: #94a3b8;
 
     --success: #10b981;

@@ -84,8 +84,8 @@
         </div>
       </div>
 
-      <!-- Section BG Color (firstjobber only) -->
-      <div v-if="template === 'firstjobber'" class="editor-field" style="margin-top: 10px">
+      <!-- Section BG Color (all templates) -->
+      <div class="editor-field" style="margin-top: 10px">
         <label class="form-label">Section Background Color</label>
         <div style="display: flex; align-items: center; gap: 8px">
           <input

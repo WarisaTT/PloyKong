@@ -251,23 +251,35 @@ const themeVars = computed(() => {
     "--primary-glow": `${primary}${glowHex}`,
     "--secondary": secondary ? secondary : `${primary}${glowHex}`,
     "--font-display": `"${font}", sans-serif`,
-    "--font-body": `"${font}", sans-serif`,
-    "--text": isLight ? "#0f172a" : "#ffffff",
-    "--muted": isLight ? "#64748b" : "#94a3b8",
-    "--surface": isLight ? "#ffffff" : "#111827",
-    "--border": isLight ? "#e2e8f0" : "#1f2937",
+    "--font-body": `"${font}", sans-serif`
   };
+
+  // Explicitly set text colors for portfolio isolation
+  // Use system preference if mode is 'system'
+  const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const mode = portfolio.value?.theme?.mode || "system";
+  const effectiveMode = (mode as any) === "system" ? (isSystemDark ? "dark" : "light") : mode;
+
+  if (effectiveMode === "light") {
+    vars["--text"] = "#000000";
+    vars["--muted"] = "#6b7280";
+  } else {
+    vars["--text"] = "#ffffff";
+    vars["--muted"] = "#94a3b8";
+  }
+  
   const bg = portfolio.value?.theme?.bg_color;
   const border = portfolio.value?.theme?.border_color;
+  
   if (bg) {
-    vars["--bg"] = bg;
+    vars["--theme-bg"] = bg;
     vars["--bg-rgb"] = hexToRgb(bg);
-  } else {
-    // Correct fallback based on mode
-    vars["--bg-rgb"] = isLight ? "250, 247, 255" : "5, 8, 20";
-    vars["--bg"] = isLight ? "#faf7ff" : "#050814";
   }
-  if (border && border !== "#000000") vars["--avatar-border"] = border;
+
+  if (border && border !== "#000000") {
+    vars["--avatar-border"] = border;
+  }
+
   return vars;
 });
 
@@ -434,7 +446,7 @@ onMounted(() => loadPortfolio());
   min-height: 100vh;
   position: relative;
   color: var(--text);
-  background: var(--bg) fixed !important; /* Fixed background for premium feel */
+  background: var(--theme-bg, var(--bg)) fixed !important; /* Fixed background for premium feel */
   overflow-x: hidden;
   width: 100%;
 }
@@ -575,7 +587,6 @@ onMounted(() => loadPortfolio());
   gap: 0 !important;
   max-width: 100% !important;
   padding-bottom: 0 !important;
-  background-color: var(--bg);
 }
 @media (max-width: 768px) {
   .tpl-business .sections-grid {
@@ -847,7 +858,6 @@ onMounted(() => loadPortfolio());
   .chat-input-row {
     padding: 10px;
     gap: 8px;
-    background: rgba(var(--bg-rgb), 0.5); /* Semi-transparent background for input row */
   }
   .chat-input-row .form-input {
     flex: 1;

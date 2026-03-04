@@ -1,5 +1,5 @@
 <template>
-  <div class="contact-preview">
+  <div class="contact-preview" :class="'layout-' + (data.layout || 'centered')" :style="data.section_bg_color ? { background: data.section_bg_color + ' !important' } : {}">
     <div v-if="data.email" class="contact-row">
       <Mail :size="16" class="icon-inline" /> {{ data.email }}
     </div>

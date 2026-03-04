@@ -1,6 +1,6 @@
 <!-- PublicHero.vue - renders the hero section on the public portfolio page -->
 <template>
-  <section class="pub-hero" :class="'layout-' + (data.layout || 'centered')">
+  <section class="pub-hero" :class="'layout-' + (data.layout || 'centered')" :style="data.section_bg_color ? { background: data.section_bg_color + ' !important' } : {}">
     <div class="pub-hero-inner">
     <img v-if="data.image_url" :src="data.image_url" class="universal-section-img" alt="Cover" />
     <div class="hero-avatar-wrap">

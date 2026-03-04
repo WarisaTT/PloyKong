@@ -114,6 +114,7 @@
         'left-collapsed': isLeftCollapsed,
         'right-collapsed': isRightCollapsed,
       }"
+      :style="dashboardThemeVars"
     >
       <!-- Left: Block Palette -->
       <aside 
@@ -172,8 +173,8 @@
           <ChevronRight v-else :size="16" />
         </button>
 
-        <main class="builder-canvas" ref="canvasRef">
-          <div class="canvas-content-limiter" :class="[templateClass, themeClass]" :style="{ 'background-color': 'transparent !important', border: 'none !important' }">
+        <main class="builder-canvas" ref="canvasRef" :style="portfolioThemeVars">
+          <div class="canvas-content-limiter" :class="[templateClass, themeClass]" :style="{ 'background-color': 'transparent !important', border: 'none !important', ...portfolioThemeVars }">
           <!-- Canvas Loading and Empty states -->
           <div v-if="store.loading" class="canvas-loading">...</div>
           <div v-else-if="store.sections.length === 0" class="canvas-empty">...</div>
@@ -191,7 +192,7 @@
               :key="section.id"
               :data-id="section.id"
               class="section-wrapper drag-item"
-              :style="themeVars"
+              :style="dashboardThemeVars"
               :class="{ 
                 'span-half': section.column_span === 'half', 
                 'span-full': section.column_span !== 'half', 
@@ -518,7 +519,7 @@
           </div>
 
           <!-- Column Divider Toggle: Only show for half-width sections -->
-          <div v-if="selectedSection.column_span === 'half' && theme.template !== 'firstjobber'" class="props-section" style="background: rgba(var(--primary-glow), 0.05); padding: 12px; border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 20px;">
+          <div v-if="selectedSection.column_span === 'half' && theme.template !== 'firstjobber'" class="props-section" style="background: color-mix(in srgb, var(--primary) 5%, transparent); padding: 12px; border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 20px;">
             <label class="toggle-row" style="cursor: pointer;">
               <span class="props-label" style="margin: 0; font-size: 11px;">
                 <LayoutGrid :size="12" class="icon-inline" /> Show Vertical Divider
@@ -543,13 +544,45 @@
             @update="handleSectionUpdate"
             @magic-fill="aiMagicFill"
           />
+
+          <!-- Quick access BG color for section -->
+          <div v-if="selectedSection" class="props-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--border);">
+            <div class="props-label" style="display: flex; justify-content: space-between;">
+              <span>Section Background Color</span>
+              <span style="opacity: 0.5; font-size: 10px;">(BG)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <input
+                type="color"
+                class="form-input"
+                style="width: 44px; height: 36px; padding: 2px; cursor: pointer"
+                :value="selectedSection.data?.section_bg_color || ''"
+                @input="handleSectionBGUpdate(($event.target as HTMLInputElement).value)"
+              />
+              <input
+                type="text"
+                class="form-input"
+                style="flex: 1; font-size: 12px"
+                placeholder="Default (Inherit)"
+                :value="selectedSection.data?.section_bg_color || ''"
+                @input="handleSectionBGUpdate(($event.target as HTMLInputElement).value)"
+              />
+              <button 
+                v-if="selectedSection.data?.section_bg_color"
+                class="btn btn-secondary btn-sm"
+                @click="handleSectionBGUpdate('')"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
     </div>
 
     <!-- ─── Mobile Bottom Navigation Bar ─── -->
-    <nav class="mobile-bottom-nav">
+    <nav v-if="store.activePortfolio" class="mobile-bottom-nav">
       <button 
         class="mob-nav-btn" 
         :class="{ active: !isLeftCollapsed }"
@@ -873,7 +906,24 @@ const templateClass = computed(() => {
   return `tpl-${theme.template || 'classic'}`
 })
 
-const themeVars = computed(() => {
+const dashboardThemeVars = computed(() => {
+  const primary = theme.primary_color || '#4F46E5'
+  const secondary = theme.secondary_color || ''
+  const isLight = theme.mode === 'light'
+  const glowHex = isLight ? '25' : '40'
+  return {
+    '--primary': primary,
+    '--primary-glow': `${primary}${glowHex}`,
+    '--secondary': secondary ? secondary : `${primary}${glowHex}`
+  }
+})
+
+const isSystemDark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches)
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  isSystemDark.value = e.matches
+})
+
+const portfolioThemeVars = computed(() => {
   const primary = theme.primary_color || '#4F46E5'
   const secondary = theme.secondary_color || ''
   const font = theme.font || 'Prompt'
@@ -881,31 +931,39 @@ const themeVars = computed(() => {
   const glowHex = isLight ? '25' : '40'
   const vars: Record<string, string> = {
     '--primary': primary,
-    '--primary-glow': hexToRgb(primary),
-    '--secondary': secondary ? secondary : primary,
+    '--primary-glow': `${primary}${glowHex}`,
+    '--secondary': secondary ? secondary : `${primary}${glowHex}`,
     '--font-display': `"${font}", sans-serif`,
     '--font-body': `"${font}", sans-serif`,
-    '--text': isLight ? '#0f172a' : '#ffffff',
-    '--muted': isLight ? '#64748b' : '#94a3b8',
-    '--surface': isLight ? '#ffffff' : '#111827',
-    '--border': isLight ? '#e2e8f0' : '#1f2937'
-    
   }
-  if (theme.bg_color) {
-    vars['--bg'] = theme.bg_color
-    vars['--bg-rgb'] = hexToRgb(theme.bg_color)
+
+  // Explicitly set text colors for portfolio workspace only
+  // This ensures the portfolio maintains its own theme (Light/Dark/System) 
+  // independently of the Dashboard's global background.
+  const effectiveMode = (theme.mode as any) === 'system' ? (isSystemDark.value ? 'dark' : 'light') : theme.mode
+
+  if (effectiveMode === 'light') {
+    vars['--text'] = '#000000'
+    vars['--muted'] = '#6b7280'
   } else {
-    vars['--bg'] = isLight ? '#faf7ff' : '#050814'
-    vars['--bg-rgb'] = isLight ? '250, 247, 255' : '5, 8, 20'
+    vars['--text'] = '#ffffff'
+    vars['--muted'] = '#94a3b8'
   }
+  
+  // Custom theme background
+  if (theme.bg_color) {
+    vars['--theme-bg'] = theme.bg_color
+    vars['--bg-rgb'] = hexToRgb(theme.bg_color)
+  }
+
   if (theme.border_color) {
     vars['--avatar-border'] = theme.border_color
-    vars['--section-border'] = theme.border_color
-  } else {
-    vars['--section-border'] = `rgba(${hexToRgb(primary)}, 0.2)`
   }
+
   return vars
 })
+
+const themeVars = dashboardThemeVars // Keep for compatibility if needed elsewhere
 
 function selectSection(id: string) {
   const isNewSelection = selectedSectionId.value !== id;
@@ -1028,6 +1086,12 @@ function handleSectionUpdate(data: any) {
   if (sec) sec.data = JSON.parse(JSON.stringify(data))
 
   debouncedSave(selectedSectionId.value, data)
+}
+
+function handleSectionBGUpdate(color: string) {
+  if (!selectedSection.value) return;
+  const newData = { ...selectedSection.value.data, section_bg_color: color };
+  handleSectionUpdate(newData);
 }
 
 function deleteSection(id: string) {
@@ -1661,9 +1725,13 @@ function escHtml(str: string): string {
   position: relative;
   overflow-y: auto;
   padding: 32px 16px;
-  padding-bottom: 10px; /* Reduced from 500px for better balance */
-  background: var(--bg) fixed;
+  padding-bottom: 10px;
+  background: var(--canvas-bg, #f1f5f9);
   font-family: var(--font-body) !important;
+}
+
+:global(.theme-dark) .builder-canvas {
+  --canvas-bg: #0f172a;
 }
 
 .canvas-content-limiter {
@@ -1751,7 +1819,7 @@ function escHtml(str: string): string {
   }
 
   .sections-grid.tpl-business > .section-wrapper.span-full {
-    background: var(--bg) !important; /* Stacked, no need for horizontal gradient */
+    background: transparent !important; /* Stacked, no need for horizontal gradient */
   }
 
   .sections-grid.tpl-business > .section-wrapper.span-full :deep(.pub-section) {
@@ -1764,10 +1832,7 @@ function escHtml(str: string): string {
   .sections-grid.tpl-business > .section-wrapper :deep(.pub-section.layout-split) {
     flex-direction: column !important;
   }
-  .sections-grid.tpl-business > .section-wrapper :deep(.pub-section.layout-split .section-header-wrapper) {
-    max-width: 100% !important;
-    margin-bottom: 20px !important;
-  }
+
 }
 
 /* Business Builder: style cards */
@@ -1909,10 +1974,7 @@ function escHtml(str: string): string {
   gap: 16px !important;
   align-items: flex-start !important;
 }
-.tpl-business.sections-grid > .section-wrapper :deep(.pub-section.layout-split .section-header-wrapper) {
-  flex: 0 0 auto !important;
-  max-width: 30% !important;
-}
+
 .tpl-business.sections-grid > .section-wrapper :deep(.pub-section.layout-split .pub-section-content) {
   flex: 1 !important;
   min-width: 0 !important;
@@ -2136,7 +2198,7 @@ function escHtml(str: string): string {
 }
 
 .toolbar-btn:hover {
-  background: rgba(var(--primary-glow), 0.1);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
   color: var(--primary);
 }
 
@@ -2736,15 +2798,7 @@ input:checked + .slider:before {
   }
 
   /* SectionBlock mobile header compacting */
-  :deep(.section-header) {
-    padding: 6px 10px !important;
-  }
-  :deep(.section-actions) {
-    gap: 4px !important;
-  }
-  :deep(.icon-btn) {
-    padding: 4px !important;
-  }
+
   
   /* Reset span-full sidebar area on mobile */
   .sections-grid.tpl-business > .section-wrapper.span-full :deep(.pub-section) {
@@ -2752,10 +2806,7 @@ input:checked + .slider:before {
     width: 100% !important;
     padding: 20px 12px !important;
   }
-  .sections-grid.tpl-business > .section-wrapper.span-full :deep(.section-header-wrapper) {
-    text-align: center !important;
-    padding-left: 0 !important;
-  }
+
   .sections-grid.tpl-business > .section-wrapper.span-full :deep(.pub-section-content) {
     padding-left: 0 !important;
   }

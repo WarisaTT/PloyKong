@@ -98,6 +98,17 @@
 
 
 /* Ensure sections inside stretches to full height of parent grid cell */
+.span-full>section,
+.span-half>section {
+    width: 100% !important;
+}
+
+/* Global Background Handling */
+.pub-section,
+.pub-hero {
+    background-color: var(--item-bg, var(--theme-bg, var(--bg))) !important;
+}
+
 .pub-section {
     height: 100% !important;
     display: flex !important;
@@ -238,7 +249,7 @@
     padding-top: 0 !important;
     /* border-top removed - handled by wrapper */
 
-    background-color: var(--bg) !important;
+    background-color: var(--item-bg, var(--theme-bg, var(--bg))) !important;
     background-image:
         /* glow มุมขวาบน */
         radial-gradient(circle at 100% 0%,
@@ -253,7 +264,7 @@
         /* base fade */
         linear-gradient(to bottom,
             color-mix(in srgb, var(--secondary) 8%, transparent) 0%,
-            rgba(var(--bg-rgb), 0) 70%) !important;
+            color-mix(in srgb, var(--bg) 0%, transparent) 70%) !important;
 
     background-repeat: no-repeat !important;
     background-blend-mode: normal !important;
@@ -326,23 +337,23 @@
 }
 
 .tpl-programmer .hero-name {
-    font-size: 42px !important;
+    font-family: var(--font-display) !important;
+    font-size: 48px !important;
     font-weight: 800 !important;
-    letter-spacing: -1.2px !important;
-    line-height: 1.1 !important;
-    color: color-mix(in srgb, var(--primary) 85%, var(--secondary));
+    letter-spacing: -1.5px !important;
+    line-height: 1.05 !important;
+    color: var(--tpl-text, var(--text)) !important;
     background: none !important;
-    -webkit-text-fill-color: unset !important;
-    text-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.25),
-        0 0 1px rgba(0, 0, 0, 0.2);
+    -webkit-text-fill-color: var(--tpl-text, var(--text)) !important;
+    text-shadow: none !important;
 }
 
 .tpl-programmer .hero-tagline {
-    font-size: 12px !important;
+    font-family: var(--font-body) !important;
+    font-size: 14px !important;
     text-align: left !important;
-    color: var(--muted) !important;
-    -webkit-text-fill-color: var(--text) !important;
+    color: var(--tpl-muted, var(--muted)) !important;
+    -webkit-text-fill-color: var(--tpl-muted, var(--muted)) !important;
     background: none !important;
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
@@ -565,12 +576,13 @@
 .tpl-designer {
     max-width: 100% !important;
     font-family: var(--font-body) !important;
+    background-color: var(--theme-bg, var(--bg)) !important;
 }
 
 .tpl-designer .pub-hero {
     min-height: 55vh !important;
     background:
-        linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, rgba(var(--bg-rgb), 0.1) 60%) !important;
+        linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, color-mix(in srgb, var(--bg) 10%, transparent) 60%) !important;
     padding: 64px 0 48px !important;
 }
 
@@ -860,7 +872,7 @@
     text-align: left !important;
     gap: 28px !important;
 
-    background: var(--surface) !important;
+    background-color: var(--item-bg, var(--surface)) !important;
     border: 1px solid var(--border) !important;
     border-radius: 18px !important;
     padding: 32px !important;
@@ -1315,7 +1327,7 @@
 
 /* ทำให้ section card หน้าตาเหมือน hero */
 .tpl-firstjobber .pub-section {
-    background: var(--surface);
+    background-color: var(--item-bg, var(--surface)) !important;
     border: 1px solid var(--border) !important;
     border-radius: 16px !important;
     padding: 24px 28px !important;
@@ -1352,9 +1364,9 @@
 
 /* ── Step 1: Token Injection ───────────────────────────────── */
 .tpl-business {
-    --tpl-bg: var(--bg-2, #F0F0F8);
+    --tpl-bg: var(--theme-bg, var(--bg));
     --tpl-surface: var(--surface-2, #F4F4FB);
-    --tpl-text: var(--text, #1A1D2E);
+    --tpl-text: var(--text, #000000);
     --tpl-muted: var(--muted, #6B7280);
     --tpl-border: var(--border, rgba(0, 0, 0, 0.08));
     font-family: 'Sarabun', sans-serif !important;
@@ -1362,33 +1374,48 @@
     min-height: 100vh;
 }
 
-.theme-dark .tpl-business,
-body.theme-dark .tpl-business {
-    --tpl-bg: var(--bg-2, #0C0D17);
+/* Force dark tokens when .theme-dark is present on the template limiter itself */
+.tpl-business.theme-dark,
+.theme-dark>.tpl-business {
     --tpl-surface: var(--surface-2, #161827);
-    --tpl-text: var(--text, #e2e8f0);
+    --tpl-text: var(--text, #ffffff);
     --tpl-muted: var(--muted, #94a3b8);
     --tpl-border: var(--border, rgba(255, 255, 255, 0.08));
 }
 
+/* System overrides inside media queries - using higher specificity to beat dashboard body.theme-dark if needed */
 @media (prefers-color-scheme: light) {
-    .theme-system .tpl-business {
-        --tpl-bg: #F0F0F8;
-        --tpl-surface: #F4F4FB;
-        --tpl-text: #1e1b4b;
-        --tpl-muted: #6b7280;
-        --tpl-border: rgba(15, 23, 42, 0.14);
+
+    .theme-system.tpl-business,
+    .theme-system>.tpl-business {
+        --tpl-text: var(--text, #000000);
+        --tpl-muted: var(--muted, #6b7280);
     }
 }
 
 @media (prefers-color-scheme: dark) {
-    .theme-system .tpl-business {
-        --tpl-bg: #0C0D17;
-        --tpl-surface: #161827;
-        --tpl-text: #e2e8f0;
-        --tpl-muted: #94a3b8;
-        --tpl-border: rgba(255, 255, 255, 0.08);
+
+    .theme-system.tpl-business,
+    .theme-system>.tpl-business {
+        --tpl-text: var(--text, #ffffff);
+        --tpl-muted: var(--muted, #94a3b8);
     }
+}
+
+/* Light mode specific accents */
+.theme-light .tpl-business .hero-tagline,
+body.theme-light .tpl-business .hero-tagline,
+.theme-system.tpl-business .hero-tagline,
+.tpl-business.theme-light .hero-tagline {
+    color: var(--primary) !important;
+    -webkit-text-fill-color: var(--primary) !important;
+}
+
+.theme-light .tpl-business .layered-title,
+body.theme-light .tpl-business .layered-title,
+.theme-system.tpl-business .layered-title,
+.tpl-business.theme-light .layered-title {
+    border-bottom-color: var(--primary) !important;
 }
 
 /* ── Step 2: Containers ────────────────────────────────────── */
@@ -1418,7 +1445,7 @@ body.theme-dark .tpl-business {
 
 /* Default = RIGHT col */
 .tpl-business .section-wrapper {
-    background: var(--tpl-bg) !important;
+    background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
     height: 100% !important;
@@ -1427,31 +1454,27 @@ body.theme-dark .tpl-business {
     overflow: hidden !important;
 }
 
-/* LEFT col = primary */
+/* LEFT col = transparent */
 .tpl-business .section-wrapper.is-row-start:not(.span-full) {
-    background: var(--primary) !important;
-    background-color: var(--primary) !important;
-    color: var(--tpl-bg) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: var(--text) !important;
     position: relative;
     z-index: 10;
 }
 
 /* RIGHT col */
 .tpl-business .sections-grid>.section-wrapper.is-right:not(.span-full) {
-    background: var(--tpl-bg) !important;
+    background: transparent !important;
 }
 
-/* SPAN-FULL: gradient 30% primary | 70% tpl-bg */
+/* SPAN-FULL: transparent */
 .tpl-business .section-wrapper.span-full {
     grid-column: 1 / -1 !important;
     position: relative !important;
     overflow: hidden !important;
-    background: linear-gradient(to right,
-            var(--primary) 0%,
-            var(--primary) 30%,
-            var(--tpl-bg) 30%,
-            var(--tpl-bg) 100%) !important;
-    color: var(--tpl-text) !important;
+    background: transparent !important;
+    color: var(--text) !important;
 }
 
 .tpl-business .section-wrapper.span-full::before {
@@ -1525,8 +1548,8 @@ body.theme-dark .tpl-business {
     background: none !important;
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
-    color: var(--tpl-text) !important;
-    -webkit-text-fill-color: var(--tpl-text) !important;
+    color: var(--text) !important;
+    -webkit-text-fill-color: var(--text) !important;
     margin-bottom: 10px !important;
     width: 100% !important;
     position: relative;
@@ -1539,11 +1562,11 @@ body.theme-dark .tpl-business {
     display: none !important;
 }
 
-/* Sidebar title = white */
+/* Sidebar title color (Dynamic) */
 .tpl-business .is-row-start .layered-title {
     color: var(--secondary) !important;
-    -webkit-text-fill-color: var(--secondary) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+    -webkit-text-fill-color: var(--primary) !important;
+    border-bottom-color: var(--primary) !important;
 }
 
 /* ── Step 7: Hero ──────────────────────────────────────────── */
@@ -1598,8 +1621,7 @@ body.theme-dark .tpl-business {
 .tpl-business .hero-text {
     flex: 1 !important;
     width: 70% !important;
-    background: var(--tpl-bg) !important;
-    background-color: var(--tpl-bg) !important;
+    background-color: var(--item-bg, var(--theme-bg, var(--bg))) !important;
     padding: 48px 48px !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1646,18 +1668,8 @@ body.theme-dark .tpl-business {
     padding: 3px 10px !important;
 }
 
-.tpl-business .hero-name {
-    font-size: 40px !important;
-    font-weight: 900 !important;
-    letter-spacing: -1px !important;
-    background: none !important;
-    color: var(--tpl-text) !important;
-    -webkit-text-fill-color: var(--tpl-text) !important;
-    -webkit-background-clip: unset !important;
-    background-clip: unset !important;
-    text-align: left !important;
-    margin-bottom: 8px !important;
-}
+
+
 
 .tpl-business .hero-tagline {
     font-size: 13px !important;
@@ -1705,15 +1717,15 @@ body.theme-dark .tpl-business {
     /* Sidebar text = white */
     .tpl-business .is-row-start .layered-title,
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .layered-title {
-        color: var(--secondary) !important;
-        -webkit-text-fill-color: var(--secondary) !important;
+        color: var(--tpl-text) !important;
+        -webkit-text-fill-color: var(--tpl-text) !important;
+        border-bottom-color: var(--tpl-border) !important;
     }
 
     .tpl-business .is-row-start .tl-position,
     .tpl-business .is-row-start .tl-company,
     .tpl-business .is-row-start .tl-desc,
     .tpl-business .is-row-start .tl-date,
-    .tpl-business .is-row-start .group-title,
     .tpl-business .is-row-start .stat-label,
     .tpl-business .is-row-start .stat-value,
     .tpl-business .is-row-start .proj-title,
@@ -1723,44 +1735,43 @@ body.theme-dark .tpl-business {
     .tpl-business .is-row-start .skill-name,
     .tpl-business .is-row-start .custom-content,
     .tpl-business .is-row-start p {
-        color: rgba(255, 255, 255, 0.85) !important;
-        -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
+        color: var(--tpl-text) !important;
+        -webkit-text-fill-color: var(--tpl-text) !important;
     }
 
     .tpl-business .is-row-start .stat-value {
-        color: var(--tpl-bg) !important;
-        -webkit-text-fill-color: var(--tpl-bg) !important;
+        color: var(--primary) !important;
+        -webkit-text-fill-color: var(--primary) !important;
     }
 
 
     /* Sidebar cards/tags */
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .skill-tag {
-        border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+        border-bottom-color: var(--tpl-border) !important;
     }
 
-    .tpl-business .is-row-start .skills-groups {
+    .tpl-business .is-row-start .section-wrapper.span-half .skills-groups {
         grid-template-columns: 1fr !important;
         gap: 20px !important;
-        background-color: var(--tpl-bg) !important;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .stat-box {
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--tpl-border) !important;
+        background: var(--tpl-surface) !important;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-card {
-        border-color: rgba(255, 255, 255, 0.2) !important;
-        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: var(--tpl-border) !important;
+        background: var(--tpl-surface) !important;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .contact-icon {
-        color: var(--tpl-bg) !important;
+        color: var(--primary) !important;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .proj-tag {
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        color: rgba(255, 255, 255, 0.7) !important;
+        border-color: var(--tpl-border) !important;
+        color: var(--tpl-muted) !important;
     }
 
     /* Sidebar experience: compact list */
@@ -1768,7 +1779,7 @@ body.theme-dark .tpl-business {
         grid-template-columns: 1fr !important;
         gap: 12px !important;
         padding: 24px 0 !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-bottom: 1px solid var(--tpl-border) !important;
     }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item.has-timeline {
@@ -1805,6 +1816,7 @@ body.theme-dark .tpl-business {
     gap: 32px 24px !important;
     margin-bottom: 24px !important;
     background-color: var(--tpl-bg) !important;
+
 }
 
 .tpl-business .group-title {
@@ -1859,13 +1871,24 @@ body.theme-dark .tpl-business {
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 1px !important;
-    color: var(--tpl-text) !important;
+    color: var(--text) !important;
 }
 
 /* Sidebar Specific Skills */
 .tpl-business .is-row-start .group-title {
-    color: var(--tpl-bg) !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    letter-spacing: 2.5px !important;
+    text-transform: uppercase !important;
+    color: var(--secondary) !important;
+    border-left-color: rgba(255, 255, 255, 0.582) !important;
+
+}
+
+.tpl-business .is-row-start .skill-tag {
+    color: var(--tpl-text) !important;
     border-left-color: rgba(255, 255, 255, 0.4) !important;
+
 }
 
 .tpl-business .is-row-start .skill-tag {
@@ -2071,8 +2094,9 @@ body.theme-dark .tpl-business {
 }
 
 .tpl-business .tl-position {
+    font-family: var(--font-display) !important;
     font-size: 22px !important;
-    font-weight: 850 !important;
+    font-weight: 800 !important;
     letter-spacing: -0.02em !important;
     color: var(--tpl-text) !important;
     margin: 0 !important;
@@ -2088,19 +2112,21 @@ body.theme-dark .tpl-business {
 }
 
 .tpl-business .tl-company {
+    font-family: var(--font-body) !important;
     font-size: 15px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
-    letter-spacing: 2px !important;
+    letter-spacing: 1.5px !important;
     margin-bottom: 16px !important;
-    color: var(--tpl-text) !important;
-    opacity: 0.6;
+    color: var(--primary) !important;
 }
 
 .tpl-business .tl-desc {
-    font-size: 16px !important;
-    line-height: 1.7 !important;
-    color: var(--tpl-muted) !important;
+    font-family: var(--font-body) !important;
+    font-size: 15px !important;
+    line-height: 1.65 !important;
+    color: var(--tpl-text) !important;
+    opacity: 0.85;
     max-width: 850px !important;
 }
 

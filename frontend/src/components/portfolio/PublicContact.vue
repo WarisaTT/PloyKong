@@ -1,5 +1,5 @@
 <template>
-  <section id="contact" class="pub-contact pub-section" :class="'layout-' + (data.layout || 'centered')">
+  <section id="contact" class="pub-contact pub-section" :class="'layout-' + (data.layout || 'centered')" :style="data.section_bg_color ? `background: ${data.section_bg_color} !important; --item-bg: ${data.section_bg_color};` : ''">
     <div class="section-header-wrapper">
       <h2 class="layered-title" :data-text="data.title || 'Contact'">{{ data.title || 'Contact' }}</h2>
     </div>

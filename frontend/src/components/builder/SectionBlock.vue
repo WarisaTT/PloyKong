@@ -64,7 +64,7 @@
     <div
       class="section-preview"
       :class="[themeClass, templateClass, { 'is-half-split': isHalfSplit }]"
-      :style="{pointerEvents: 'none' }"
+      :style="section.data?.section_bg_color ? `pointer-events: none; background: ${section.data.section_bg_color} !important; --item-bg: ${section.data.section_bg_color};` : 'pointer-events: none; background: color-mix(in srgb, var(--theme-bg, var(--bg)) 60%, transparent);'"
     >
       <div 
         class="section-preview-inner"
@@ -197,7 +197,7 @@ async function confirmDelete() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--theme-bg, var(--bg)) 60%, transparent);
   border: 1.5px solid var(--section-border);
   border-radius: 20px;
   overflow: hidden;
@@ -210,17 +210,17 @@ async function confirmDelete() {
 .section-block:hover {
   border-color: var(--primary);
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(var(--primary-glow), 0.1);
+  box-shadow: 0 12px 24px var(--primary-glow);
 }
 
 .section-block.selected {
   border-color: var(--primary);
   border-width: 2px;
-  box-shadow: 0 0 0 4px rgba(var(--primary-glow), 0.1), 0 12px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 4px var(--primary-glow), 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 :global(.theme-dark) .section-block {
-  background: #0f172a;
+  background: color-mix(in srgb, var(--theme-bg, var(--bg)) 60%, transparent);
 }
 
 .section-block.hidden {
@@ -234,18 +234,17 @@ async function confirmDelete() {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: rgba(var(--bg-rgb), 0.6);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--section-border);
+  background: var(--sidebar-bg);
+  border: 1px solid var(--section-border);
   z-index: 10;
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.3s ease;
 }
 
-.section-block:hover .section-header,
-.section-block.selected .section-header {
-  opacity: 1;
+.section-header.section-left {
+  color: var(--text);
 }
+
 
 .section-left {
   display: flex;
