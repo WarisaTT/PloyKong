@@ -94,6 +94,7 @@ export interface ExperienceItem {
   description: string;
   location?: string;
   image_urls?: string[]; // newly added for flexible experience block
+  skills?: string[];
 }
 
 export interface CertificateItem {

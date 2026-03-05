@@ -39,6 +39,13 @@
               >
             </div>
             <div class="tl-desc">{{ item.description }}</div>
+
+            <!-- Skills/Tags (New) -->
+            <div v-if="item.skills && item.skills.length > 0" class="tl-skills">
+              <span v-for="skill in item.skills" :key="skill" class="tl-skill-tag">
+                {{ skill }}
+              </span>
+            </div>
             
             <!-- Experience Image Gallery (New) -->
             <div v-if="item.image_urls && item.image_urls.length > 0" class="tl-gallery">
@@ -175,6 +182,25 @@ defineProps<{ data: any }>();
   line-height: 1.6;
   color: var(--muted);
   white-space: pre-wrap;
+}
+
+.tl-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.layout-centered .tl-skills {
+  justify-content: center;
+}
+.tl-skill-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: var(--primary-glow);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  font-weight: 600;
 }
 
 /* New Gallery Styles */

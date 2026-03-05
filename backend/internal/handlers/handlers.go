@@ -501,7 +501,7 @@ func (h *AIHandler) MagicFill(c *fiber.Ctx) error {
 		- Format: Return ONLY a valid JSON object matching the data schema for this section type. No markdown code blocks, just the JSON.
 		
 		Example schemas:
-		- experience: {"items": [{"company": "...", "position": "...", "location": "...", "start_date": "...", "end_date": "...", "description": "..."}]}
+		- experience: {"items": [{"company": "...", "position": "...", "location": "...", "start_date": "...", "end_date": "...", "description": "...", "skills": ["Skill1", "Skill2"]}]}
 		- skills: {"items": [{"name": "...", "category": "..."}]}
 		- projects: {"items": [{"title": "...", "description": "...", "live_url": "...", "github_url": "...", "tags": ["tag1", "tag2"]}]}
 		- education: {"items": [{"school": "...", "degree": "...", "field": "...", "start_year": "...", "end_year": "...", "gpa": "..."}]}

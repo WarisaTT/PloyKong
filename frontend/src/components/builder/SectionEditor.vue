@@ -313,6 +313,22 @@
           @update:modelValue="emitUpdate()"
         />
 
+        <div class="editor-field" style="margin-top: 8px">
+          <label class="form-label" style="font-size: 11px">Skills / Tags (แยกด้วยคอมม่า)</label>
+          <input
+            :value="(item.skills || []).join(', ')"
+            class="form-input"
+            placeholder="Go, Vue.js, Docker"
+            @input="
+              item.skills = ($event.target as HTMLInputElement).value
+                .split(',')
+                .map((s) => s.trim())
+                .filter(s => s !== '');
+              emitUpdate();
+            "
+          />
+        </div>
+
         <div class="editor-field" style="margin-top: 8px;">
           <label class="form-label">รูปภาพประกอบ (Gallery)</label>
           <div v-if="item.image_urls && item.image_urls.length > 0" class="exp-gallery-preview">

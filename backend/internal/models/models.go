@@ -149,6 +149,7 @@ type ExperienceItem struct {
 	Description string   `json:"description"`
 	Location    string   `json:"location"`
 	ImageURLs   []string `json:"image_urls,omitempty"`
+	Skills      []string `json:"skills,omitempty"`
 }
 
 type ExperienceData struct {
