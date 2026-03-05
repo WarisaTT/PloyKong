@@ -42,7 +42,7 @@
       >
         <a
           v-if="data.show_hire_me"
-          href="#contact"
+          href="#hire-me"
           class="hero-btn primary"
           @click="trackHire"
         >
