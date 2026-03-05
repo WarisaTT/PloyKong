@@ -418,7 +418,8 @@
         <AutoResizeTextarea v-model="cert.title" placeholder="Certificate Title" @input="emitUpdate()" />
         <AutoResizeTextarea v-model="cert.issuer" placeholder="Issuer (e.g. Coursera, Google)" @input="emitUpdate()" />
         <input v-model="cert.date" class="form-input" placeholder="Issue Date (e.g. 2023)" @input="emitUpdate()" />
-        <PopupTextEditor v-model="cert.description" title="Description (Optional)" placeholder="Additional details..." :rows="3" @update:modelValue="emitUpdate()" />
+        <input v-model="cert.certificate_url" class="form-input" placeholder="Certificate URL (Link ใบประกาศ)" @input="emitUpdate()" />
+        <PopupTextEditor v-model="cert.description" title="Description (สั้นๆ)" placeholder="สรุปเนื้อหาใบประกาศ..." :rows="3" @update:modelValue="emitUpdate()" />
         
         <div class="editor-field" style="margin-top: 8px;">
           <label class="form-label">รูปใบประกาศ</label>
@@ -776,6 +777,10 @@ function getDefaultTitle(type: string) {
 
 // Deep clone section data into reactive form
 const initialData = JSON.parse(JSON.stringify(props.section.data || {}));
+// Initialize visibility flags from top-level properties if available, fallback to data blob
+if (initialData.hide_title === undefined) initialData.hide_title = !!props.section.hide_title;
+if (initialData.hide_divider === undefined) initialData.hide_divider = !!props.section.hide_divider;
+
 if (props.section.type === 'hero') {
   if (initialData.show_resume === undefined) initialData.show_resume = false;
   if (initialData.show_hire_me === undefined) initialData.show_hire_me = false;
@@ -838,8 +843,10 @@ watch(
 
     const newData = JSON.parse(JSON.stringify(props.section.data || {}));
     if (newData.hide_percentage === undefined) newData.hide_percentage = false;
-    if (newData.hide_title === undefined) newData.hide_title = false;
-    if (newData.hide_divider === undefined) newData.hide_divider = false;
+    // Prefer top-level database state for UI toggles
+    newData.hide_title = !!props.section.hide_title;
+    newData.hide_divider = !!props.section.hide_divider;
+
     if (props.section.type === 'hero') {
       if (newData.show_resume === undefined) newData.show_resume = false;
       if (newData.show_hire_me === undefined) newData.show_hire_me = false;

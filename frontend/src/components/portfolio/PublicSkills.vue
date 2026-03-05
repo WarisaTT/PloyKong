@@ -134,12 +134,12 @@ const groupedSkills = computed(() => {
   font-weight: 600;
 }
 .skills-group {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 .group-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   color: var(--primary);
   opacity: 0.9;
 }

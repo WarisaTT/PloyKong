@@ -146,13 +146,13 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     return data.data.id;
   }
 
-  async function updateSection(sectionId: string, sectionData: any) {
+  async function updateSection(sectionId: string, updates: Partial<Section>) {
     if (!activePortfolio.value) return;
     saving.value = true;
     try {
-      await sectionAPI.update(sectionId, { data: sectionData });
+      await sectionAPI.update(sectionId, updates);
       const idx = sections.value.findIndex((s) => s.id === sectionId);
-      if (idx !== -1) sections.value[idx].data = sectionData;
+      if (idx !== -1) Object.assign(sections.value[idx], updates);
     } catch (e: any) {
       if (e.response?.status === 404) {
         // Section missing from DB — try to re-persist it
@@ -163,13 +163,15 @@ export const usePortfolioStore = defineStore("portfolio", () => {
             const { data } = await sectionAPI.create(activePortfolio.value.id, {
               type: lost.type,
               position: lost.position,
-              data: sectionData,
+              data: updates.data,
+              hide_title: updates.hide_title,
+              hide_divider: updates.hide_divider,
             });
             // Update the local section to use the new DB-assigned ID
             const idx = sections.value.findIndex(s => s.id === sectionId);
             if (idx !== -1) {
               sections.value[idx].id = data.data.id;
-              sections.value[idx].data = sectionData;
+              Object.assign(sections.value[idx], updates);
             }
           } catch (createErr) {
             console.error('[store] Failed to re-create section:', createErr);

@@ -57,10 +57,13 @@
       <!-- Render sections: Dynamic grouping for full-bleed vs grid-constrained -->
       <div v-for="(group, idx) in sectionGroups" :key="idx" class="section-group-wrap">
         <!-- Full-bleed Hero Group -->
-        <div v-if="group.type === 'full'" class="full-bleed-section">
+        <div v-if="group.type === 'full'" class="full-bleed-section" :class="{ 
+          'hide-title': group.sections[0].hide_title || !!group.sections[0].data.hide_title,
+          'hide-divider': group.sections[0].hide_divider || !!group.sections[0].data.hide_divider
+        }">
           <component
             :is="getSectionComponent(group.sections[0].type)"
-            :data="group.sections[0].data"
+            :data="{ ...group.sections[0].data, hide_title: group.sections[0].hide_title, hide_divider: group.sections[0].hide_divider }"
             :theme="portfolio.theme"
             :portfolio="portfolio"
             class="is-full-bleed"
@@ -86,12 +89,13 @@
                 'is-right': section.isRight,
                 'is-row-start': section.isRowStart,
                 'is-paired': section.isPaired,
-                'hide-divider': !!section.data.hide_divider
+                'hide-divider': section.hide_divider || !!section.data.hide_divider,
+                'hide-title': section.hide_title || !!section.data.hide_title
               }"
             >
               <component
                 :is="getSectionComponent(section.type)"
-                :data="section.data"
+                :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
                 :theme="portfolio.theme"
                 :portfolio="portfolio"
                 :class="{ 'is-half-split': section.column_span === 'half' }"
@@ -644,8 +648,7 @@ onMounted(() => loadPortfolio());
 }
 
 .public-portfolio {
-  padding-top: 3px;
-  padding-bottom: 3px;
+  padding: 0;
 }
 
 /* AI Chat FAB */

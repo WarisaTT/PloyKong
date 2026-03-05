@@ -339,16 +339,18 @@ func mixWhite(c [3]uint8, amount float64) [3]uint8 {
 // ─── PDF Canvas wrapper ───────────────────────────────────────────────────────
 
 type cv struct {
-	p        *gopdf.GoPdf
-	w        float64 // page width
-	h        float64 // page height
-	ml       float64 // margin left
-	mr       float64 // margin right
-	y        float64 // current y cursor (top-down: 0 = top)
-	page     int
-	cAccent  [3]uint8
-	cAccentL [3]uint8
-	cAccentB [3]uint8
+	p             *gopdf.GoPdf
+	w             float64 // page width
+	h             float64 // page height
+	ml            float64 // margin left
+	mr            float64 // margin right
+	y             float64 // current y cursor (top-down: 0 = top)
+	page          int
+	bodyStartPage int
+	bodyMaxPage   int
+	cAccent       [3]uint8
+	cAccentL      [3]uint8
+	cAccentB      [3]uint8
 }
 
 func newCV(primary string) *cv {
@@ -451,6 +453,10 @@ func (c *cv) wrapText(x, y float64, col [3]uint8, font string, size int, text st
 				if maxLines > 0 && drawn >= maxLines {
 					break
 				}
+				// Protection: don't overlap with footer (hline at h-40)
+				if y+lineH > c.h-45 {
+					return y
+				}
 				c.text(x, y, col, font, size, currentLine)
 				y += lineH
 				drawn++
@@ -461,6 +467,9 @@ func (c *cv) wrapText(x, y float64, col [3]uint8, font string, size int, text st
 		}
 
 		if currentLine != "" && (maxLines <= 0 || drawn < maxLines) {
+			if y+lineH > c.h-45 {
+				return y
+			}
 			c.text(x, y, col, font, size, currentLine)
 			y += lineH
 			drawn++
@@ -477,8 +486,23 @@ func (c *cv) wrapText(x, y float64, col [3]uint8, font string, size int, text st
 func (c *cv) addPage() {
 	c.p.AddPage()
 	c.page++
+	if c.page > c.bodyMaxPage {
+		c.bodyMaxPage = c.page
+	}
 	c.rect(0, 0, c.w, c.h, cWhite)
 	c.y = 24
+}
+
+// switchAndAddPage moves to next page for current column, either existing or new
+func (c *cv) switchAndAddPage(x float64) {
+	c.drawFooter()
+	if c.page < c.bodyMaxPage {
+		c.page++
+		_ = c.p.SetPage(c.page)
+		c.y = 24
+	} else {
+		c.addPage()
+	}
 }
 
 // needsNewPage returns true if content of height h won't fit on the current page
@@ -765,6 +789,8 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	rx := cv.ml + lw + cv.bodyW()*0.04
 
 	bodyTopY := cv.y
+	cv.bodyStartPage = cv.page
+	cv.bodyMaxPage = cv.page
 	rightY := bodyTopY
 
 	// ── RIGHT: Skills ──────────────────────────────────────────────────────────
@@ -800,6 +826,10 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 		}
 
 		for _, cat := range catNames {
+			if cv.needsNewPage(30) {
+				cv.switchAndAddPage(rx)
+				cv.sectionTitle(rx, title+" CONT.")
+			}
 			// Only show Category Title if it's not empty
 			if cat != "" {
 				cv.y += 2
@@ -820,6 +850,11 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 				if tx+tw > rx+rw {
 					cv.y += 20
 					tx = rx
+					if cv.needsNewPage(20) {
+						cv.switchAndAddPage(rx)
+						cv.sectionTitle(rx, title+" CONT.")
+						tx = rx
+					}
 				}
 				tx = cv.skillPill(tx, cv.y, name) + 4
 			}
@@ -857,6 +892,10 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			}
 
 			if degree != "" || school != "" {
+				if cv.needsNewPage(45) {
+					cv.switchAndAddPage(rx)
+					cv.sectionTitle(rx, title+" CONT.")
+				}
 				cv.text(rx, cv.y, cBlack, "THSarabun", 10, degree)
 				cv.y += 13
 				cv.text(rx, cv.y, cv.cAccent, "THSarabun", 9, school)
@@ -876,7 +915,53 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 		rightY = cv.y
 	}
 
+	// ── RIGHT: Certificates ──────────────────────────────────────────────────
+	for i, sec := range sections {
+		if !sec.IsVisible || sec.Type != "certificates" {
+			continue
+		}
+		items := jslice(data[i], "items")
+		if len(items) == 0 {
+			continue
+		}
+
+		title := firstOf(jstr(data[i], "title"), "Certificates")
+		cv.y = rightY
+		if title != lastRightTitle && !jbool(data[i], "hide_title") {
+			cv.sectionTitle(rx, title)
+			lastRightTitle = title
+		}
+
+		for _, item := range items {
+			im := toJMap(item)
+			certTitle := jstr(im, "title")
+			issuer := jstr(im, "issuer")
+			date := jstr(im, "date")
+
+			if cv.needsNewPage(40) {
+				cv.switchAndAddPage(rx)
+				// Re-apply column title if we broke page
+				cv.sectionTitle(rx, title+" (cont.)")
+			}
+
+			cv.text(rx, cv.y, cBlack, "THSarabun", 10, certTitle)
+			cv.y += 12
+			cv.text(rx, cv.y, cv.cAccent, "THSarabun", 9, issuer+" • "+date)
+			cv.y += 13
+
+			desc := jstr(im, "description")
+			if desc != "" {
+				cv.y = cv.wrapText(rx, cv.y, cGray600, "THSarabun", 8, desc, rw, 11, 0)
+			}
+			cv.y += 10
+		}
+		rightY = cv.y
+	}
+	cv.drawFooter()
+
 	// ── LEFT: Experience ───────────────────────────────────────────────────────
+	cv.page = cv.bodyStartPage
+	_ = cv.p.SetPage(cv.page)
 	cv.y = bodyTopY
 	lastLeftTitle := ""
 	for i, sec := range sections {
@@ -909,11 +994,10 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			}
 			desc := jstr(im, "description")
 
-			if cv.needsNewPage(72) {
-				cv.drawFooter()
-				cv.addPage()
+			if cv.needsNewPage(90) { // Increased buffer for Experience
+				cv.switchAndAddPage(cv.ml)
 				// Re-render title if page broke within the same group
-				cv.sectionTitle(cv.ml, title+" (cont.)")
+				cv.sectionTitle(cv.ml, title+" CONT.")
 			}
 
 			// Position + dates on same row
@@ -953,16 +1037,16 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 		}
 		for _, item := range items {
 			im := toJMap(item)
-			title := jstr(im, "title")
+			projItemTitle := jstr(im, "title")
 			desc := jstr(im, "description")
 			tags := jstrslice(im, "tags")
 
-			if cv.needsNewPage(60) {
-				cv.drawFooter()
-				cv.addPage()
+			if cv.needsNewPage(80) { // Increased buffer for Projects
+				cv.switchAndAddPage(cv.ml)
+				cv.sectionTitle(cv.ml, title+" CONT.")
 			}
 
-			cv.text(cv.ml, cv.y, cBlack, "THSarabun", 11, title)
+			cv.text(cv.ml, cv.y, cBlack, "THSarabun", 11, projItemTitle)
 			cv.y += 13
 
 			// Tags
@@ -992,12 +1076,12 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			continue
 		}
 
-		if cv.needsNewPage(60) {
-			cv.drawFooter()
-			cv.addPage()
+		title := firstOf(jstr(data[i], "title"), "Note")
+		if cv.needsNewPage(50) {
+			cv.switchAndAddPage(cv.ml)
+			cv.sectionTitle(cv.ml, title+" CONT.")
 		}
 
-		title := firstOf(jstr(data[i], "title"), "Note")
 		if title != lastLeftTitle && !jbool(data[i], "hide_title") {
 			cv.sectionTitle(cv.ml, title)
 			lastLeftTitle = title

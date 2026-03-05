@@ -458,12 +458,13 @@ h6 {
 /* PUBLIC PORTFOLIO LAYERED HEADERS (3D Effect)                  */
 /* ───────────────────────────────────────────────────────────── */
 .section-header-wrapper {
-  margin-bottom: 50px;
+  margin-bottom: 55px;
   position: relative;
 }
 
 /* Toggle visibility */
-.hide-title .section-header-wrapper {
+.hide-title .section-header-wrapper,
+.hide-title .hero-name {
   display: none !important;
 }
 

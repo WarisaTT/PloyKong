@@ -42,7 +42,7 @@
 .skills-groups {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 40px !important;
+    gap: 20px !important;
     width: 100% !important;
     align-items: flex-start !important;
 }
@@ -1369,7 +1369,7 @@
     --tpl-text: var(--text, #000000);
     --tpl-muted: var(--muted, #6B7280);
     --tpl-border: var(--border, rgba(0, 0, 0, 0.08));
-    font-family: 'Sarabun', sans-serif !important;
+    font-family: var(--font-body) !important;
     background: var(--tpl-bg) !important;
     background: linear-gradient(to right, var(--primary) 30%, var(--tpl-bg) 30%) !important;
     min-height: 100vh;
@@ -1555,8 +1555,17 @@ body.theme-light .tpl-business .layered-title,
 /* ───────── */
 /* ── Step 6: layered-title ─────────────────────────────────── */
 .tpl-business .section-header-wrapper {
-    margin-bottom: 10px !important;
-    /* Tighten gap between title and content */
+    margin-bottom: 15px !important;
+}
+
+/* Force specific alignments for Business template based on area width */
+.tpl-business .is-row-start .pub-section:not(.layout-split) .section-header-wrapper {
+    text-align: left !important;
+}
+
+.tpl-business .is-right .pub-section:not(.layout-split) .section-header-wrapper,
+.tpl-business .span-full .pub-section:not(.layout-split) .section-header-wrapper {
+    text-align: center !important;
 }
 
 .tpl-business .layered-title {
@@ -1592,6 +1601,10 @@ body.theme-light .tpl-business .layered-title,
     padding: 0 !important;
     border-bottom: none !important;
     max-height: 100%;
+}
+
+.tpl-business .hero-ring {
+    display: none !important;
 }
 
 .tpl-business .pub-hero-inner {
@@ -1656,7 +1669,7 @@ body.theme-light .tpl-business .layered-title,
     margin-bottom: 0 !important;
     z-index: 1;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
-    border: 4px solid rgba(255, 255, 255, 0.2) !important;
+    border: none !important;
     object-fit: cover;
 }
 
@@ -2218,15 +2231,6 @@ body.theme-light .tpl-business .layered-title,
     color: var(--tpl-muted) !important;
 }
 
-.tpl-business .is-row-start .stat-box {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-left-color: rgba(255, 255, 255, 0.4) !important;
-}
-
-.tpl-business .is-row-start .stat-value,
-.tpl-business .is-row-start .stat-label {
-    color: var(--tpl-bg) !important;
-}
 
 .tpl-business .contact-card {
     background: var(--tpl-surface) !important;
@@ -2643,7 +2647,7 @@ body.theme-light .tpl-business .layered-title,
    ════════════════════════════════════════════════════════════ */
 
 .tpl-creative {
-    font-family: 'Sarabun', sans-serif !important;
+    font-family: var(--font-body) !important;
     --tpl-bg: transparent;
 }
 
@@ -2680,7 +2684,7 @@ body.theme-light .tpl-business .layered-title,
 }
 
 .tpl-creative .section-header-wrapper {
-    margin-bottom: 80px !important;
+    margin-bottom: 85px !important;
 }
 
 .tpl-creative .layered-title {

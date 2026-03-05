@@ -174,7 +174,7 @@
         </button>
 
         <main class="builder-canvas" ref="canvasRef" :style="portfolioThemeVars">
-          <div class="canvas-content-limiter" :class="[templateClass, themeClass]" :style="{ 'background-color': 'transparent !important', border: 'none !important', ...portfolioThemeVars }">
+          <div class="canvas-content-limiter" :class="[templateClass, themeClass]" :style="{ 'background-color': 'transparent !important', border: 'none !important', ...portfolioThemeVars, fontFamily: theme.font ? `\&quot;${theme.font}\&quot;, sans-serif` : '' }">
           <!-- Canvas Loading and Empty states -->
           <div v-if="store.loading" class="canvas-loading">...</div>
           <div v-else-if="store.sections.length === 0" class="canvas-empty">...</div>
@@ -1073,19 +1073,30 @@ function copyPublicLink() {
 }
 
 // Debounce the backend API call to save bandwidth
-const debouncedSave = debounce(async (id: string, data: any) => {
-  await store.updateSection(id, data)
+const debouncedSave = debounce(async (id: string, updates: any) => {
+  await store.updateSection(id, updates)
 }, 500)
 
 // Update local state instantly so the Preview refreshes immediately in real-time
-function handleSectionUpdate(data: any) {
+function handleSectionUpdate(newData: any) {
   if (!selectedSectionId.value) return
+
+  // Extract top-level database flags from the form data
+  const { hide_title, hide_divider, ...actualData } = newData;
 
   // Optimistic update for real-time canvas preview
   const sec = store.sections.find((s) => s.id === selectedSectionId.value)
-  if (sec) sec.data = JSON.parse(JSON.stringify(data))
+  if (sec) {
+    sec.data = JSON.parse(JSON.stringify(actualData));
+    sec.hide_title = !!hide_title;
+    sec.hide_divider = !!hide_divider;
+  }
 
-  debouncedSave(selectedSectionId.value, data)
+  debouncedSave(selectedSectionId.value, { 
+    data: actualData, 
+    hide_title: !!hide_title, 
+    hide_divider: !!hide_divider 
+  })
 }
 
 function handleSectionBGUpdate(color: string) {

@@ -30,7 +30,7 @@ func (h *SectionHandler) List(c *fiber.Ctx) error {
 	portfolioID := c.Params("portfolioId")
 
 	rows, err := h.db.Query(
-		"SELECT id, type, position, data, is_visible, COALESCE(column_span, 'full'), created_at FROM sections WHERE portfolio_id = ? ORDER BY position",
+		"SELECT id, type, position, data, is_visible, hide_title, hide_divider, COALESCE(column_span, 'full'), created_at FROM sections WHERE portfolio_id = ? ORDER BY position",
 		portfolioID,
 	)
 	if err != nil {
@@ -42,7 +42,7 @@ func (h *SectionHandler) List(c *fiber.Ctx) error {
 	for rows.Next() {
 		var s models.Section
 		var dataRaw []byte
-		if err := rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.ColumnSpan, &s.CreatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.HideTitle, &s.HideDivider, &s.ColumnSpan, &s.CreatedAt); err != nil {
 			continue
 		}
 		s.Data = json.RawMessage(dataRaw)
@@ -88,7 +88,7 @@ func (h *SectionHandler) Create(c *fiber.Ctx) error {
 	}
 
 	_, err = tx.Exec(
-		"INSERT INTO sections (id, portfolio_id, type, position, data, column_span) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO sections (id, portfolio_id, type, position, data, is_visible, hide_title, hide_divider, column_span) VALUES (?, ?, ?, ?, ?, TRUE, FALSE, FALSE, ?)",
 		id, portfolioID, req.Type, req.Position, string(req.Data), req.ColumnSpan,
 	)
 	if err != nil {
@@ -106,9 +106,11 @@ func (h *SectionHandler) Update(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	var req struct {
-		Data       json.RawMessage `json:"data"`
-		IsVisible  *bool           `json:"is_visible"`
-		ColumnSpan *string         `json:"column_span"`
+		Data        json.RawMessage `json:"data"`
+		IsVisible   *bool           `json:"is_visible"`
+		HideTitle   *bool           `json:"hide_title"`
+		HideDivider *bool           `json:"hide_divider"`
+		ColumnSpan  *string         `json:"column_span"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(400, "invalid body")
@@ -122,11 +124,13 @@ func (h *SectionHandler) Update(c *fiber.Ctx) error {
 
 	res, err := h.db.Exec(
 		`UPDATE sections SET
-			data        = COALESCE(?, data),
-			is_visible  = COALESCE(?, is_visible),
-			column_span = COALESCE(?, column_span)
+			data         = COALESCE(?, data),
+			is_visible   = COALESCE(?, is_visible),
+			hide_title   = COALESCE(?, hide_title),
+			hide_divider = COALESCE(?, hide_divider),
+			column_span  = COALESCE(?, column_span)
 		WHERE id = ?`,
-		dataParam, req.IsVisible, req.ColumnSpan, id,
+		dataParam, req.IsVisible, req.HideTitle, req.HideDivider, req.ColumnSpan, id,
 	)
 	if err != nil {
 		return fiber.NewError(500, err.Error())
@@ -168,15 +172,15 @@ func (h *SectionHandler) Duplicate(c *fiber.Ctx) error {
 	var portfolioID, sType, colSpan string
 	var pos int
 	var dataRaw []byte
-	var isVis bool
+	var isVis, hTitle, hDivider bool
 
 	// 1. Fetch original section and verify user ownership
 	err := h.db.QueryRow(`
-		SELECT s.portfolio_id, s.type, s.position, s.data, s.is_visible, COALESCE(s.column_span, 'full')
+		SELECT s.portfolio_id, s.type, s.position, s.data, s.is_visible, s.hide_title, s.hide_divider, COALESCE(s.column_span, 'full')
 		FROM sections s
 		JOIN portfolios p ON s.portfolio_id = p.id
 		WHERE s.id = ? AND p.user_id = ?
-	`, id, claims.UserID).Scan(&portfolioID, &sType, &pos, &dataRaw, &isVis, &colSpan)
+	`, id, claims.UserID).Scan(&portfolioID, &sType, &pos, &dataRaw, &isVis, &hTitle, &hDivider, &colSpan)
 
 	if err == sql.ErrNoRows {
 		return fiber.NewError(fiber.StatusNotFound, "section not found or not owned by user")
@@ -200,8 +204,8 @@ func (h *SectionHandler) Duplicate(c *fiber.Ctx) error {
 	// 3. Insert duplicated section
 	newID := ulid.Make().String()
 	_, err = tx.Exec(
-		"INSERT INTO sections (id, portfolio_id, type, position, data, is_visible, column_span) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		newID, portfolioID, sType, newPos, string(dataRaw), isVis, colSpan,
+		"INSERT INTO sections (id, portfolio_id, type, position, data, is_visible, hide_title, hide_divider, column_span) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		newID, portfolioID, sType, newPos, string(dataRaw), isVis, hTitle, hDivider, colSpan,
 	)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to duplicate section")

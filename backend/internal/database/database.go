@@ -177,6 +177,19 @@ func Migrate(db *sql.DB) error {
 		}
 	}
 
+	// ─── Section Flags ────────────────────────────────────────────
+	var hideTitleCount int
+	db.QueryRow(`SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sections' AND COLUMN_NAME = 'hide_title'`).Scan(&hideTitleCount)
+	if hideTitleCount == 0 {
+		db.Exec(`ALTER TABLE sections ADD COLUMN hide_title BOOLEAN NOT NULL DEFAULT FALSE`)
+	}
+
+	var hideDividerCount int
+	db.QueryRow(`SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sections' AND COLUMN_NAME = 'hide_divider'`).Scan(&hideDividerCount)
+	if hideDividerCount == 0 {
+		db.Exec(`ALTER TABLE sections ADD COLUMN hide_divider BOOLEAN NOT NULL DEFAULT FALSE`)
+	}
+
 	// ─── User Google ID Migration ──────────────────────────────────
 	var googleIDColCount int
 	err = db.QueryRow(`
