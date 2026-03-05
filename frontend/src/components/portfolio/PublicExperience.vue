@@ -195,6 +195,18 @@ defineProps<{ data: any }>();
   border: 1px solid var(--border);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+@media (max-width: 600px) {
+  .tl-gallery {
+    gap: 8px;
+  }
+  .tl-gallery-img {
+    width: calc(30% - 4px); /* Show 2 side-by-side on mobile */
+    min-width: 100px;
+    height: 100px;
+  }
+}
+
 .tl-gallery-img:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);

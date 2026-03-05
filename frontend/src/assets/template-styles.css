@@ -1554,6 +1554,11 @@ body.theme-light .tpl-business .layered-title,
 
 /* ───────── */
 /* ── Step 6: layered-title ─────────────────────────────────── */
+.tpl-business .section-header-wrapper {
+    margin-bottom: 10px !important;
+    /* Tighten gap between title and content */
+}
+
 .tpl-business .layered-title {
     font-size: 25px !important;
     font-weight: 800 !important;
@@ -2397,7 +2402,30 @@ body.theme-light .tpl-business .layered-title,
     .tpl-business .section-wrapper.span-full .pub-section {
         margin-left: 0 !important;
         width: 100% !important;
-        padding: 24px 16px !important;
+        padding: 40px 24px !important;
+    }
+
+    .tpl-business .layered-title {
+        font-size: 20px !important;
+        letter-spacing: 1px !important;
+        line-height: 1.2 !important;
+        width: 100% !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+        /* Reduced from 24px */
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+    }
+
+    .tpl-business .section-wrapper.is-row-start:not(.span-full) .layered-title {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        border-bottom-color: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .tpl-business .section-wrapper.is-row-start:not(.span-full) .pub-section {
+        padding: 40px 24px !important;
     }
 
     /* Mobile Hero */
@@ -2415,9 +2443,10 @@ body.theme-light .tpl-business .layered-title,
     .tpl-business .hero-text {
         width: 100% !important;
         background: var(--tpl-bg) !important;
-        padding: 40px 24px !important;
+        padding: 50px 24px !important;
         text-align: center !important;
         align-items: center !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
     }
 
     .tpl-business .hero-name {

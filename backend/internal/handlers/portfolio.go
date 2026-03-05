@@ -357,8 +357,8 @@ func newCV(primary string) *cv {
 		p:        &gopdf.GoPdf{},
 		w:        595.28,
 		h:        841.89,
-		ml:       38,
-		mr:       38,
+		ml:       50,
+		mr:       50,
 		page:     0,
 		cAccent:  accent,
 		cAccentL: mixWhite(accent, 0.92),
@@ -483,7 +483,7 @@ func (c *cv) addPage() {
 
 // needsNewPage returns true if content of height h won't fit on the current page
 func (c *cv) needsNewPage(h float64) bool {
-	return c.y+h > c.h-30
+	return c.y+h > c.h-50
 }
 
 // ─── Section title with blue underline ───────────────────────────────────────
@@ -751,11 +751,11 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	if cv.y < cy {
 		cv.y = cy
 	}
-	cv.y += 6
+	cv.y += 10
 
 	// Divider
-	cv.hline(cv.ml, cv.y, cv.w-cv.mr, cGray200, 0.5) // Thinner line
-	cv.y += 10
+	cv.hline(cv.ml, cv.y, cv.w-cv.mr, cGray200, 0.8)
+	cv.y += 14
 
 	// ── TWO-COLUMN BODY ───────────────────────────────────────────────────────
 	// Left 58% — Experience, Projects, Education, Custom Text
@@ -909,7 +909,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			}
 			desc := jstr(im, "description")
 
-			if cv.needsNewPage(55) {
+			if cv.needsNewPage(72) {
 				cv.drawFooter()
 				cv.addPage()
 				// Re-render title if page broke within the same group
@@ -929,9 +929,9 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			}
 			// Description
 			if desc != "" {
-				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 11, 0)
+				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 12, 0)
 			}
-			cv.y += 8
+			cv.y += 12
 		}
 	}
 
@@ -957,7 +957,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			desc := jstr(im, "description")
 			tags := jstrslice(im, "tags")
 
-			if cv.needsNewPage(45) {
+			if cv.needsNewPage(60) {
 				cv.drawFooter()
 				cv.addPage()
 			}
@@ -976,9 +976,9 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			}
 			// Description
 			if desc != "" {
-				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 11, 0)
+				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 12, 0)
 			}
-			cv.y += 6
+			cv.y += 10
 		}
 	}
 
