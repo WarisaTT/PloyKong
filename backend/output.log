@@ -1,0 +1,19 @@
+2026/03/06 17:57:09 ✅ Database connected successfully
+2026/03/06 17:57:09 🔄 Running database migrations...
+2026/03/06 17:57:09 ✅ Migrations completed successfully
+2026/03/06 17:57:09 🚀 PloyKong API running on :8082
+
+ ┌───────────────────────────────────────────────────┐ 
+ │                 PloyKong API v1.0                 │ 
+ │                   Fiber v2.52.5                   │ 
+ │               http://127.0.0.1:8082               │ 
+ │       (bound on host 0.0.0.0 and port 8082)       │ 
+ │                                                   │ 
+ │ Handlers ............ 66  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID ............. 41240 │ 
+ └───────────────────────────────────────────────────┘ 
+
+[17:58:55] 200 - GET /api/v1/public/p/v2-business-sunset |   13.703166ms
+[17:58:55] 204 - OPTIONS /api/v1/public/p/v2-business-sunset/track |      33.084µs
+[17:58:55] 200 - POST /api/v1/public/p/v2-business-sunset/track |    4.128917ms
+signal: killed

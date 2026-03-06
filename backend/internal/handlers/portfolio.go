@@ -1047,13 +1047,17 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			if im["include_in_resume"] == false {
 				continue
 			}
-			degree := jstr(im, "degree")
+			degree := firstOf(jstr(im, "degree"), jstr(im, "field"))
 			school := jstr(im, "school")
-			startD := jstr(im, "start_date")
-			endD := jstr(im, "end_date")
+			startD := firstOf(jstr(im, "start_year"), jstr(im, "start_date"))
+			endD := firstOf(jstr(im, "end_year"), jstr(im, "end_date"))
 			dates := startD
 			if endD != "" {
-				dates += " – " + endD
+				if dates != "" {
+					dates += " – " + endD
+				} else {
+					dates = endD
+				}
 			}
 
 			if degree != "" || school != "" {
@@ -1152,7 +1156,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			if im["include_in_resume"] == false {
 				continue
 			}
-			pos := firstOf(jstr(im, "position"), jstr(im, "title"))
+			pos := firstOf(jstr(im, "position"), jstr(im, "title"), jstr(im, "name"))
 			company := jstr(im, "company")
 			startD := jstr(im, "start_date")
 			endD := jstr(im, "end_date")
@@ -1243,7 +1247,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			if im["include_in_resume"] == false {
 				continue
 			}
-			projItemTitle := jstr(im, "title")
+			projItemTitle := firstOf(jstr(im, "title"), jstr(im, "name"))
 			desc := jstr(im, "description")
 			tags := jstrslice(im, "tags")
 
