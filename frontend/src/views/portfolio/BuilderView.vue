@@ -12,7 +12,7 @@
         <div class="slug-container">
           <span class="portfolio-slug">
             <Globe :size="14" class="icon-inline" />
-            ploy-kong.vercel.app/p/{{ store.activePortfolio?.slug }}
+            {{ store.activePortfolio?.slug }}.ploykong.com
           </span>
           <button type="button" class="copy-link-btn-indigo" :disabled="!store.activePortfolio?.is_published"
             title="Copy Public Link" @click="copyPublicLink">
@@ -279,7 +279,7 @@
           <div class="props-section">
             <div class="props-label">Portfolio URL</div>
             <div class="url-display copyable-url" @click="copyPublicLink" :title="copied ? 'Copied!' : 'Click to copy'">
-               ploy-kong.vercel.app/p/{{ store.activePortfolio?.slug }}
+              {{ store.activePortfolio?.slug }}.ploykong.com
               <Copy v-if="!copied" :size="12" style="margin-left: auto; opacity: 0.5" />
               <Check v-else :size="12" style="margin-left: auto; color: var(--success)" />
             </div>
@@ -940,8 +940,10 @@ function copyPublicLink() {
   const slug = store.activePortfolio?.slug
   if (!slug) return
 
-  // Use the canonical public URL on Vercel
-  const url = `https://ploy-kong.vercel.app/p/${slug}`;
+  // Use the API's Public URL to trigger the SEO/Crawler handler (needed for OG images)
+  const apiBase = import.meta.env.VITE_API_URL || '/api/v1'
+  const url = `${apiBase}/public/p/${slug}`
+  
   navigator.clipboard.writeText(url).then(() => {
     copied.value = true
     setTimeout(() => {
@@ -953,7 +955,10 @@ function copyPublicLink() {
 function previewPortfolio() {
   const slug = store.activePortfolio?.slug
   if (!slug) return
-  window.open(`https://ploy-kong.vercel.app/p/${slug}`, '_blank')
+  
+  // Use the API's Public URL for preview as well to check SEO/OG
+  const apiBase = import.meta.env.VITE_API_URL || '/api/v1'
+  window.open(`${apiBase}/public/p/${slug}`, '_blank')
 }
 
 

@@ -446,10 +446,10 @@
           <span class="footer-slogan">— มีดีต้องปล่อยของ</span>
         </div>
         <div class="footer-links">
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
+          <RouterLink to="/privacy">Privacy</RouterLink>
+          <RouterLink to="/terms">Terms</RouterLink>
           <a href="https://github.com/WarisaTT" target="_blank">GitHub</a>
-          <a href="#">Contact</a>
+          <RouterLink to="/contact">Contact</RouterLink>
         </div>
         <div class="footer-copy">
           © 2026 PloyKong · Built by Garfairdummn
