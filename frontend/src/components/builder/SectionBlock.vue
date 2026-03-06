@@ -18,12 +18,13 @@
       </div>
       <div class="section-actions" @click.stop>
         <!-- Move Up -->
-        <button class="icon-btn" title="Move Up" @click="$emit('move-up')">
+        <button type="button" class="icon-btn" title="Move Up" @click="$emit('move-up')">
           <ArrowUp :size="12" />
         </button>
 
         <!-- Toggle List/Grid Column Span -->
         <button
+          type="button"
           v-if="section.type !== 'hero'"
           class="icon-btn"
           :title="section.column_span === 'half' ? 'Make Full Width' : 'Make Half Width'"
@@ -34,12 +35,13 @@
         </button>
 
         <!-- Move Down -->
-        <button class="icon-btn" title="Move Down" @click="$emit('move-down')">
+        <button type="button" class="icon-btn" title="Move Down" @click="$emit('move-down')">
           <ArrowDown :size="12" />
         </button>
 
         <!-- Toggle Visibility -->
         <button
+          type="button"
           class="icon-btn"
           :title="section.is_visible ? 'Hide' : 'Show'"
           @click="$emit('toggle-visibility')"
@@ -49,12 +51,12 @@
         </button>
 
         <!-- Duplicate -->
-        <button class="icon-btn" title="Duplicate" @click="$emit('duplicate')">
+        <button type="button" class="icon-btn" title="Duplicate" @click="$emit('duplicate')">
           <Copy :size="12" />
         </button>
 
         <!-- Delete -->
-        <button class="icon-btn danger" title="Delete" @click="confirmDelete">
+        <button type="button" class="icon-btn danger" title="Delete" @click="confirmDelete">
           <Trash2 :size="12" />
         </button>
       </div>
@@ -73,39 +75,39 @@
         <PublicHero v-if="section.type === 'hero'" :data="section.data" />
         <PublicSkills
           v-else-if="section.type === 'skills'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicProjects
           v-else-if="section.type === 'projects'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicExperience
           v-else-if="section.type === 'experience'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicContact
           v-else-if="section.type === 'contact'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicCustomText
           v-else-if="section.type === 'custom_text'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicEducation
           v-else-if="section.type === 'education'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicStats
           v-else-if="section.type === 'stats'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicSocial
           v-else-if="section.type === 'social'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <PublicCertificates
           v-else-if="section.type === 'certificates'"
-          :data="section.data"
+          :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
         />
         <GenericPreview v-else :section="section" />
       </div>

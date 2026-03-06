@@ -3,7 +3,7 @@
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
   ]" :style="data.section_bg_color ? `background: ${data.section_bg_color} !important; --item-bg: ${data.section_bg_color};` : ''">
-    <div class="section-header-wrapper">
+    <div class="section-header-wrapper animate-slide-up" v-intersect>
       <h2 class="layered-title" :data-text="data.title || 'Projects'">{{ data.title || 'Projects' }}</h2>
     </div>
     <div class="pub-section-content">
@@ -14,7 +14,7 @@
         <div
           v-for="(proj, i) in data.items"
           :key="i"
-          class="proj-card animate-scale-up"
+          class="proj-card animate-scale-up premium-card-shine"
           v-intersect
           :style="{ transitionDelay: `${Number(i) * 100}ms` }"
         >

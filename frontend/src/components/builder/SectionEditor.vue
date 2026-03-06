@@ -17,6 +17,7 @@
       <div v-if="section.type !== 'hero'" class="editor-field toggle-row" style="margin-bottom: 12px">
         <label class="form-label" style="margin: 0">ซ่อนหัวข้อ</label>
         <button
+          type="button"
           class="toggle"
           :class="{ on: !!form.hide_title }"
           @click="form.hide_title = !form.hide_title; emitUpdate()"
@@ -28,11 +29,24 @@
       <div v-if="section.type !== 'hero' && template !== 'firstjobber'" class="editor-field toggle-row" style="margin-bottom: 12px">
         <label class="form-label" style="margin: 0">ซ่อนขีดคั่น</label>
         <button
+          type="button"
           class="toggle"
           :class="{ on: !!form.hide_divider }"
           @click="form.hide_divider = !form.hide_divider; emitUpdate()"
         >
           {{ form.hide_divider ? "Show" : "Hide" }}
+        </button>
+      </div>
+
+      <div v-if="['hero', 'contact', 'custom_text'].includes(section.type)" class="editor-field toggle-row" style="margin-bottom: 12px">
+        <label class="form-label" style="margin: 0">แสดงใน Resume (PDF)</label>
+        <button
+          type="button"
+          class="toggle"
+          :class="{ on: form.include_in_resume !== false }"
+          @click="form.include_in_resume = form.include_in_resume === false ? true : false; emitUpdate()"
+        >
+          {{ form.include_in_resume === false ? "Excluded" : "Included" }}
         </button>
       </div>
 
@@ -43,6 +57,7 @@
           class="form-input"
           placeholder="ระบุหัวข้อที่ต้องการ..."
           @input="emitUpdate()"
+          @keydown.enter.prevent
         />
       </div>
 
@@ -54,6 +69,7 @@
             class="form-input"
             placeholder="https:// หรืออัปโหลดรูป..."
             @input="emitUpdate()"
+            @keydown.enter.prevent
           />
           <input
             type="file"
@@ -100,8 +116,10 @@
             style="flex: 1; font-size: 12px"
             placeholder="#1e1b2e"
             @input="emitUpdate()"
+            @keydown.enter.prevent
           />
           <button
+            type="button"
             v-if="form.section_bg_color"
             class="btn btn-secondary btn-sm"
             style="font-size: 14px; padding: 11px 16px;"
@@ -114,6 +132,14 @@
     </div>
     
     <div class="editor-divider" style="margin: 2px 2;"></div>
+
+    <ImageCropperModal
+      :show="cropper.show"
+      :image-src="cropper.src"
+      :aspect-ratio="cropper.aspectRatio"
+      @confirm="handleCropConfirm"
+      @cancel="cropper.show = false"
+    />
 
     <!-- Hero Editor -->
     <template v-if="section.type === 'hero'">
@@ -151,6 +177,7 @@
             class="form-input"
             placeholder="https://..."
             @input="emitUpdate()"
+            @keydown.enter.prevent
           />
           <input
             type="file"
@@ -183,6 +210,7 @@
       <div class="editor-field toggle-row">
         <label class="form-label" style="margin: 0">Hire Me Button</label>
         <button
+          type="button"
           class="toggle"
           :class="{ on: form.show_hire_me }"
           @click="
@@ -196,6 +224,7 @@
       <div class="editor-field toggle-row">
         <label class="form-label" style="margin: 0">Resume / CV Button</label>
         <button
+          type="button"
           class="toggle"
           :class="{ on: form.show_resume }"
           @click="
@@ -206,15 +235,13 @@
           {{ form.show_resume ? "ON" : "OFF" }}
         </button>
       </div>
-
-
     </template>
 
     <!-- Skills Editor -->
     <template v-else-if="section.type === 'skills'">
       <div class="skills-editor">
         <div
-          v-for="(skill, i) in form.items as any[]"
+          v-for="(skill, i) in (form.items as any[])"
           :key="i"
           class="skill-row"
         >
@@ -231,12 +258,13 @@
               placeholder="Type"
               @input="emitUpdate()"
             />
-            <button class="icon-btn danger" style="margin-left: auto;" @click="removeSkill(i)" title="Remove Skill">
+            <button type="button" class="icon-btn danger" style="margin-left: auto;" @click="removeSkill(i)" title="Remove Skill">
               <X :size="16" />
             </button>
           </div>
         </div>
         <button
+          type="button"
           class="btn btn-secondary btn-sm btn-icon-text"
           style="width: 100%; margin-top: 8px"
           @click="addSkill"
@@ -249,18 +277,28 @@
     <!-- Experience Editor -->
     <template v-else-if="section.type === 'experience'">
       <div
-        v-for="(item, i) in form.items as any[]"
+        v-for="(item, i) in (form.items as any[])"
         :key="i"
         class="exp-editor-item"
       >
         <div class="exp-editor-header">
           <span style="font-size: 12px; font-weight: 700"
-            >งาน #{{ i + 1 }}</span
+            >งาน #{{ Number(i) + 1 }}</span
           >
           <button
+            type="button"
+            class="toggle btn-sm"
+            style="margin-left: 8px;"
+            :class="{ on: item.include_in_resume !== false }"
+            @click="item.include_in_resume = item.include_in_resume === false ? true : false; emitUpdate()"
+          >
+            {{ item.include_in_resume === false ? "Excluded from PDF" : "Include in PDF" }}
+          </button>
+          <button
+            type="button"
             class="icon-btn danger btn-icon-text"
             style="margin-left: auto; width: auto; padding: 0 8px"
-            @click="removeExp(i)"
+            @click="removeExp(Number(i))"
           >
             <Trash2 :size="14" />
           </button>
@@ -286,6 +324,7 @@
             class="form-input"
             placeholder="2022-01"
             @input="emitUpdate()"
+            @keydown.enter.prevent
           />
           <input
             v-model="item.end_date"
@@ -293,11 +332,13 @@
             placeholder="2024-01"
             :disabled="item.is_current"
             @input="emitUpdate()"
+            @keydown.enter.prevent
           />
         </div>
         <div class="editor-field toggle-row" style="margin-bottom: 8px">
           <label class="form-label" style="margin: 0; font-size: 11px">ทำงานอยู่ที่นี่ (Current)</label>
           <button
+            type="button"
             class="toggle"
             :class="{ on: item.is_current }"
             @click="item.is_current = !item.is_current; emitUpdate()"
@@ -316,16 +357,12 @@
         <div class="editor-field" style="margin-top: 8px">
           <label class="form-label" style="font-size: 11px">Skills / Tags (แยกด้วยคอมม่า)</label>
           <input
-            :value="(item.skills || []).join(', ')"
+            :value="getTagsString('exp-' + i, item.skills)"
             class="form-input"
             placeholder="Go, Vue.js, Docker"
-            @input="
-              item.skills = ($event.target as HTMLInputElement).value
-                .split(',')
-                .map((s) => s.trim())
-                .filter(s => s !== '');
-              emitUpdate();
-            "
+            @input="updateTags('exp-' + i, ($event.target as HTMLInputElement).value, item, 'skills')"
+            @blur="finalizeTags('exp-' + i, item, 'skills')"
+            @keydown.enter.prevent
           />
         </div>
 
@@ -334,7 +371,7 @@
           <div v-if="item.image_urls && item.image_urls.length > 0" class="exp-gallery-preview">
             <div v-for="(img, idx) in item.image_urls" :key="idx" class="exp-img-thumbnail">
               <img :src="img" />
-              <button class="icon-btn danger btn-sm delete-btn" @click="removeExpImage(Number(i), Number(idx))">
+              <button type="button" class="icon-btn danger btn-sm delete-btn" @click="removeExpImage(Number(i), Number(idx))">
                 <X :size="12" />
               </button>
             </div>
@@ -342,7 +379,7 @@
           
           <div style="display: flex; gap: 8px; margin-top: 4px;">
             <input type="file" :ref="el => setExpInputRef(el, Number(i))" accept="image/*" style="display: none" @change="e => uploadExpImage(e, Number(i))" />
-            <button class="btn btn-secondary btn-sm" @click="triggerExpUpload(Number(i))" :disabled="uploadingExp === Number(i)">
+            <button type="button" class="btn btn-secondary btn-sm" @click="triggerExpUpload(Number(i))" :disabled="uploadingExp === Number(i)">
               <template v-if="uploadingExp === Number(i)"><Loader2 :size="14" class="spin" /> กำลังอัพโหลด...</template>
               <template v-else><Plus :size="14" /> เพิ่มรูปภาพ</template>
             </button>
@@ -350,6 +387,7 @@
         </div>
       </div>
       <button
+        type="button"
         class="btn btn-secondary btn-sm btn-icon-text"
         style="width: 100%; margin-top: 8px"
         @click="addExp"
@@ -361,18 +399,28 @@
     <!-- Projects Editor -->
     <template v-else-if="section.type === 'projects'">
       <div
-        v-for="(proj, i) in form.items as any[]"
+        v-for="(proj, i) in (form.items as any[])"
         :key="i"
         class="proj-editor-item"
       >
         <div class="exp-editor-header">
           <span style="font-size: 12px; font-weight: 700"
-            >Project #{{ i + 1 }}</span
+            >Project #{{ Number(i) + 1 }}</span
           >
           <button
+            type="button"
+            class="toggle btn-sm"
+            style="margin-left: 8px;"
+            :class="{ on: proj.include_in_resume !== false }"
+            @click="proj.include_in_resume = proj.include_in_resume === false ? true : false; emitUpdate()"
+          >
+            {{ proj.include_in_resume === false ? "Excluded from PDF" : "Include in PDF" }}
+          </button>
+          <button
+            type="button"
             class="icon-btn danger btn-icon-text"
             style="margin-left: auto; width: auto; padding: 0 8px"
-            @click="removeProj(i)"
+            @click="removeProj(Number(i))"
           >
             <Trash2 :size="14" />
           </button>
@@ -394,26 +442,26 @@
           class="form-input"
           placeholder="Live URL (optional)"
           @input="emitUpdate()"
+          @keydown.enter.prevent
         />
         <input
           v-model="proj.github_url"
           class="form-input"
           placeholder="GitHub URL (optional)"
           @input="emitUpdate()"
+          @keydown.enter.prevent
         />
         <input
-          :value="(proj.tags || []).join(', ')"
+          :value="getTagsString('proj-' + i, proj.tags)"
           class="form-input"
           placeholder="Tags: Go, Vue.js, Docker"
-          @input="
-            proj.tags = ($event.target as HTMLInputElement).value
-              .split(',')
-              .map((s) => s.trim());
-            emitUpdate();
-          "
+          @input="updateTags('proj-' + i, ($event.target as HTMLInputElement).value, proj, 'tags')"
+          @blur="finalizeTags('proj-' + i, proj, 'tags')"
+          @keydown.enter.prevent
         />
       </div>
       <button
+        type="button"
         class="btn btn-secondary btn-sm btn-icon-text"
         style="width: 100%; margin-top: 8px"
         @click="addProj"
@@ -424,23 +472,32 @@
 
     <!-- Certificates Editor -->
     <template v-else-if="section.type === 'certificates'">
-      <div v-for="(cert, i) in form.items as any[]" :key="i" class="proj-editor-item">
+      <div v-for="(cert, i) in (form.items as any[])" :key="i" class="proj-editor-item">
         <div class="exp-editor-header">
-          <span style="font-size: 12px; font-weight: 700">Certificate #{{ i + 1 }}</span>
-          <button class="icon-btn danger btn-icon-text" style="margin-left: auto; width: auto; padding: 0 8px" @click="removeCert(Number(i))">
+          <span style="font-size: 12px; font-weight: 700">Certificate #{{ Number(i) + 1 }}</span>
+          <button
+            type="button"
+            class="toggle btn-sm"
+            style="margin-left: 8px;"
+            :class="{ on: cert.include_in_resume !== false }"
+            @click="cert.include_in_resume = cert.include_in_resume === false ? true : false; emitUpdate()"
+          >
+            {{ cert.include_in_resume === false ? "Excluded from PDF" : "Include in PDF" }}
+          </button>
+          <button type="button" class="icon-btn danger btn-icon-text" style="margin-left: auto; width: auto; padding: 0 8px" @click="removeCert(Number(i))">
             <Trash2 :size="14" />
           </button>
         </div>
         <AutoResizeTextarea v-model="cert.title" placeholder="Certificate Title" @input="emitUpdate()" />
         <AutoResizeTextarea v-model="cert.issuer" placeholder="Issuer (e.g. Coursera, Google)" @input="emitUpdate()" />
-        <input v-model="cert.date" class="form-input" placeholder="Issue Date (e.g. 2023)" @input="emitUpdate()" />
-        <input v-model="cert.certificate_url" class="form-input" placeholder="Certificate URL (Link ใบประกาศ)" @input="emitUpdate()" />
+        <input v-model="cert.date" class="form-input" placeholder="Issue Date (e.g. 2023)" @input="emitUpdate()" @keydown.enter.prevent />
+        <input v-model="cert.certificate_url" class="form-input" placeholder="Certificate URL (Link ใบประกาศ)" @input="emitUpdate()" @keydown.enter.prevent />
         <PopupTextEditor v-model="cert.description" title="Description (สั้นๆ)" placeholder="สรุปเนื้อหาใบประกาศ..." :rows="3" @update:modelValue="emitUpdate()" />
         
         <div class="editor-field" style="margin-top: 8px;">
           <label class="form-label">รูปใบประกาศ</label>
           <div class="image-input-row">
-            <input v-model="cert.image_url" class="form-input" placeholder="https://..." @input="emitUpdate()" />
+            <input v-model="cert.image_url" class="form-input" placeholder="https://..." @input="emitUpdate()" @keydown.enter.prevent />
             <input type="file" :ref="el => setCertInputRef(el, Number(i))" accept="image/*" style="display: none" @change="e => uploadCertImage(e, Number(i))" />
             <button type="button" class="btn btn-secondary btn-sm" @click="triggerCertUpload(Number(i))" :disabled="uploadingCert === Number(i)">
               <template v-if="uploadingCert === Number(i)"><Loader2 :size="14" class="spin" /></template>
@@ -457,7 +514,7 @@
           </div>
         </div>
       </div>
-      <button class="btn btn-secondary btn-sm btn-icon-text" style="width: 100%; margin-top: 8px" @click="addCert">
+      <button type="button" class="btn btn-secondary btn-sm btn-icon-text" style="width: 100%; margin-top: 8px" @click="addCert">
         <Plus :size="16" /> Add Certificate
       </button>
     </template>
@@ -471,6 +528,7 @@
           class="form-input"
           placeholder="ploykong@example.com"
           @input="emitUpdate()"
+          @keydown.enter.prevent
         />
       </div>
       <div class="editor-field">
@@ -480,6 +538,7 @@
           class="form-input"
           placeholder="linkedin.com/in/..."
           @input="emitUpdate()"
+          @keydown.enter.prevent
         />
       </div>
       <div class="editor-field">
@@ -489,6 +548,7 @@
           class="form-input"
           placeholder="github.com/..."
           @input="emitUpdate()"
+          @keydown.enter.prevent
         />
       </div>
       <div class="editor-field" style="margin-bottom: 24px">
@@ -498,23 +558,25 @@
           class="form-input"
           placeholder="Bangkok, Thailand"
           @input="emitUpdate()"
+          @keydown.enter.prevent
         />
       </div>
 
       <!-- Custom Contacts List -->
       <div
-        v-for="(contact, i) in (form.custom_items || []) as any[]"
-        :key="contact.id"
+        v-for="(contact, i) in (form.custom_items || [])"
+        :key="(contact as any).id"
         class="proj-editor-item"
       >
         <div class="exp-editor-header">
           <span style="font-size: 12px; font-weight: 700"
-            >Custom #{{ i + 1 }}</span
+            >Custom #{{ Number(i) + 1 }}</span
           >
           <button
+            type="button"
             class="icon-btn danger btn-icon-text"
             style="margin-left: auto; width: auto; padding: 0 8px"
-            @click="removeCustomContact(i)"
+            @click="removeCustomContact(Number(i))"
           >
             <Trash2 :size="14" />
           </button>
@@ -545,6 +607,7 @@
               class="form-input"
               placeholder="Label"
               @input="emitUpdate()"
+              @keydown.enter.prevent
             />
           </div>
           <div class="editor-field">
@@ -554,6 +617,7 @@
               class="form-input"
               placeholder="Value"
               @input="emitUpdate()"
+              @keydown.enter.prevent
             />
           </div>
         </div>
@@ -565,11 +629,13 @@
             class="form-input"
             placeholder="https://... or tel:0812345678"
             @input="emitUpdate()"
+            @keydown.enter.prevent
           />
         </div>
       </div>
 
       <button
+        type="button"
         class="btn btn-secondary btn-sm btn-icon-text"
         style="width: 100%; margin-top: 8px"
         @click="addCustomContact"
@@ -594,7 +660,7 @@
       <div class="editor-field" style="margin-top: 12px">
         <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
           <span>AI Knowledge Center (คำถามที่ AI ตอบไม่ได้)</span>
-          <button class="btn-text btn-sm" @click="fetchGaps" :disabled="loadingGaps">
+          <button type="button" class="btn-text btn-sm" @click="fetchGaps" :disabled="loadingGaps">
             <Loader2 v-if="loadingGaps" :size="12" class="spin" />
             <RefreshCw v-else :size="12" /> Refresh
           </button>
@@ -608,8 +674,8 @@
           <div v-for="(gap, i) in gaps" :key="i" class="gap-item" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 13px; font-weight: 600; color: var(--primary);">Q: {{ gap.question }}</div>
             <div style="display: flex; gap: 8px; margin-top: 8px;">
-               <input v-model="gap.answer" class="form-input" style="font-size: 12px;" placeholder="เพิ่มข้อมูลสำหรับตอบคำถามนี้..." />
-               <button class="btn btn-primary btn-sm" @click="addTrainingData(gap)" :disabled="!gap.answer">Learn</button>
+               <input v-model="gap.answer" class="form-input" style="font-size: 12px;" placeholder="เพิ่มข้อมูลสำหรับตอบคำถามนี้..." @keydown.enter.prevent />
+               <button type="button" class="btn btn-primary btn-sm" @click="addTrainingData(gap)" :disabled="!gap.answer">Learn</button>
             </div>
           </div>
         </div>
@@ -623,12 +689,13 @@
             class="form-input"
             placeholder="เช่น 'คุณถนัดเทคโนโลยีอะไรบ้าง?'"
             @input="emitUpdate()"
+            @keydown.enter.prevent
           />
-          <button class="icon-btn danger" @click="removeExampleQuestion(Number(i))">
+          <button type="button" class="icon-btn danger" @click="removeExampleQuestion(Number(i))">
             <X :size="14" />
           </button>
         </div>
-        <button class="btn btn-secondary btn-sm" style="width: 100%" @click="addExampleQuestion">
+        <button type="button" class="btn btn-secondary btn-sm" style="width: 100%" @click="addExampleQuestion">
           <Plus :size="14" /> Add Question
         </button>
       </div>
@@ -658,10 +725,24 @@
 
     <!-- Education Editor -->
     <template v-else-if="section.type === 'education'">
-      <div v-for="(edu, i) in form.items as any[]" :key="i" class="proj-editor-item">
+      <div v-for="(edu, i) in (form.items as any[])" :key="i" class="proj-editor-item">
         <div class="exp-editor-header">
-          <span style="font-size: 12px; font-weight: 700">Education #{{ i + 1 }}</span>
-          <button class="icon-btn danger btn-icon-text" style="margin-left: auto; width: auto; padding: 0 8px" @click="removeEdu(Number(i))">
+          <span style="font-size: 12px; font-weight: 700">Education #{{ Number(i) + 1 }}</span>
+          <button
+            type="button"
+            class="toggle btn-sm"
+            style="margin-left: 8px;"
+            :class="{ on: edu.include_in_resume !== false }"
+            @click="edu.include_in_resume = edu.include_in_resume === false ? true : false; emitUpdate()"
+          >
+            {{ edu.include_in_resume === false ? "Excluded from PDF" : "Include in PDF" }}
+          </button>
+          <button
+            type="button"
+            class="icon-btn danger btn-icon-text"
+            style="margin-left: auto; width: auto; padding: 0 8px"
+            @click="removeEdu(Number(i))"
+          >
             <Trash2 :size="14" />
           </button>
         </div>
@@ -671,35 +752,45 @@
           <AutoResizeTextarea v-model="edu.field" :style="{ flex: 2 }" placeholder="Field of Study" @input="emitUpdate()" />
         </div>
         <div style="display: flex; gap: 8px;">
-          <input v-model="edu.start_year" class="form-input" style="flex: 1" placeholder="Start Year" @input="emitUpdate()" />
-          <input v-model="edu.end_year" class="form-input" style="flex: 1" placeholder="End Year (or Present)" @input="emitUpdate()" />
-          <input v-model="edu.gpa" class="form-input" style="flex: 1" placeholder="GPA (Optional)" @input="emitUpdate()" />
+          <input v-model="edu.start_year" class="form-input" style="flex: 1" placeholder="Start Year" @input="emitUpdate()" @keydown.enter.prevent />
+          <input v-model="edu.end_year" class="form-input" style="flex: 1" placeholder="End Year (or Present)" @input="emitUpdate()" @keydown.enter.prevent />
+          <input v-model="edu.gpa" class="form-input" style="flex: 1" placeholder="GPA (Optional)" @input="emitUpdate()" @keydown.enter.prevent />
         </div>
       </div>
-      <button class="btn btn-secondary btn-sm btn-icon-text" style="width: 100%; margin-top: 8px" @click="addEdu">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm btn-icon-text"
+        style="width: 100%; margin-top: 8px"
+        @click="addEdu"
+      >
         <Plus :size="16" /> Add Education
       </button>
     </template>
 
     <!-- Stats Editor -->
     <template v-else-if="section.type === 'stats'">
-      <div v-for="(stat, i) in form.items as any[]" :key="i" class="proj-editor-item">
+      <div v-for="(stat, i) in (form.items as any[])" :key="i" class="proj-editor-item">
         <div class="exp-editor-header" style="margin-bottom:0">
           <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
-            <input v-model="stat.value" class="form-input" style="flex: 1" placeholder="Value (e.g. 1M+)" @input="emitUpdate()" />
-            <input v-model="stat.label" class="form-input" style="flex: 2" placeholder="Label (e.g. Users Served)" @input="emitUpdate()" />
-            <button class="icon-btn danger" style="flex-shrink:0" @click="removeStat(Number(i))" title="Remove Stat"><Trash2 :size="14" /></button>
+            <input v-model="stat.value" class="form-input" style="flex: 1" placeholder="Value (e.g. 1M+)" @input="emitUpdate()" @keydown.enter.prevent />
+            <input v-model="stat.label" class="form-input" style="flex: 2" placeholder="Label (e.g. Users Served)" @input="emitUpdate()" @keydown.enter.prevent />
+            <button type="button" class="icon-btn danger" style="flex-shrink:0" @click="removeStat(Number(i))" title="Remove Stat"><Trash2 :size="14" /></button>
           </div>
         </div>
       </div>
-      <button class="btn btn-secondary btn-sm btn-icon-text" style="width: 100%; margin-top: 8px" @click="addStat">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm btn-icon-text"
+        style="width: 100%; margin-top: 8px"
+        @click="addStat"
+      >
         <Plus :size="16" /> Add Stat
       </button>
     </template>
 
     <!-- Social Editor -->
     <template v-else-if="section.type === 'social'">
-      <div v-for="(soc, i) in form.items as any[]" :key="i" class="proj-editor-item">
+      <div v-for="(soc, i) in (form.items as any[])" :key="i" class="proj-editor-item">
         <div class="exp-editor-header" style="margin-bottom:0">
           <div style="display: flex; gap: 8px; width: 100%; align-items: center;">
             <select v-model="soc.platform" class="form-input form-select" style="flex: 1; padding: 6px;" @change="emitUpdate()">
@@ -712,13 +803,18 @@
               <option value="line">Line</option>
               <option value="website">Website</option>
             </select>
-            <input v-model="soc.label" class="form-input" style="flex: 1" placeholder="Label (Optional)" @input="emitUpdate()" />
-            <button class="icon-btn danger" style="flex-shrink:0" @click="removeSocial(Number(i))" title="Remove"><Trash2 :size="14" /></button>
+            <input v-model="soc.label" class="form-input" style="flex: 1" placeholder="Label (Optional)" @input="emitUpdate()" @keydown.enter.prevent />
+            <button type="button" class="icon-btn danger" style="flex-shrink:0" @click="removeSocial(Number(i))" title="Remove"><Trash2 :size="14" /></button>
           </div>
         </div>
-        <input v-model="soc.url" class="form-input" style="margin-top: 6px;" placeholder="URL (https://...)" @input="emitUpdate()" />
+        <input v-model="soc.url" class="form-input" style="margin-top: 6px;" placeholder="URL (https://...)" @input="emitUpdate()" @keydown.enter.prevent />
       </div>
-      <button class="btn btn-secondary btn-sm btn-icon-text" style="width: 100%; margin-top: 8px" @click="addSocial">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm btn-icon-text"
+        style="width: 100%; margin-top: 8px"
+        @click="addSocial"
+      >
         <Plus :size="16" /> Add Social Link
       </button>
     </template>
@@ -738,7 +834,6 @@
     </template>
   </div>
 </template>
-
 <script setup lang="ts">
 import { reactive, watch, ref, computed } from "vue";
 import type { Section } from "@/types";
@@ -749,6 +844,7 @@ import { X, Plus, Trash2, Loader2, RefreshCw, CheckCircle } from "lucide-vue-nex
 import { toastError, toastSuccess } from "@/utils/alert";
 import { useRoute } from "vue-router";
 import { portfolioAPI } from "@/api";
+import ImageCropperModal from "./ImageCropperModal.vue";
 
 const props = defineProps<{ 
   section: Section, 
@@ -761,9 +857,12 @@ const emit = defineEmits<{
 }>();
 const route = useRoute();
 
-// Wrapper to prevent emitting the Vue Proxy directly, which causes infinite update loops in the parent
+let isEmitting = false;
 function emitUpdate() {
+  isEmitting = true;
   emit('update', JSON.parse(JSON.stringify(form)));
+  // Reset after short delay to allow store update to propagate back
+  setTimeout(() => { isEmitting = false; }, 200);
 }
 
 // Check if the current section + template combo locks the layout via CSS
@@ -862,6 +961,7 @@ watch(
     // Prefer top-level database state for UI toggles
     newData.hide_title = !!props.section.hide_title;
     newData.hide_divider = !!props.section.hide_divider;
+    newData.include_in_resume = props.section.include_in_resume !== false;
 
     if (props.section.type === 'hero') {
       if (newData.show_resume === undefined) newData.show_resume = false;
@@ -888,7 +988,7 @@ watch(
 watch(
   () => props.section.data,
   (newData) => {
-    if (!newData) return;
+    if (!newData || isEmitting) return;
     
     // Only update fields that are actually different to avoid input cursor jumps
     Object.keys(newData).forEach(key => {
@@ -909,6 +1009,40 @@ function addSkill() {
 function removeSkill(i: number) {
   form.items.splice(i, 1);
   emitUpdate();
+}
+
+// Cropper State
+const cropper = reactive({
+  show: false,
+  src: '',
+  aspectRatio: 1,
+  type: '' as 'avatar' | 'cover'
+});
+
+function openCropper(file: File, type: 'avatar' | 'cover') {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    cropper.src = e.target?.result as string;
+    cropper.aspectRatio = type === 'avatar' ? 1 : 16 / 9;
+    cropper.type = type;
+    cropper.show = true;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleCropConfirm(blob: Blob) {
+  cropper.show = false;
+  const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
+  
+  if (cropper.type === 'avatar') {
+    uploadingAvatar.value = true;
+    await safeUpload(file, (url) => { form.avatar_url = url; });
+    uploadingAvatar.value = false;
+  } else if (cropper.type === 'cover') {
+    uploadingCover.value = true;
+    await safeUpload(file, (url) => { form.image_url = url; });
+    uploadingCover.value = false;
+  }
 }
 
 // Upload Avatar (for Hero)
@@ -973,18 +1107,14 @@ async function safeUpload(file: File, callback: (url: string) => void) {
 async function uploadAvatar(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
-  uploadingAvatar.value = true;
-  await safeUpload(file, (url) => { form.avatar_url = url; });
-  uploadingAvatar.value = false;
+  openCropper(file, 'avatar');
   if (avatarInputRef.value) avatarInputRef.value.value = "";
 }
 
 async function uploadCover(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
-  uploadingCover.value = true;
-  await safeUpload(file, (url) => { form.image_url = url; });
-  uploadingCover.value = false;
+  openCropper(file, 'cover');
   if (coverInputRef.value) coverInputRef.value.value = "";
 }
 
@@ -1120,6 +1250,34 @@ function removeExampleQuestion(i: number) {
   form.example_questions.splice(i, 1);
   emitUpdate();
 }
+
+const tempTags = reactive<Record<string, string>>({});
+
+function getTagsString(key: string, items: string[]) {
+  if (tempTags[key] !== undefined) return tempTags[key];
+  return (items || []).join(', ');
+}
+
+function updateTags(key: string, value: string, targetItem: any, field: string) {
+  tempTags[key] = value;
+  // If user ends with comma, we just keep the temp string but don't parse to array yet
+  // to avoid clobbering the input value (which would add a space or remove the comma)
+  if (!value.endsWith(',')) {
+    const newVal = value.split(',').map(s => s.trim()).filter(s => s);
+    targetItem[field] = newVal;
+    emitUpdate();
+  }
+}
+
+function finalizeTags(key: string, targetItem: any, field: string) {
+  const value = tempTags[key];
+  if (value !== undefined) {
+    const newVal = value.split(',').map(s => s.trim()).filter(s => s);
+    targetItem[field] = newVal;
+    delete tempTags[key];
+    emitUpdate();
+  }
+}
 </script>
 
 <style scoped>
@@ -1199,6 +1357,7 @@ function removeExampleQuestion(i: number) {
   align-items: center;
   margin-bottom: 4px;
 }
+
 
 .btn-text {
   background: none;

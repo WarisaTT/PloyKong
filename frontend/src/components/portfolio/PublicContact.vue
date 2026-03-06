@@ -1,6 +1,6 @@
 <template>
   <section id="contact" class="pub-contact pub-section" :class="'layout-' + (data.layout || 'centered')" :style="data.section_bg_color ? `background: ${data.section_bg_color} !important; --item-bg: ${data.section_bg_color};` : ''">
-    <div class="section-header-wrapper">
+    <div class="section-header-wrapper animate-slide-up" v-intersect>
       <h2 class="layered-title" :data-text="data.title || 'Contact'">{{ data.title || 'Contact' }}</h2>
     </div>
     <div v-if="data.image_url" class="universal-section-img-container">
@@ -11,7 +11,7 @@
         v-if="data.email"
         id="contact-email"
         href="javascript:void(0)"
-        class="contact-card animate-scale-up"
+        class="contact-card animate-scale-up premium-card-shine"
         v-intersect
         @click="showContactModal = true"
       >
@@ -93,7 +93,7 @@
         v-if="data.linkedin"
         :href="data.linkedin"
         target="_blank"
-        class="contact-card animate-scale-up"
+        class="contact-card animate-scale-up premium-card-shine"
         v-intersect
         style="transition-delay: 100ms"
       >
@@ -105,7 +105,7 @@
         v-if="data.github"
         :href="data.github"
         target="_blank"
-        class="contact-card animate-scale-up"
+        class="contact-card animate-scale-up premium-card-shine"
         v-intersect
         style="transition-delay: 200ms"
       >
@@ -115,7 +115,7 @@
       </a>
       <div
         v-if="data.location"
-        class="contact-card static animate-scale-up"
+        class="contact-card static animate-scale-up premium-card-shine"
         v-intersect
         style="transition-delay: 300ms"
       >
@@ -137,7 +137,7 @@
             ? '_blank'
             : undefined
         "
-        class="contact-card animate-scale-up"
+        class="contact-card animate-scale-up premium-card-shine"
         :class="{ static: !contact.link }"
         v-intersect
         :style="{ transitionDelay: `${400 + Number(i) * 100}ms` }"

@@ -146,43 +146,66 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     return data.data.id;
   }
 
+  // Debounce for updateSection to prevent lag on every keystroke
+  let updateTimeout: any = null;
+  const pendingUpdates = new Map<string, Partial<Section>>();
+
   async function updateSection(sectionId: string, updates: Partial<Section>) {
     if (!activePortfolio.value) return;
-    saving.value = true;
-    try {
-      await sectionAPI.update(sectionId, updates);
-      const idx = sections.value.findIndex((s) => s.id === sectionId);
-      if (idx !== -1) Object.assign(sections.value[idx], updates);
-    } catch (e: any) {
-      if (e.response?.status === 404) {
-        // Section missing from DB — try to re-persist it
-        const lost = sections.value.find(s => s.id === sectionId);
-        if (lost && activePortfolio.value) {
-          try {
-            console.warn(`[store] Re-creating lost section: ${sectionId} (${lost.type})`);
-            const { data } = await sectionAPI.create(activePortfolio.value.id, {
-              type: lost.type,
-              position: lost.position,
-              data: updates.data,
-              hide_title: updates.hide_title,
-              hide_divider: updates.hide_divider,
-            });
-            // Update the local section to use the new DB-assigned ID
-            const idx = sections.value.findIndex(s => s.id === sectionId);
-            if (idx !== -1) {
-              sections.value[idx].id = data.data.id;
-              Object.assign(sections.value[idx], updates);
-            }
-          } catch (createErr) {
-            console.error('[store] Failed to re-create section:', createErr);
-          }
-        }
-        return;
-      }
-      throw e;
-    } finally {
-      saving.value = false;
+
+    // Update local state immediately for snappy UI
+    const idx = sections.value.findIndex((s) => s.id === sectionId);
+    if (idx !== -1) {
+      Object.assign(sections.value[idx], updates);
     }
+
+    // Merge updates for this section
+    const currentPending = pendingUpdates.get(sectionId) || {};
+    pendingUpdates.set(sectionId, { ...currentPending, ...updates });
+
+    if (updateTimeout) clearTimeout(updateTimeout);
+
+    saving.value = true;
+    updateTimeout = setTimeout(async () => {
+      try {
+        const mergedUpdates = pendingUpdates.get(sectionId);
+        if (mergedUpdates) {
+          pendingUpdates.delete(sectionId);
+          await sectionAPI.update(sectionId, mergedUpdates);
+        }
+      } catch (e: any) {
+        if (e.response?.status === 404) {
+          // Section missing from DB — try to re-persist it
+          const lost = sections.value.find(s => s.id === sectionId);
+          if (lost && activePortfolio.value) {
+            try {
+              console.warn(`[store] Re-creating lost section: ${sectionId} (${lost.type})`);
+              const { data } = await sectionAPI.create(activePortfolio.value.id, {
+                type: lost.type,
+                position: lost.position,
+                data: lost.data, // use latest local data
+                hide_title: lost.hide_title,
+                hide_divider: lost.hide_divider,
+                include_in_resume: lost.include_in_resume,
+              });
+              // Update the local section to use the new DB-assigned ID
+              const idx = sections.value.findIndex(s => s.id === sectionId);
+              if (idx !== -1) {
+                sections.value[idx].id = data.data.id;
+              }
+            } catch (createErr) {
+              console.error('[store] Failed to re-create section:', createErr);
+            }
+          }
+        } else {
+          showError("Failed to save changes");
+        }
+      } finally {
+        if (pendingUpdates.size === 0) {
+          saving.value = false;
+        }
+      }
+    }, 1000); // 1 second debounce
   }
 
   async function deleteSection(sectionId: string) {

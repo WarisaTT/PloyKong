@@ -67,6 +67,7 @@ export interface Section {
   is_visible: boolean;
   hide_title?: boolean;
   hide_divider?: boolean;
+  include_in_resume?: boolean;
   column_span?: 'full' | 'half'; // half = 1/2 width, sits side-by-side with next half section
   created_at?: string;
 }

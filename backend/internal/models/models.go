@@ -114,17 +114,18 @@ const (
 )
 
 type Section struct {
-	ID          string          `json:"id"`
-	PortfolioID string          `json:"portfolio_id"`
-	Type        SectionType     `json:"type"`
-	Position    int             `json:"position"`
-	Data        json.RawMessage `json:"data"` // flexible JSON
-	IsVisible   bool            `json:"is_visible"`
-	HideTitle   bool            `json:"hide_title"`
-	HideDivider bool            `json:"hide_divider"`
-	ColumnSpan  string          `json:"column_span"` // "full" | "half"
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID              string          `json:"id"`
+	PortfolioID     string          `json:"portfolio_id"`
+	Type            SectionType     `json:"type"`
+	Position        int             `json:"position"`
+	Data            json.RawMessage `json:"data"` // flexible JSON
+	IsVisible       bool            `json:"is_visible"`
+	HideTitle       bool            `json:"hide_title"`
+	HideDivider     bool            `json:"hide_divider"`
+	IncludeInResume bool            `json:"include_in_resume"`
+	ColumnSpan      string          `json:"column_span"` // "full" | "half"
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
 // ─── Hero Section Data ────────────────────────────────────────────────────────

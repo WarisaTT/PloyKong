@@ -67,6 +67,19 @@ defineProps<{ data: any }>();
 }
 
 /* Layout alignment */
+.layout-centered .custom-content {
+  text-align: center !important;
+}
+.layout-centered .custom-content :deep(*) {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.layout-centered .custom-content :deep(p), 
+.layout-centered .custom-content :deep(div),
+.layout-centered .custom-content :deep(span) {
+  text-align: center !important;
+}
+
 .layout-left .custom-content {
   text-align: left !important;
 }

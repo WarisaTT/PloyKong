@@ -3,7 +3,7 @@
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
   ]" :style="data.section_bg_color ? `background: ${data.section_bg_color} !important; --item-bg: ${data.section_bg_color};` : ''">
-    <div class="section-header-wrapper">
+    <div class="section-header-wrapper animate-slide-up" v-intersect>
       <h2 class="layered-title" :data-text="data.title || 'Skills'">{{ data.title || 'Skills' }}</h2>
     </div>
     <div class="pub-section-content">
@@ -12,12 +12,12 @@
       </div>
       <div v-if="groupedSkills.length > 0" class="skills-groups">
         <div v-for="(group, gIdx) in groupedSkills" :key="gIdx" class="skills-group">
-          <h3 v-if="group.category && (group.category !== 'Skills' || groupedSkills.length > 1)" class="group-title">{{ group.category }}</h3>
+          <h3 v-if="group.category && (group.category !== 'Skills' || groupedSkills.length > 1)" class="group-title animate-slide-up" v-intersect>{{ group.category }}</h3>
           <div class="skills-grid grid-tags">
             <div
               v-for="(skill, i) in group.items"
               :key="i"
-              class="skill-item skill-tag animate-slide-in-left is-visible"
+              class="skill-item skill-tag animate-slide-in-left"
               v-intersect
               :style="{ transitionDelay: `${(Number(i) % 10) * 50}ms` }"
             >
@@ -168,6 +168,9 @@ const groupedSkills = computed(() => {
 }
 .skill-tag:hover {
   transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px var(--primary-glow);
+  background: var(--primary);
+  color: white;
 }
 .skill-tag .skill-header {
   margin-bottom: 0;

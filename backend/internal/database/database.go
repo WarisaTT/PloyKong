@@ -190,6 +190,12 @@ func Migrate(db *sql.DB) error {
 		db.Exec(`ALTER TABLE sections ADD COLUMN hide_divider BOOLEAN NOT NULL DEFAULT FALSE`)
 	}
 
+	var includeInResumeCount int
+	db.QueryRow(`SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sections' AND COLUMN_NAME = 'include_in_resume'`).Scan(&includeInResumeCount)
+	if includeInResumeCount == 0 {
+		db.Exec(`ALTER TABLE sections ADD COLUMN include_in_resume BOOLEAN NOT NULL DEFAULT TRUE`)
+	}
+
 	// ─── User Google ID Migration ──────────────────────────────────
 	var googleIDColCount int
 	err = db.QueryRow(`

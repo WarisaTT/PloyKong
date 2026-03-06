@@ -854,17 +854,20 @@
 
 .tpl-firstjobber .pub-hero {
     display: flex !important;
-    margin-top: -20px !important;
+    margin-top: 0 !important;
     background: none !important;
     min-height: auto !important;
-    margin-bottom: -30px !important;
+    margin-bottom: 20px !important;
     justify-content: center !important;
+    padding: 0 16px !important;
+    /* Keep it away from screen edge */
 }
 
 .tpl-firstjobber .pub-hero-inner {
     margin: 0 auto !important;
     position: relative !important;
-    max-width: 100% !important;
+    max-width: 1200px !important;
+    /* Limit width like other sections */
     width: 100% !important;
     display: flex !important;
     flex-direction: row !important;
@@ -876,6 +879,12 @@
     border: 1px solid var(--border) !important;
     border-radius: 18px !important;
     padding: 32px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.tpl-firstjobber .pub-hero .universal-section-img {
+    display: none !important;
+    /* Firstjobber Hero inner is the box */
 }
 
 .tpl-firstjobber .pub-hero>div {
@@ -1420,6 +1429,30 @@ body.theme-light .tpl-business .layered-title,
 }
 
 /* ── Step 2: Containers ────────────────────────────────────── */
+.tpl-business.public-portfolio {
+    position: relative;
+    background: var(--tpl-bg) !important;
+}
+
+.tpl-business.public-portfolio::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 30%;
+    background: var(--primary) !important;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Ensure mobile view doesn't have the strip if it's stacked */
+@media (max-width: 1024px) {
+    .tpl-business.public-portfolio::before {
+        display: none !important;
+    }
+}
+
 .tpl-business .sections-container,
 .tpl-business .pub-container,
 .tpl-business .section-group-wrap,
@@ -1427,7 +1460,7 @@ body.theme-light .tpl-business .layered-title,
     margin: 0 !important;
     padding: 0 !important;
     max-width: 100% !important;
-    background: transparent;
+    background: transparent !important;
 }
 
 .tpl-business .sections-grid {
@@ -1439,7 +1472,8 @@ body.theme-light .tpl-business .layered-title,
     padding: 0 !important;
     margin: 0 !important;
     align-items: stretch !important;
-    background: linear-gradient(to right, var(--primary) 3fr, transparent 3fr) !important;
+    background: transparent !important;
+    /* Managed by page-level pseudo */
 }
 
 /* ── Step 3: Section Wrappers ──────────────────────────────── */
@@ -1474,7 +1508,8 @@ body.theme-light .tpl-business .layered-title,
     grid-column: 1 / -1 !important;
     position: relative !important;
     overflow: hidden !important;
-    background: linear-gradient(to right, var(--primary) 30%, transparent 30%) !important;
+    background: transparent !important;
+    /* Managed by page-level pseudo */
     color: var(--text) !important;
 }
 
@@ -1486,8 +1521,8 @@ body.theme-light .tpl-business .layered-title,
 
 /* Sidebar: ล้างทุก child ให้ transparent */
 .tpl-business .section-wrapper.is-row-start:not(.span-full) *:not(img):not(svg):not(.hero-img):not(video) {
-    background: var(--primary) !important;
-    background-color: var(--primary) !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* span-full: ล้าง chrome wrapper */
@@ -1504,37 +1539,57 @@ body.theme-light .tpl-business .layered-title,
 .tpl-business .section-wrapper.is-right .section-block,
 .tpl-business .section-wrapper.is-right .section-preview,
 .tpl-business .section-wrapper.is-right .section-inner {
-    background: var(--tpl-bg) !important;
+    background: transparent !important;
 }
 
 /* ── Step 5: pub-section padding ───────────────────────────── */
 .tpl-business .pub-section {
-    background: var(--tpl-bg) !important;
+    background: transparent !important;
     border: none !important;
     width: 100% !important;
     overflow: hidden !important;
 }
 
-.tpl-business .section-wrapper.is-row-start .pub-section {
-    padding: 32px 24px !important;
+/* Sidebar sections (left 30%) */
+.tpl-business .section-wrapper.is-row-start:not(.span-full) .pub-section {
+    padding: 64px 32px !important;
+}
+
+/* Main col sections (right 70%) */
+.tpl-business .section-wrapper.is-right:not(.span-full) .pub-section {
+    padding: 64px 48px !important;
 }
 
 
 
-/* span-full: content offset ไปอยู่ 30% ขวา */
+/* span-full behavior: Shifting content to 70% column while preserving background structure */
 .tpl-business .section-wrapper.span-full .pub-section {
+    display: flex !important;
     flex-direction: column !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 70% !important;
     margin-left: 30% !important;
-    padding: 64px 48px !important;
-    /* Reduced padding for "fuller" look */
-    background: var(--tpl-bg) !important;
+    background: transparent !important;
     color: var(--tpl-text) !important;
     position: relative;
     z-index: 1;
-    min-height: 100px;
-    width: 70% !important;
-    /* Occupies exactly 70% */
-    border-left: 1px solid rgba(0, 0, 0, 0.05) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.tpl-business .section-wrapper.span-full .section-header-wrapper {
+    width: 100% !important;
+    padding: 64px 48px 15px 48px !important;
+    text-align: left !important;
+    flex-shrink: 0;
+}
+
+.tpl-business .section-wrapper.span-full .pub-section-content {
+    width: 100% !important;
+    padding: 0 48px 64px 48px !important;
+    flex-grow: 1;
+    margin-left: 0 !important;
+    border-left: none !important;
 }
 
 /* Ensure inner content fills the entire 70% right side */
@@ -1564,7 +1619,7 @@ body.theme-light .tpl-business .layered-title,
 }
 
 .tpl-business .is-right .pub-section:not(.layout-split) .section-header-wrapper,
-.tpl-business .span-full .pub-section:not(.layout-split) .section-header-wrapper {
+.tpl-business .span-full .section-header-wrapper {
     text-align: center !important;
 }
 
@@ -1591,9 +1646,29 @@ body.theme-light .tpl-business .layered-title,
 
 /* Sidebar title color (Dynamic) */
 .tpl-business .is-row-start .layered-title {
-    color: var(--secondary) !important;
-    -webkit-text-fill-color: var(--primary) !important;
-    border-bottom-color: var(--primary) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Span-full title alignment: Centered in the right 70% area */
+.tpl-business .span-full .section-header-wrapper .layered-title {
+    color: var(--text) !important;
+    -webkit-text-fill-color: var(--text) !important;
+    border-bottom: 1px solid var(--tpl-border) !important;
+    text-shadow: none !important;
+}
+
+.tpl-business .is-row-start .group-title,
+.tpl-business .is-row-start .contact-val,
+.tpl-business .is-row-start .stat-value {
+    color: #ffffff !important;
+}
+
+.tpl-business .is-row-start .stat-label,
+.tpl-business .is-row-start .contact-label {
+    color: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* ── Step 7: Hero ──────────────────────────────────────────── */
@@ -1671,6 +1746,7 @@ body.theme-light .tpl-business .layered-title,
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
     border: none !important;
     object-fit: cover;
+    animation: business-premium-float 6s ease-in-out infinite;
 }
 
 .tpl-business .hero-avatar-fallback {
@@ -1891,12 +1967,6 @@ body.theme-light .tpl-business .layered-title,
         transition: padding-left 0.3s ease !important;
     }
 
-    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item:hover,
-    .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .education-item:hover {
-        padding-left: 8px !important;
-        border-left: 2px solid var(--primary) !important;
-        background: transparent !important;
-    }
 
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .experience-item.has-timeline,
     .tpl-business .sections-grid>.section-wrapper.is-row-start:not(.span-full) .education-item.has-timeline {
@@ -1996,10 +2066,7 @@ body.theme-light .tpl-business .layered-title,
     transition: all 0.25s ease;
 }
 
-.tpl-business .skill-tag:hover {
-    padding-left: 12px !important;
-    border-bottom-color: var(--primary) !important;
-}
+
 
 .tpl-business .skill-tag::before {
     display: none !important;
@@ -2088,11 +2155,7 @@ body.theme-light .tpl-business .layered-title,
     /* Image on top for sidebar */
 }
 
-.tpl-business .proj-card:hover {
-    background: color-mix(in srgb, var(--tpl-text) 3%, transparent) !important;
-    padding-left: 16px !important;
-    transform: translateX(4px);
-}
+
 
 .tpl-business .proj-card:last-child {
     border-bottom: none !important;
@@ -2186,10 +2249,7 @@ body.theme-light .tpl-business .layered-title,
     transition: background 0.3s ease;
 }
 
-.tpl-business .experience-item:hover,
-.tpl-business .education-item:hover {
-    background: color-mix(in srgb, var(--tpl-text) 2%, transparent) !important;
-}
+
 
 .tpl-business .experience-item.has-timeline,
 .tpl-business .education-item.has-timeline {
@@ -2635,11 +2695,23 @@ body.theme-light .tpl-business .layered-title,
         margin-bottom: 8px !important;
     }
 
-    .tpl-business .pk-watermark,
+    .tpl-business .pk-watermark {
+        display: none !important;
+    }
+
     .tpl-business .hero-cta,
     .tpl-business .chat-fab {
         display: none !important;
     }
+}
+
+/* Business Watermark Position & Styling */
+.tpl-business .pk-watermark {
+    width: 70% !important;
+    margin-left: 30% !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: transparent !important;
+    padding: 60px 0 !important;
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2702,4 +2774,231 @@ body.theme-light .tpl-business .layered-title,
 
 .tpl-firstjobber .pub-section {
     min-height: 100% !important;
+
+}
+
+/* PREMIUM SCROLL ANIMATIONS (v-intersect)                       */
+/* ───────────────────────────────────────────────────────────── */
+
+.animate-slide-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, opacity;
+}
+
+.animate-slide-up.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.animate-fade-in-on-scroll {
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in-on-scroll.is-visible {
+    opacity: 1;
+}
+
+.animate-scale-up {
+    opacity: 0;
+    transform: scale(0.85);
+    transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, opacity;
+}
+
+.animate-scale-up.is-visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.animate-slide-in-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, opacity;
+}
+
+.animate-slide-in-right.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.animate-slide-in-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, opacity;
+}
+
+.animate-slide-in-left.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Section Reveal Effect */
+.section-reveal {
+    opacity: 0;
+    transform: translateY(80px) scale(0.95);
+    filter: blur(10px);
+    transition:
+        opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+        filter 1.2s ease;
+    will-change: transform, opacity, filter;
+}
+
+.section-reveal.is-visible,
+.is-visible .section-reveal,
+.is-visible.section-reveal {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    filter: blur(0) !important;
+}
+
+/* Scrollytelling: Dynamic Side Reveals */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-100px) rotate(-2deg);
+    filter: blur(8px);
+    transition: all 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(100px) rotate(2deg);
+    filter: blur(8px);
+    transition: all 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.is-visible .reveal-left,
+.is-visible.reveal-left {
+    opacity: 1 !important;
+    transform: translateX(0) rotate(0) !important;
+    filter: blur(0) !important;
+}
+
+.is-visible .reveal-right,
+.is-visible.reveal-right {
+    opacity: 1 !important;
+    transform: translateX(0) rotate(0) !important;
+    filter: blur(0) !important;
+}
+
+/* Glassmorphism for sections in scrollytelling */
+.scrolly-glass {
+    background: rgba(var(--bg-rgb), 0.4) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Premium Section Transitions */
+.section-group-wrap {
+    perspective: 1000px;
+}
+
+/* Hover Shine Effect for cards */
+.premium-card-shine {
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-card-shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.03) 45%,
+            rgba(255, 255, 255, 0.08) 50%,
+            rgba(255, 255, 255, 0.03) 55%,
+            transparent 100%);
+    transform: rotate(30deg);
+    transition: all 0.6s;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.premium-card-shine:hover::after {
+    left: 100%;
+    opacity: 1;
+}
+
+/* Floating Glow Orbs for Background */
+.bg-glow-aura {
+    position: fixed;
+    top: -10%;
+    right: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(80px);
+    opacity: 0.3;
+    animation: float-glow 20s infinite alternate;
+}
+
+.bg-glow-aura-2 {
+    position: fixed;
+    bottom: -10%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(80px);
+    opacity: 0.2;
+    animation: float-glow 25s infinite alternate-reverse;
+}
+
+@keyframes float-glow {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        transform: translate(50px, 50px) scale(1.1);
+    }
+}
+
+@keyframes business-premium-float {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1) rotate(0deg);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    50% {
+        transform: translateY(-12px) scale(1.03) rotate(0.5deg);
+        box-shadow: 0 35px 70px rgba(0, 0, 0, 0.35);
+    }
+}
+
+/* Stagger Delays */
+.delay-100 {
+    transition-delay: 100ms;
+}
+
+.delay-200 {
+    transition-delay: 200ms;
+}
+
+.delay-300 {
+    transition-delay: 300ms;
+}
+
+.delay-400 {
+    transition-delay: 400ms;
+}
+
+.delay-500 {
+    transition-delay: 500ms;
 }

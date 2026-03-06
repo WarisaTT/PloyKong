@@ -1,9 +1,9 @@
 <!-- PublicHero.vue - renders the hero section on the public portfolio page -->
 <template>
-  <section class="pub-hero" :class="'layout-' + (data.layout || 'centered')" :style="data.section_bg_color ? { background: data.section_bg_color + ' !important' } : {}">
-    <div class="pub-hero-inner">
+  <section class="pub-hero" :class="'layout-' + (data.layout || 'centered')" :style="(theme?.template !== 'firstjobber' && data.section_bg_color) ? { background: data.section_bg_color + ' !important' } : {}">
+    <div class="pub-hero-inner" :style="(theme?.template === 'firstjobber' && data.section_bg_color) ? { background: data.section_bg_color + ' !important' } : {}">
     <img v-if="data.image_url" :src="data.image_url" class="universal-section-img" alt="Cover" />
-    <div class="hero-avatar-wrap">
+    <div class="hero-avatar-wrap animate-scale-up" v-intersect>
       <img
         v-if="data.avatar_url"
         :src="data.avatar_url"
@@ -57,7 +57,6 @@
       </div>
       </div>
     </div>
-    
   </section>
 </template>
 <script setup lang="ts">
@@ -405,6 +404,61 @@ async function downloadResume() {
   .hero-role-badge {
     font-size: 11px;
     padding: 6px 16px;
+  }
+}
+
+/* Scroll Indicator */
+.scroll-indicator-wrap {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.mouse {
+  width: 20px;
+  height: 35px;
+  border: 2px solid var(--text);
+  border-radius: 20px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.wheel {
+  width: 2px;
+  height: 6px;
+  background: var(--primary);
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  animation: scroll-wheel 1.6s ease-in-out infinite;
+}
+
+@keyframes scroll-wheel {
+  0% { transform: translate(-50%, 0); opacity: 1; }
+  100% { transform: translate(-50%, 15px); opacity: 0; }
+}
+
+.scroll-text {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .scroll-indicator-wrap {
+    display: none;
   }
 }
 </style>

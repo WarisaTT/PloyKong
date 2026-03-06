@@ -3,7 +3,7 @@
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
   ]" :style="data.section_bg_color ? `background: ${data.section_bg_color} !important; --item-bg: ${data.section_bg_color};` : ''">
-    <div class="section-header-wrapper">
+    <div class="section-header-wrapper animate-slide-up" v-intersect>
       <h2 class="layered-title" :data-text="data.title || 'Certificates'">{{ data.title || 'Certificates & Awards' }}</h2>
     </div>
     
@@ -19,7 +19,7 @@
           :key="i"
           :href="cert.certificate_url || undefined"
           :target="cert.certificate_url ? '_blank' : undefined"
-          class="cert-card animate-scale-up"
+          class="cert-card animate-scale-up premium-card-shine"
           :class="{ 'is-link': !!cert.certificate_url }"
           v-intersect
           :style="{ transitionDelay: `${Number(i) * 100}ms` }"

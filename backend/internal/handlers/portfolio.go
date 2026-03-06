@@ -130,8 +130,6 @@ func (h *PortfolioHandler) Create(c *fiber.Ctx) error {
 	})
 }
 
-// ─── Get Portfolio by ID ──────────────────────────────────────────────────────
-
 func (h *PortfolioHandler) GetByID(c *fiber.Ctx) error {
 	claims := middleware.GetUserClaims(c)
 	id := c.Params("id")
@@ -143,7 +141,8 @@ func (h *PortfolioHandler) GetByID(c *fiber.Ctx) error {
 	err := h.db.QueryRow(
 		`SELECT id, user_id, slug, title, description, theme, seo_title, seo_desc,
 		 is_published, view_count, expires_at, created_at, updated_at
-		 FROM portfolios WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		 FROM portfolios 
+		 WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
 		id, claims.UserID,
 	).Scan(
 		&p.ID, &p.UserID, &p.Slug, &p.Title, &descNull, &themeRaw,
@@ -158,6 +157,18 @@ func (h *PortfolioHandler) GetByID(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
 
+	// ─── Check Expire ─────────────────────────
+	if p.ExpiresAt != nil && p.ExpiresAt.Before(time.Now()) && p.IsPublished {
+		_, _ = h.db.Exec(
+			`UPDATE portfolios 
+			SET is_published = FALSE 
+			WHERE id = ?`,
+			p.ID,
+		)
+
+		p.IsPublished = false
+	}
+
 	p.ScanTheme(themeRaw)
 	p.Description = descNull
 	p.SEOTitle = seoTitleNull
@@ -167,17 +178,20 @@ func (h *PortfolioHandler) GetByID(c *fiber.Ctx) error {
 	sections, _ := h.loadSections(id)
 	p.Sections = sections
 
-	return c.JSON(fiber.Map{"success": true, "data": p})
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    p,
+	})
 }
 
 // ─── Update Portfolio ─────────────────────────────────────────────────────────
-
 type UpdatePortfolioRequest struct {
 	Title       *string             `json:"title"`
 	Description *string             `json:"description"`
 	Theme       *models.ThemeConfig `json:"theme"`
 	SEOTitle    *string             `json:"seo_title"`
 	SEODesc     *string             `json:"seo_desc"`
+	ExpiresAt   **time.Time         `json:"expires_at"`
 }
 
 func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
@@ -191,7 +205,15 @@ func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
 
 	// Verify ownership
 	var count int
-	h.db.QueryRow("SELECT COUNT(*) FROM portfolios WHERE id = ? AND user_id = ? AND deleted_at IS NULL", id, claims.UserID).Scan(&count)
+	err := h.db.QueryRow(
+		"SELECT COUNT(*) FROM portfolios WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
+		id, claims.UserID,
+	).Scan(&count)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "database error")
+	}
+
 	if count == 0 {
 		return fiber.NewError(fiber.StatusNotFound, "portfolio not found")
 	}
@@ -202,20 +224,51 @@ func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
 		themeParam = string(themeJSON)
 	}
 
-	_, err := h.db.Exec(
-		`UPDATE portfolios SET title = COALESCE(?, title),
-		 description = COALESCE(?, description),
-		 theme = COALESCE(?, theme),
-		 seo_title = COALESCE(?, seo_title),
-		 seo_desc = COALESCE(?, seo_desc)
-		 WHERE id = ?`,
-		req.Title, req.Description, themeParam, req.SEOTitle, req.SEODesc, id,
+	// Update portfolio
+	_, err = h.db.Exec(
+		`UPDATE portfolios SET
+	 title = COALESCE(?, title),
+	 description = COALESCE(?, description),
+	 theme = COALESCE(?, theme),
+	 seo_title = COALESCE(?, seo_title),
+	 seo_desc = COALESCE(?, seo_desc),
+	 expires_at = COALESCE(?, expires_at),
+	 is_published = CASE
+		WHEN COALESCE(?, expires_at) IS NOT NULL
+		AND COALESCE(?, expires_at) < NOW()
+		THEN FALSE
+		ELSE is_published
+	 END
+	 WHERE id = ?`,
+		req.Title,
+		req.Description,
+		themeParam,
+		req.SEOTitle,
+		req.SEODesc,
+		req.ExpiresAt,
+		req.ExpiresAt,
+		req.ExpiresAt,
+		id,
 	)
+
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to update portfolio")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "portfolio updated"})
+	// Auto unpublish if expired
+	_, _ = h.db.Exec(
+		`UPDATE portfolios
+		 SET is_published = FALSE
+		 WHERE id = ?
+		 AND expires_at IS NOT NULL
+		 AND expires_at < NOW()`,
+		id,
+	)
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "portfolio updated",
+	})
 }
 
 // ─── Delete Portfolio ─────────────────────────────────────────────────────────
@@ -274,7 +327,7 @@ func (h *PortfolioHandler) Unpublish(c *fiber.Ctx) error {
 
 func (h *PortfolioHandler) loadSections(portfolioID string) ([]models.Section, error) {
 	rows, err := h.db.Query(
-		`SELECT id, portfolio_id, type, position, data, is_visible, COALESCE(column_span, 'full')
+		`SELECT id, portfolio_id, type, position, data, is_visible, hide_title, hide_divider, include_in_resume, COALESCE(column_span, 'full')
 		 FROM sections WHERE portfolio_id = ? ORDER BY position ASC`,
 		portfolioID,
 	)
@@ -287,7 +340,7 @@ func (h *PortfolioHandler) loadSections(portfolioID string) ([]models.Section, e
 	for rows.Next() {
 		var s models.Section
 		var dataRaw []byte
-		if err := rows.Scan(&s.ID, &s.PortfolioID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.ColumnSpan); err != nil {
+		if err := rows.Scan(&s.ID, &s.PortfolioID, &s.Type, &s.Position, &dataRaw, &s.IsVisible, &s.HideTitle, &s.HideDivider, &s.IncludeInResume, &s.ColumnSpan); err != nil {
 			continue
 		}
 		s.Data = json.RawMessage(dataRaw)
@@ -421,6 +474,61 @@ func (c *cv) measureW(font string, size int, s string) float64 {
 }
 
 // wrapText draws word-wrapped text, handles newlines (\n), and returns final y after last line
+// estimateWrapHeight predicts the height needed for wrapText without drawing it
+func (c *cv) estimateWrapHeight(font string, size int, text string, maxW, lineH float64) float64 {
+	_ = c.p.SetFont(font, "", size)
+	lines := strings.Split(text, "\n")
+	totalH := 0.0
+
+	for _, l := range lines {
+		if l == "" {
+			totalH += lineH
+			continue
+		}
+		rawWords := strings.Split(l, " ")
+		currentLine := ""
+		for _, w := range rawWords {
+			ww, _ := c.p.MeasureTextWidth(w)
+			if ww > maxW {
+				if currentLine != "" {
+					totalH += lineH
+					currentLine = ""
+				}
+				runes := []rune(w)
+				temp := ""
+				for _, r := range runes {
+					test := temp + string(r)
+					tw, _ := c.p.MeasureTextWidth(test)
+					if tw > maxW {
+						totalH += lineH
+						temp = string(r)
+					} else {
+						temp = test
+					}
+				}
+				currentLine = temp
+				continue
+			}
+			test := currentLine
+			if test != "" {
+				test += " "
+			}
+			test += w
+			tw, _ := c.p.MeasureTextWidth(test)
+			if tw > maxW && currentLine != "" {
+				totalH += lineH
+				currentLine = w
+			} else {
+				currentLine = test
+			}
+		}
+		if currentLine != "" {
+			totalH += lineH
+		}
+	}
+	return totalH
+}
+
 func (c *cv) wrapText(x, y float64, col [3]uint8, font string, size int, text string, maxW, lineH float64, maxLines int) float64 {
 	_ = c.p.SetFont(font, "", size)
 
@@ -437,11 +545,52 @@ func (c *cv) wrapText(x, y float64, col [3]uint8, font string, size int, text st
 			continue
 		}
 
-		// Use Split(" ") instead of Fields() to preserve most spaces, though we TrimSpace at the end
 		rawWords := strings.Split(l, " ")
 		currentLine := ""
 
 		for _, w := range rawWords {
+			// If current word itself is extremely long (like Thai text without spaces or a URL)
+			ww, _ := c.p.MeasureTextWidth(w)
+			if ww > maxW {
+				// Flush current line first
+				if currentLine != "" {
+					if y+lineH > c.h-45 {
+						return y
+					}
+					c.text(x, y, col, font, size, currentLine)
+					y += lineH
+					drawn++
+					currentLine = ""
+					if maxLines > 0 && drawn >= maxLines {
+						break
+					}
+				}
+
+				// Break the long word by characters
+				runes := []rune(w)
+				temp := ""
+				for _, r := range runes {
+					test := temp + string(r)
+					tw, _ := c.p.MeasureTextWidth(test)
+					if tw > maxW {
+						if y+lineH > c.h-45 {
+							return y
+						}
+						c.text(x, y, col, font, size, temp)
+						y += lineH
+						drawn++
+						temp = string(r)
+						if maxLines > 0 && drawn >= maxLines {
+							break
+						}
+					} else {
+						temp = test
+					}
+				}
+				currentLine = temp
+				continue
+			}
+
 			test := currentLine
 			if test != "" {
 				test += " "
@@ -453,7 +602,6 @@ func (c *cv) wrapText(x, y float64, col [3]uint8, font string, size int, text st
 				if maxLines > 0 && drawn >= maxLines {
 					break
 				}
-				// Protection: don't overlap with footer (hline at h-40)
 				if y+lineH > c.h-45 {
 					return y
 				}
@@ -494,7 +642,7 @@ func (c *cv) addPage() {
 }
 
 // switchAndAddPage moves to next page for current column, either existing or new
-func (c *cv) switchAndAddPage(x float64) {
+func (c *cv) switchAndAddPage(_ float64) {
 	c.drawFooter()
 	if c.page < c.bodyMaxPage {
 		c.page++
@@ -796,7 +944,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	// ── RIGHT: Skills ──────────────────────────────────────────────────────────
 	lastRightTitle := ""
 	for i, sec := range sections {
-		if !sec.IsVisible || sec.Type != "skills" {
+		if !sec.IsVisible || !sec.IncludeInResume || sec.Type != "skills" {
 			continue
 		}
 		items := jslice(data[i], "items")
@@ -807,7 +955,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 		title := firstOf(jstr(data[i], "title"), "Skills")
 
 		cv.y = rightY
-		if title != lastRightTitle && !jbool(data[i], "hide_title") {
+		if title != lastRightTitle && !sec.HideTitle {
 			cv.sectionTitle(rx, title)
 			lastRightTitle = title
 		}
@@ -865,7 +1013,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 	// ── RIGHT: Education ───────────────────────────────────────────────────────
 	for i, sec := range sections {
-		if !sec.IsVisible || sec.Type != "education" {
+		if !sec.IsVisible || !sec.IncludeInResume || sec.Type != "education" {
 			continue
 		}
 		items := jslice(data[i], "items")
@@ -876,12 +1024,15 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 		title := firstOf(jstr(data[i], "title"), "Education")
 
 		cv.y = rightY
-		if title != lastRightTitle && !jbool(data[i], "hide_title") {
+		if title != lastRightTitle && !sec.HideTitle {
 			cv.sectionTitle(rx, title)
 			lastRightTitle = title
 		}
 		for _, item := range items {
 			im := toJMap(item)
+			if im["include_in_resume"] == false {
+				continue
+			}
 			degree := jstr(im, "degree")
 			school := jstr(im, "school")
 			startD := jstr(im, "start_date")
@@ -896,9 +1047,9 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 					cv.switchAndAddPage(rx)
 					cv.sectionTitle(rx, title+" CONT.")
 				}
-				cv.text(rx, cv.y, cBlack, "THSarabun", 10, degree)
-				cv.y += 13
-				cv.text(rx, cv.y, cv.cAccent, "THSarabun", 9, school)
+				cv.y = cv.wrapText(rx, cv.y, cBlack, "THSarabun", 10, degree, rw, 12, 0)
+				cv.y += 1
+				cv.y = cv.wrapText(rx, cv.y, cv.cAccent, "THSarabun", 9, school, rw, 11, 0)
 				cv.y += 12
 				if dates != "" {
 					cv.text(rx, cv.y, cGray400, "THSarabun", 9, dates)
@@ -917,7 +1068,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 	// ── RIGHT: Certificates ──────────────────────────────────────────────────
 	for i, sec := range sections {
-		if !sec.IsVisible || sec.Type != "certificates" {
+		if !sec.IsVisible || !sec.IncludeInResume || sec.Type != "certificates" {
 			continue
 		}
 		items := jslice(data[i], "items")
@@ -927,13 +1078,16 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 		title := firstOf(jstr(data[i], "title"), "Certificates")
 		cv.y = rightY
-		if title != lastRightTitle && !jbool(data[i], "hide_title") {
+		if title != lastRightTitle && !sec.HideTitle {
 			cv.sectionTitle(rx, title)
 			lastRightTitle = title
 		}
 
 		for _, item := range items {
 			im := toJMap(item)
+			if im["include_in_resume"] == false {
+				continue
+			}
 			certTitle := jstr(im, "title")
 			issuer := jstr(im, "issuer")
 			date := jstr(im, "date")
@@ -944,9 +1098,9 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 				cv.sectionTitle(rx, title+" (cont.)")
 			}
 
-			cv.text(rx, cv.y, cBlack, "THSarabun", 10, certTitle)
-			cv.y += 12
-			cv.text(rx, cv.y, cv.cAccent, "THSarabun", 9, issuer+" • "+date)
+			cv.y = cv.wrapText(rx, cv.y, cBlack, "THSarabun", 10, certTitle, rw, 12, 0)
+			cv.y += 1
+			cv.y = cv.wrapText(rx, cv.y, cv.cAccent, "THSarabun", 9, issuer+" • "+date, rw, 11, 0)
 			cv.y += 13
 
 			desc := jstr(im, "description")
@@ -965,7 +1119,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 	cv.y = bodyTopY
 	lastLeftTitle := ""
 	for i, sec := range sections {
-		if !sec.IsVisible || sec.Type != "experience" {
+		if !sec.IsVisible || !sec.IncludeInResume || sec.Type != "experience" {
 			continue
 		}
 		items := jslice(data[i], "items")
@@ -975,12 +1129,15 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 		title := firstOf(jstr(data[i], "title"), "Experience")
 
-		if title != lastLeftTitle && !jbool(data[i], "hide_title") {
+		if title != lastLeftTitle && !sec.HideTitle {
 			cv.sectionTitle(cv.ml, title)
 			lastLeftTitle = title
 		}
 		for _, item := range items {
 			im := toJMap(item)
+			if im["include_in_resume"] == false {
+				continue
+			}
 			pos := firstOf(jstr(im, "position"), jstr(im, "title"))
 			company := jstr(im, "company")
 			startD := jstr(im, "start_date")
@@ -993,11 +1150,22 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 				dates += " – " + endD
 			}
 			desc := jstr(im, "description")
+			skills := jslice(im, "skills")
 
-			if cv.needsNewPage(90) { // Increased buffer for Experience
+			// Estimate height of this item to keep it together
+			hItem := 14.0 + 13.0 + 12.0 // Pos + Company + spacing
+			if desc != "" {
+				hItem += cv.estimateWrapHeight("THSarabun", 9, desc, lw, 12)
+			}
+			if len(skills) > 0 {
+				hItem += 18.0
+			}
+
+			if cv.needsNewPage(hItem) {
 				cv.switchAndAddPage(cv.ml)
-				// Re-render title if page broke within the same group
-				cv.sectionTitle(cv.ml, title+" CONT.")
+				if !sec.HideTitle {
+					cv.sectionTitle(cv.ml, title+" CONT.")
+				}
 			}
 
 			// Position + dates on same row
@@ -1015,13 +1183,34 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			if desc != "" {
 				cv.y = cv.wrapText(cv.ml, cv.y, cGray600, "THSarabun", 9, desc, lw, 12, 0)
 			}
+			cv.y += 3
+
+			// Skills
+			if len(skills) > 0 {
+				tx := cv.ml
+				for _, s := range skills {
+					tag := fmt.Sprintf("%v", s)
+					tagW := cv.measureW("THSarabun", 8, tag) + 15
+					if tx+tagW > cv.ml+lw {
+						cv.y += 18
+						tx = cv.ml
+						if cv.needsNewPage(18) {
+							cv.switchAndAddPage(cv.ml)
+							tx = cv.ml
+						}
+					}
+					tx = cv.tagPill(tx, cv.y, tag)
+				}
+				cv.y += 18
+			}
+
 			cv.y += 12
 		}
 	}
 
 	// ── LEFT: Projects ─────────────────────────────────────────────────────────
 	for i, sec := range sections {
-		if !sec.IsVisible || sec.Type != "projects" {
+		if !sec.IsVisible || !sec.IncludeInResume || sec.Type != "projects" {
 			continue
 		}
 		items := jslice(data[i], "items")
@@ -1031,19 +1220,33 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 		title := firstOf(jstr(data[i], "title"), "Projects")
 
-		if title != lastLeftTitle && !jbool(data[i], "hide_title") {
+		if title != lastLeftTitle && !sec.HideTitle {
 			cv.sectionTitle(cv.ml, title)
 			lastLeftTitle = title
 		}
 		for _, item := range items {
 			im := toJMap(item)
+			if im["include_in_resume"] == false {
+				continue
+			}
 			projItemTitle := jstr(im, "title")
 			desc := jstr(im, "description")
 			tags := jstrslice(im, "tags")
 
-			if cv.needsNewPage(80) { // Increased buffer for Projects
+			// Estimate height
+			hItem := 13.0 + 13.0 + 10.0 // Title + spacers
+			if desc != "" {
+				hItem += cv.estimateWrapHeight("THSarabun", 9, desc, lw, 12)
+			}
+			if len(tags) > 0 {
+				hItem += 18.0
+			}
+
+			if cv.needsNewPage(hItem) {
 				cv.switchAndAddPage(cv.ml)
-				cv.sectionTitle(cv.ml, title+" CONT.")
+				if !sec.HideTitle {
+					cv.sectionTitle(cv.ml, title+" CONT.")
+				}
 			}
 
 			cv.text(cv.ml, cv.y, cBlack, "THSarabun", 11, projItemTitle)
@@ -1054,6 +1257,15 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			if len(tags) > 0 {
 				tx := cv.ml
 				for _, tag := range tags {
+					tagW := cv.measureW("THSarabun", 8, tag) + 15
+					if tx+tagW > cv.ml+lw {
+						cv.y += 18
+						tx = cv.ml
+						if cv.needsNewPage(18) {
+							cv.switchAndAddPage(cv.ml)
+							tx = cv.ml
+						}
+					}
 					tx = cv.tagPill(tx, cv.y, tag)
 				}
 				cv.y += 18
@@ -1068,7 +1280,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 
 	// ── LEFT: Custom Text ──────────────────────────────────────────────────────
 	for i, sec := range sections {
-		if !sec.IsVisible || sec.Type != "custom_text" {
+		if !sec.IsVisible || !sec.IncludeInResume || sec.Type != "custom_text" {
 			continue
 		}
 		content := jstr(data[i], "content")
@@ -1082,7 +1294,7 @@ func (h *PortfolioHandler) GeneratePDFWithID(c *fiber.Ctx, id string) error {
 			cv.sectionTitle(cv.ml, title+" CONT.")
 		}
 
-		if title != lastLeftTitle && !jbool(data[i], "hide_title") {
+		if title != lastLeftTitle && !sec.HideTitle {
 			cv.sectionTitle(cv.ml, title)
 			lastLeftTitle = title
 		}

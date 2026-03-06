@@ -3,7 +3,7 @@
     'layout-' + (data.layout || 'centered'),
     { 'hide-title': data.hide_title, 'hide-divider': data.hide_divider }
   ]" :style="data.section_bg_color ? `background: ${data.section_bg_color} !important; --item-bg: ${data.section_bg_color};` : ''">
-    <div class="section-header-wrapper">
+    <div class="section-header-wrapper animate-slide-up" v-intersect>
       <h2 class="layered-title" :data-text="data.title || 'Connect'">{{ data.title || 'Connect Here' }}</h2>
     </div>
     
