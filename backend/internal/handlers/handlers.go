@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -609,6 +610,15 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 	p.OGImageURL = ogImageNull
 	p.HasPassword = passwordHash.Valid
 
+	// ─── Access Checks ────────────────────────────────────────────────────────
+	if !p.IsPublished {
+		return fiber.NewError(403, "ลิงก์นี้ยังไม่เปิดใช้งาน (This portfolio is not published)")
+	}
+	if p.ExpiresAt != nil && time.Now().UTC().After(*p.ExpiresAt) {
+		log.Printf("🚫 Link Expired Check: Current time (UTC): %v, Expire time (DB UTC): %v", time.Now().UTC().Format(time.RFC3339), p.ExpiresAt.Format(time.RFC3339))
+		return fiber.NewError(410, "ลิงก์หมดอายุแล้ว กรุณาติดต่อเจ้าของ Resume นี้")
+	}
+
 	// If it's a direct browser visit or a Bot, show the SEO Page + Redirect
 	if !wantsJSON {
 		// FALLBACK: If og_image_url is not set, try to get avatar from hero section
@@ -629,14 +639,7 @@ func (h *PublicHandler) ViewPortfolio(c *fiber.Ctx) error {
 
 	// ─── API RESPONSE (JSON) ──────────────────────────────────────────────────
 	// This part is for the Frontend SPA fetching data
-	if !p.IsPublished {
-		return fiber.NewError(403, "this portfolio is not published")
-	}
-	if p.ExpiresAt != nil && time.Now().After(*p.ExpiresAt) {
-		return fiber.NewError(410, "this portfolio link has expired")
-	}
-
-	// Check password
+	// Check password (if login enabled)
 	if passwordHash.Valid {
 		providedPassword := c.Get("X-Portfolio-Password")
 		if providedPassword == "" {

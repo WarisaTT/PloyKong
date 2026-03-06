@@ -35,7 +35,19 @@
         </div>
         <h1>Portfolio Not Found</h1>
         <p>This portfolio may have been deleted or the URL is incorrect.</p>
-        <a href="https://app.ploykong.com" class="btn btn-primary" style="margin-top: 24px">Back to Home</a>
+        <a href="https://ploy-kong.vercel.app/" class="btn btn-primary" style="margin-top: 24px">Back to Home</a>
+      </div>
+    </div>
+
+    <!-- 410 Expired -->
+    <div v-else-if="isExpired" class="pub-404">
+      <div class="not-found-content">
+        <div style="margin-bottom: 16px">
+          <Lock :size="64" style="stroke-width: 1.5px; color: var(--danger)" />
+        </div>
+        <h1>ลิงก์หมดอายุแล้ว</h1>
+        <p>กรุณาติดต่อเจ้าของ Resume นี้เพื่อขอเข้าถึงข้อมูล</p>
+        <a href="https://ploy-kong.vercel.app/" class="btn btn-primary" style="margin-top: 24px">กลับหน้าหลัก</a>
       </div>
     </div>
 
@@ -172,6 +184,7 @@ const slug = computed(() => route.params.slug as string);
 const portfolio = ref<Portfolio | null>(null);
 const loading = ref(true);
 const notFound = ref(false);
+const isExpired = ref(false);
 const requiresPassword = ref(false);
 const password = ref("");
 const pwError = ref("");
@@ -341,6 +354,8 @@ async function loadPortfolio(pw?: string) {
   } catch (e: any) {
     if (e.response?.data?.requires_password) {
       requiresPassword.value = true;
+    } else if (e.response?.status === 410) {
+      isExpired.value = true;
     } else {
       notFound.value = true;
     }

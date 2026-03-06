@@ -36,7 +36,7 @@ export interface Portfolio {
   og_image_url?: string;
   is_published: boolean;
   has_password: boolean;
-  expires_at?: string;
+  expires_at?: string | null;
   view_count: number;
   sections?: Section[];
   url?: string;

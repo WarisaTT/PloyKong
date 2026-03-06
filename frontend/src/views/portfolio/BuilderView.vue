@@ -12,7 +12,7 @@
         <div class="slug-container">
           <span class="portfolio-slug">
             <Globe :size="14" class="icon-inline" />
-            {{ store.activePortfolio?.slug }}.ploykong.com
+            ploy-kong.vercel.app/p/{{ store.activePortfolio?.slug }}
           </span>
           <button type="button" class="copy-link-btn-indigo" :disabled="!store.activePortfolio?.is_published"
             title="Copy Public Link" @click="copyPublicLink">
@@ -124,7 +124,7 @@
         <main class="builder-canvas" :class="{ 'is-dragging-mode': isDragging }" ref="canvasRef"
           :style="portfolioThemeVars">
           <div class="canvas-content-limiter" :class="[templateClass, themeClass]"
-            :style="{ 'background-color': 'transparent !important', border: 'none !important', ...portfolioThemeVars, fontFamily: theme.font ? `\&quot;${theme.font}\&quot;, sans-serif` : '' }">
+            :style="{ 'background-color': 'transparent !important', border: 'none !important', ...portfolioThemeVars, fontFamily: theme.font ? `${theme.font}, sans-serif` : '' }">
             <!-- Canvas Loading and Empty states -->
             <div v-if="store.loading" class="canvas-loading">...</div>
             <div v-else-if="store.sections.length === 0" class="canvas-empty">...</div>
@@ -174,15 +174,31 @@
           <!-- Portfolio Information -->
           <div v-if="store.activePortfolio" class="props-section info-section">
             <div class="props-label">Portfolio Name</div>
-            <input type="text" class="form-input" v-model="store.activePortfolio.title" placeholder="Portfolio Name"
-              @change="store.savePortfolio({ title: store.activePortfolio.title })" />
+            <div style="display: flex; gap: 8px;">
+              <input type="text" class="form-input" v-model="store.activePortfolio.title" placeholder="Portfolio Name"
+                @keyup.enter="store.savePortfolio({ title: store.activePortfolio.title })" />
+              <button class="btn btn-secondary btn-sm"
+                @click="store.savePortfolio({ title: store.activePortfolio.title })">Save</button>
+            </div>
           </div>
 
           <div v-if="store.activePortfolio" class="props-section">
             <div class="props-label">Link Expiration (Link หมดอายุ)</div>
-            <input type="datetime-local" class="form-input"
-              :value="formatDateTimeLocal(store.activePortfolio?.expires_at)"
-              @change="(e) => store.savePortfolio({ expires_at: (e.target as HTMLInputElement)?.value })" />
+            <div style="display: flex; gap: 8px; flex-direction: column;">
+              <input type="datetime-local" class="form-input"
+                :value="tempExpiresAt || formatDateTimeLocal(store.activePortfolio?.expires_at)"
+                @input="(e) => tempExpiresAt = (e.target as HTMLInputElement).value" />
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary btn-sm" style="flex: 1" @click="handleSaveExpiresAt"
+                  :disabled="tempExpiresAt === formatDateTimeLocal(store.activePortfolio?.expires_at)">
+                  Save Expiration (บันทึกวันหมดอายุ)
+                </button>
+                <button v-if="store.activePortfolio?.expires_at" class="btn btn-outline btn-sm"
+                  @click="tempExpiresAt = null; store.savePortfolio({ expires_at: null })">
+                  Clear
+                </button>
+              </div>
+            </div>
             <p style="font-size: 10px; color: var(--muted); margin-top: 4px;">
               เมื่อถึงเวลาที่กำหนด พอร์ตโฟลิโอจะถูกยกเลิกการเผยแพร่อัตโนมัติ (Unpublish)
             </p>
@@ -263,8 +279,7 @@
           <div class="props-section">
             <div class="props-label">Portfolio URL</div>
             <div class="url-display copyable-url" @click="copyPublicLink" :title="copied ? 'Copied!' : 'Click to copy'">
-              <span class="url-prefix">pk.io/</span>
-              <span class="url-slug">{{ store.activePortfolio?.slug }}</span>
+               ploy-kong.vercel.app/p/{{ store.activePortfolio?.slug }}
               <Copy v-if="!copied" :size="12" style="margin-left: auto; opacity: 0.5" />
               <Check v-else :size="12" style="margin-left: auto; color: var(--success)" />
             </div>
@@ -921,24 +936,24 @@ async function togglePublish() {
   }
 }
 
-function previewPortfolio() {
-  const slug = store.activePortfolio?.slug
-  if (slug) window.open(`/p/${slug}`, '_blank')
-}
-
 function copyPublicLink() {
   const slug = store.activePortfolio?.slug
   if (!slug) return
 
-  // Use the API's Public URL to trigger the SEO/Crawler handler
-  const apiBase = import.meta.env.VITE_API_URL || '/api/v1'
-  const url = `${apiBase}/public/p/${slug}`
+  // Use the canonical public URL on Vercel
+  const url = `https://ploy-kong.vercel.app/p/${slug}`;
   navigator.clipboard.writeText(url).then(() => {
     copied.value = true
     setTimeout(() => {
       copied.value = false
     }, 2000)
   })
+}
+
+function previewPortfolio() {
+  const slug = store.activePortfolio?.slug
+  if (!slug) return
+  window.open(`https://ploy-kong.vercel.app/p/${slug}`, '_blank')
 }
 
 
@@ -968,6 +983,19 @@ function handleSectionUpdate(newData: any) {
     hide_divider: !!hide_divider,
     include_in_resume: !!include_in_resume
   })
+}
+
+const tempExpiresAt = ref<string | null>(null)
+
+function handleSaveExpiresAt() {
+  const val = tempExpiresAt.value;
+  if (!val && !store.activePortfolio?.expires_at) return;
+
+  // If user picked a date, convert to ISO UTC for backend
+  const isoVal = val ? new Date(val).toISOString() : null;
+  store.savePortfolio({ expires_at: isoVal }).then(() => {
+    tempExpiresAt.value = null;
+  });
 }
 
 function handleSectionBGUpdate(color: string) {
@@ -1324,7 +1352,7 @@ function escHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function formatDateTimeLocal(dateStr?: string) {
+function formatDateTimeLocal(dateStr?: string | null) {
   if (!dateStr) return ""
 
   const d = new Date(dateStr)

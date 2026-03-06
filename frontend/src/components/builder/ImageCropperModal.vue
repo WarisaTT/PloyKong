@@ -16,9 +16,14 @@
             :src="imageSrc"
             :stencil-props="{
               aspectRatio: aspectRatio,
-              grid: true
+              grid: true,
+              movable: true,
+              resizable: true,
             }"
-            image-restriction="stencil"
+            image-restriction="fill-area"
+            :default-size="defaultSize"
+            :auto-zoom="true"
+            :check-orientation="true"
           />
         </div>
         
@@ -36,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { Cropper } from 'vue-advanced-cropper';
 import 'vue-advanced-cropper/dist/style.css';
 import { X, Check } from 'lucide-vue-next';
@@ -53,6 +58,29 @@ const emit = defineEmits<{
 }>();
 
 const cropperRef = ref<any>(null);
+
+const defaultSize = ({ imageSize }: any) => {
+  if (props.aspectRatio) {
+    const imgRatio = imageSize.width / imageSize.height;
+    if (imgRatio > props.aspectRatio) {
+      // Image is wider than stencil ratio -> height is constraint
+      return {
+        width: imageSize.height * props.aspectRatio,
+        height: imageSize.height,
+      };
+    } else {
+      // Image is taller than stencil ratio -> width is constraint
+      return {
+        width: imageSize.width,
+        height: imageSize.width / props.aspectRatio,
+      };
+    }
+  }
+  return {
+    width: imageSize.width,
+    height: imageSize.height,
+  };
+};
 
 function confirm() {
   if (cropperRef.value) {

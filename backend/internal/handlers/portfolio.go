@@ -198,8 +198,10 @@ func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
 	claims := middleware.GetUserClaims(c)
 	id := c.Params("id")
 
+	// Parse body manually to handle tri-state expires_at
+	body := c.Body()
 	var req UpdatePortfolioRequest
-	if err := c.BodyParser(&req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 
@@ -211,6 +213,7 @@ func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
 	).Scan(&count)
 
 	if err != nil {
+		log.Printf("❌ DB Error during ownership check: %v", err)
 		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
 
@@ -224,46 +227,57 @@ func (h *PortfolioHandler) Update(c *fiber.Ctx) error {
 		themeParam = string(themeJSON)
 	}
 
-	// Update portfolio
-	_, err = h.db.Exec(
-		`UPDATE portfolios SET
-	 title = COALESCE(?, title),
-	 description = COALESCE(?, description),
-	 theme = COALESCE(?, theme),
-	 seo_title = COALESCE(?, seo_title),
-	 seo_desc = COALESCE(?, seo_desc),
-	 expires_at = COALESCE(?, expires_at),
-	 is_published = CASE
-		WHEN COALESCE(?, expires_at) IS NOT NULL
-		AND COALESCE(?, expires_at) < NOW()
-		THEN FALSE
-		ELSE is_published
-	 END
-	 WHERE id = ?`,
-		req.Title,
-		req.Description,
-		themeParam,
-		req.SEOTitle,
-		req.SEODesc,
-		req.ExpiresAt,
-		req.ExpiresAt,
-		req.ExpiresAt,
-		id,
-	)
+	// Build dynamic update query
+	query := `UPDATE portfolios SET
+		 title = COALESCE(?, title),
+		 description = COALESCE(?, description),
+		 theme = COALESCE(?, theme),
+		 seo_title = COALESCE(?, seo_title),
+		 seo_desc = COALESCE(?, seo_desc)`
+	args := []interface{}{req.Title, req.Description, themeParam, req.SEOTitle, req.SEODesc}
 
+	// Handle Tri-state expires_at
+	// req.ExpiresAt == nil          => Not provided (don't update)
+	// req.ExpiresAt != nil          => Provided
+	//   *req.ExpiresAt == nil       => Provided as null
+	//   *req.ExpiresAt != nil       => Provided as actual time
+	if req.ExpiresAt != nil {
+		query += `, expires_at = ?`
+		if *req.ExpiresAt == nil {
+			args = append(args, nil)
+		} else {
+			args = append(args, *req.ExpiresAt)
+		}
+	}
+
+	query += ` WHERE id = ?`
+	args = append(args, id)
+
+	_, err = h.db.Exec(query, args...)
 	if err != nil {
+		log.Printf("❌ Update Portfolio Exec error: %v\nQuery: %s\nArgs: %+v", err, query, args)
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to update portfolio")
 	}
 
-	// Auto unpublish if expired
+	// Auto unpublish if expires_at is in the past
 	_, _ = h.db.Exec(
-		`UPDATE portfolios
-		 SET is_published = FALSE
-		 WHERE id = ?
-		 AND expires_at IS NOT NULL
-		 AND expires_at < NOW()`,
+		`UPDATE portfolios 
+		 SET is_published = FALSE 
+		 WHERE id = ? 
+		 AND expires_at IS NOT NULL 
+		 AND expires_at < UTC_TIMESTAMP()`,
 		id,
 	)
+
+	// Auto publish if newly updated expires_at is in the future
+	if req.ExpiresAt != nil && *req.ExpiresAt != nil && (*req.ExpiresAt).After(time.Now().UTC()) {
+		_, _ = h.db.Exec(
+			`UPDATE portfolios 
+			 SET is_published = TRUE 
+			 WHERE id = ?`,
+			id,
+		)
+	}
 
 	return c.JSON(fiber.Map{
 		"success": true,

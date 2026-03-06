@@ -66,7 +66,9 @@ export const usePortfolioStore = defineStore("portfolio", () => {
       await portfolioAPI.update(activePortfolio.value.id, updates);
       Object.assign(activePortfolio.value, updates);
     } catch (e: any) {
-      error.value = e.response?.data?.error || "Failed to save";
+      const msg = e.response?.data?.error || "Failed to save";
+      error.value = msg;
+      showError(msg);
     } finally {
       saving.value = false;
     }
