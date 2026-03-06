@@ -144,6 +144,7 @@ func main() {
 	public.Get("/p/:slug", publicHandler.ViewPortfolio)
 	public.Post("/p/:slug/track", publicHandler.TrackEvent)
 	public.Post("/p/:slug/chat", publicHandler.AIChat)
+	public.Post("/translate", aiHandler.Translate)
 	public.Get("/p/:slug/pdf", publicHandler.ExportPDFBySlug)
 	public.Get("/id/:id/pdf", portfolioHandler.GeneratePDF)
 

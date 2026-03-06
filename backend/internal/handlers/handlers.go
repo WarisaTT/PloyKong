@@ -506,10 +506,12 @@ func (h *AIHandler) MagicFill(c *fiber.Ctx) error {
 		Example schemas:
 		- experience: {"items": [{"company": "...", "position": "...", "location": "...", "start_date": "...", "end_date": "...", "description": "...", "skills": ["Skill1", "Skill2"]}]}
 		- skills: {"items": [{"name": "...", "category": "..."}]}
-		- projects: {"items": [{"title": "...", "description": "...", "live_url": "...", "github_url": "...", "tags": ["tag1", "tag2"]}]}
+		- projects: {"items": [{"title": "e.g., E-commerce Redesign", "description": "Describe the problem, solution, and impact (2-3 sentences).", "live_url": "https://...", "github_url": "https://...", "tags": ["React", "AI", "UI/UX"]}]}
 		- education: {"items": [{"school": "...", "degree": "...", "field": "...", "start_year": "...", "end_year": "...", "gpa": "..."}]}
 		- certificates: {"items": [{"title": "...", "issuer": "...", "date": "...", "description": "..."}]}
 		- contact: {"email": "...", "linkedin": "...", "github": "...", "location": "..."}
+		
+		STORYTELLING TIP: For Projects, focus on "Built X to solve Y resulting in Z" style descriptions.
 		
 		Generate content now:`,
 		req.SectionType, req.HeroData, req.PreviousData, req.Template,
@@ -517,16 +519,80 @@ func (h *AIHandler) MagicFill(c *fiber.Ctx) error {
 
 	result, err := callFreeAI(prompt)
 	if err != nil {
+		log.Printf("❌ MagicFill AI Error: %v", err)
 		return fiber.NewError(500, "AI service unavailable")
 	}
 
-	// Clean up potential markdown formatting from AI
-	result = strings.TrimPrefix(result, "```json")
-	result = strings.TrimPrefix(result, "```")
-	result = strings.TrimSuffix(result, "```")
+	result = cleanAIResult(result)
+	return c.JSON(fiber.Map{"success": true, "data": json.RawMessage(result)})
+}
+
+func (h *AIHandler) Translate(c *fiber.Ctx) error {
+	var req struct {
+		Data       json.RawMessage `json:"data"`
+		TargetLang string          `json:"target_lang"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(400, "invalid body")
+	}
+
+	prompt := fmt.Sprintf(
+		`You are a professional translator and portfolio optimizer. Translate the following JSON data into "%s".
+		
+		INSTRUCTIONS:
+		1. Translate ONLY the string values. DO NOT change JSON keys.
+		2. For arrays of objects, translate each object's values.
+		3. Keep the tone professional and suitable for a resume/portfolio.
+		4. Maintain all URLs, dates, and technical terms as they are if appropriate.
+		5. Return ONLY the valid JSON object. No markdown block, no extra text.
+		
+		DATA:
+		%s`,
+		req.TargetLang, string(req.Data),
+	)
+
+	result, err := callFreeAI(prompt)
+	if err != nil {
+		log.Printf("❌ Translation AI Error: %v", err)
+		return fiber.NewError(500, "AI service unavailable")
+	}
+
+	result = cleanAIResult(result)
+	return c.JSON(fiber.Map{"success": true, "data": json.RawMessage(result)})
+}
+
+// cleanAIResult robustly extracts JSON from AI response
+func cleanAIResult(result string) string {
 	result = strings.TrimSpace(result)
 
-	return c.JSON(fiber.Map{"success": true, "data": json.RawMessage(result)})
+	// Handle markdown blocks
+	if strings.Contains(result, "```") {
+		// Try to find content between ```json and ```
+		if start := strings.Index(result, "```json"); start != -1 {
+			result = result[start+7:]
+		} else if start := strings.Index(result, "```"); start != -1 {
+			result = result[start+3:]
+		}
+
+		if end := strings.LastIndex(result, "```"); end != -1 {
+			result = result[:end]
+		}
+	}
+
+	// Final trim to ensure we have just the JSON object/array
+	result = strings.TrimSpace(result)
+
+	// Very aggressive check: if it doesn't start with { or [, it's likely not valid JSON
+	if !strings.HasPrefix(result, "{") && !strings.HasPrefix(result, "[") {
+		// Try to find the first { or [
+		sIdx := strings.IndexAny(result, "{[")
+		eIdx := strings.LastIndexAny(result, "}]")
+		if sIdx != -1 && eIdx != -1 && eIdx > sIdx {
+			result = result[sIdx : eIdx+1]
+		}
+	}
+
+	return result
 }
 
 // callFreeAI sends a request to Pollinations (free AI)

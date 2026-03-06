@@ -204,7 +204,9 @@ export const publicAPI = {
   chat: (slug: string, message: string, sessionId: string) =>
     api.post(`/public/p/${slug}/chat`, { message, session_id: sessionId }),
   exportPdf: (slug: string) =>
-    api.get(`/public/p/${slug}/pdf`, { responseType: "blob" })
+    api.get(`/public/p/${slug}/pdf`, { responseType: "blob" }),
+  translate: (data: any, targetLang: string) =>
+    api.post("/public/translate", { data, target_lang: targetLang }),
 };
 
 export default api;

@@ -2112,53 +2112,94 @@ body.theme-light .tpl-business .layered-title,
 
 /* ── Step 11: Projects ─────────────────────────────────────── */
 .tpl-business .proj-card {
-    background: transparent !important;
-    border: none !important;
-    border-bottom: 1px solid var(--tpl-border) !important;
-    border-radius: 0 !important;
-    padding: 48px 0 !important;
+    background: var(--tpl-surface) !important;
+    border: 1px solid var(--tpl-border) !important;
+    border-radius: 20px !important;
+    padding: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    /* Default 1 column */
-    gap: 64px !important;
-    align-items: center !important;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
-}
-
-/* Dynamic 2-column only if image is present */
-.tpl-business .proj-card:has(.proj-img) {
-    grid-template-columns: 1fr 480px !important;
-}
-
-.tpl-business .proj-card .proj-img {
-    order: 2 !important;
-    /* Move image to second column */
-}
-
-.tpl-business .proj-card .proj-body {
-    order: 1 !important;
-    /* Move body to first column */
-}
-
-.tpl-business .is-row-start .proj-card {
-    grid-template-columns: 1fr !important;
-    gap: 24px !important;
-    padding: 32px 0 !important;
     display: flex !important;
     flex-direction: column !important;
+    overflow: hidden !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+    margin-bottom: 32px !important;
 }
 
-.tpl-business .is-row-start .proj-card .proj-img {
-    order: 1 !important;
-    /* Image on top for sidebar */
+.theme-light .tpl-business .proj-card,
+body.theme-light .tpl-business .proj-card {
+    background: #ffffff !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04) !important;
 }
 
+.tpl-business .proj-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2) !important;
+    border-color: var(--primary) !important;
+}
 
+.theme-light .tpl-business .proj-card:hover,
+body.theme-light .tpl-business .proj-card:hover {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.tpl-business .proj-img {
+    width: 100% !important;
+    height: 240px !important;
+    object-fit: cover !important;
+    border-bottom: 1px solid var(--tpl-border) !important;
+}
+
+.tpl-business .proj-body {
+    padding: 32px !important;
+    flex: 1 !important;
+}
+
+.tpl-business .proj-title {
+    font-family: var(--font-display) !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    color: var(--tpl-text) !important;
+    margin-bottom: 12px !important;
+}
+
+.tpl-business .proj-desc {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    color: var(--tpl-text) !important;
+    opacity: 0.7 !important;
+    margin-bottom: 24px !important;
+}
+
+.tpl-business .proj-tag {
+    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    color: var(--primary) !important;
+    border: none !important;
+    font-weight: 700 !important;
+    padding: 5px 12px !important;
+    border-radius: 6px !important;
+    font-size: 11px !important;
+}
+
+.tpl-business .proj-link {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+
+/* Split layout adjustments for Projects */
+.tpl-business .pub-section.layout-split.pub-projects .proj-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+}
+
+.tpl-business .pub-section.layout-split.pub-projects .proj-card {
+    margin-bottom: 40px !important;
+}
 
 .tpl-business .proj-card:last-child {
-    border-bottom: none !important;
+    margin-bottom: 0 !important;
 }
 
 .tpl-business .proj-img-wrap {
