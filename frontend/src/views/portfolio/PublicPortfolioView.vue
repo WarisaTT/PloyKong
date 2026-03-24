@@ -64,7 +64,7 @@
         }">
           <component :is="getSectionComponent(group.sections[0].type)"
             :data="{ ...group.sections[0].data, hide_title: group.sections[0].hide_title, hide_divider: group.sections[0].hide_divider }"
-            :theme="displayPortfolio?.theme" :portfolio="displayPortfolio!" class="is-full-bleed"></component>
+            :theme="portfolio?.theme" :portfolio="portfolio!" class="is-full-bleed"></component>
         </div>
 
         <!-- Constrained Grid Group -->
@@ -83,22 +83,10 @@
               }">
               <component :is="getSectionComponent(section.type)"
                 :data="{ ...section.data, hide_title: section.hide_title, hide_divider: section.hide_divider }"
-                :theme="displayPortfolio?.theme" :portfolio="displayPortfolio!"
+                :theme="portfolio?.theme" :portfolio="portfolio!"
                 :class="{ 'is-half-split': section.column_span === 'half' }"></component>
             </div>
           </TransitionGroup>
-        </div>
-      </div>
-
-      <!-- Language Switcher FAB -->
-      <div v-if="portfolio" class="lang-fab" :class="{ 'translate-loading': translateLoading }">
-        <div v-if="translateLoading" class="loader-wrap">
-          <Loader2 class="animate-spin" :size="20" />
-        </div>
-        <div v-else class="lang-options">
-          <button @click="switchLanguage('th')" :class="{ active: currentLang === 'th' }">TH</button>
-          <div class="lang-divider"></div>
-          <button @click="switchLanguage('en')" :class="{ active: currentLang === 'en' }">EN</button>
         </div>
       </div>
 
@@ -214,26 +202,10 @@ const chatMessages = ref<{ role: "user" | "assistant"; content: string }[]>([
 const chatMessagesRef = ref<HTMLElement | null>(null);
 const sessionId = ref(Math.random().toString(36).slice(2));
 
-const currentLang = ref("original"); // "original", "th", "en"
-const translateLoading = ref(false);
-const translatedDataMap = ref<Record<string, any>>({});
-
-const displayPortfolio = computed(() => {
-  if (!portfolio.value) return null;
-  if (currentLang.value === "original") return portfolio.value;
-
-  // Reconstruct portfolio with translated sections
-  return {
-    ...portfolio.value,
-    sections: (portfolio.value.sections || []).map(s => ({
-      ...s,
-      data: translatedDataMap.value[s.id] || s.data
-    }))
-  };
-});
+// Language switching removed at user request
 
 const themeClass = computed(() => {
-  const mode = displayPortfolio.value?.theme?.mode || "system";
+  const mode = portfolio.value?.theme?.mode || "system";
   return `theme-${mode}`;
 });
 
@@ -244,9 +216,9 @@ const templateClass = computed(() => {
 });
 
 const themeVars = computed(() => {
-  const primary = displayPortfolio.value?.theme?.primary_color || "#4F46E5";
-  const secondary = displayPortfolio.value?.theme?.secondary_color || "";
-  const font = displayPortfolio.value?.theme?.font || "Plus Jakarta Sans";
+  const primary = portfolio.value?.theme?.primary_color || "#4F46E5";
+  const secondary = portfolio.value?.theme?.secondary_color || "";
+  const font = portfolio.value?.theme?.font || "Plus Jakarta Sans";
   const glowHex = "40";
   const vars: Record<string, string> = {
     "--primary": primary,
@@ -257,7 +229,7 @@ const themeVars = computed(() => {
   };
 
   const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const mode = displayPortfolio.value?.theme?.mode || "system";
+  const mode = portfolio.value?.theme?.mode || "system";
   const effectiveMode = (mode as any) === "system" ? (isSystemDark ? "dark" : "light") : mode;
 
   if (effectiveMode === "light") {
@@ -268,8 +240,8 @@ const themeVars = computed(() => {
     vars["--muted"] = "#94a3b8";
   }
 
-  const bg = displayPortfolio.value?.theme?.bg_color;
-  const border = displayPortfolio.value?.theme?.border_color;
+  const bg = portfolio.value?.theme?.bg_color;
+  const border = portfolio.value?.theme?.border_color;
 
   if (bg) {
     vars["--theme-bg"] = bg;
@@ -283,58 +255,10 @@ const themeVars = computed(() => {
   return vars;
 });
 
-async function switchLanguage(lang: "th" | "en") {
-  if (currentLang.value === lang) {
-    currentLang.value = "original";
-    return;
-  }
-
-  // If already translated, just switch
-  const allSectionsTranslated = (portfolio.value?.sections || []).every(
-    s => translatedDataMap.value[s.id] && translatedDataMap.value[s.id]._lang === lang
-  );
-
-  if (allSectionsTranslated) {
-    currentLang.value = lang;
-    return;
-  }
-
-  // Otherwise, translate using AI
-  translateLoading.value = true;
-  try {
-    const sections = portfolio.value?.sections || [];
-    const targetLangLabel = lang === "th" ? "Thai" : "English";
-
-    // Translate in parallel chunks
-    const promises = (portfolio.value?.sections || []).map(async (sec) => {
-      // Skip non-translatable or empty sections
-      if (!sec.data || (typeof sec.data === 'object' && Object.keys(sec.data).length === 0)) return;
-      if (sec.type === 'ai_chat') return;
-      
-      // Check if already translated
-      if (translatedDataMap.value[sec.id]?._lang === lang) return;
-
-      try {
-        const res = await publicAPI.translate(sec.data, targetLangLabel);
-        if (res.data?.data) {
-           translatedDataMap.value[sec.id] = { ...res.data.data, _lang: lang };
-        }
-      } catch (e) {
-        console.warn(`Translation failed for section ${sec.id}:`, e);
-      }
-    });
-
-    await Promise.all(promises);
-    currentLang.value = lang;
-  } catch (e) {
-    console.error("Critical translation error:", e);
-  } finally {
-    translateLoading.value = false;
-  }
-}
+// Translation function removed at user request
 
 const visibleSections = computed(() =>
-  (displayPortfolio.value?.sections || [])
+  (portfolio.value?.sections || [])
     .filter((s) => s.is_visible)
     .sort((a, b) => a.position - b.position),
 );
@@ -394,7 +318,7 @@ const sectionGroups = computed(() => {
 });
 
 const hasAIChat = computed(() =>
-  (displayPortfolio.value?.sections || []).some((s) => s.type === "ai_chat" && s.is_visible),
+  (portfolio.value?.sections || []).some((s) => s.type === "ai_chat" && s.is_visible),
 );
 
 const exampleQuestions = computed(() => {
@@ -793,74 +717,5 @@ onMounted(() => loadPortfolio());
   opacity: 0;
 }
 
-.lang-fab {
-  position: fixed;
-  bottom: 28px;
-  right: 100px;
-  height: 56px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
 
-:global(.theme-dark) .lang-fab {
-  background: #1e293b;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.lang-fab.translate-loading {
-  width: 56px;
-  justify-content: center;
-  padding: 0;
-}
-
-.lang-options {
-  display: flex;
-  align-items: center;
-  padding: 0 4px;
-}
-
-.lang-options button {
-  border: none;
-  background: transparent;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 800;
-  border-radius: 20px;
-  cursor: pointer;
-  color: var(--muted);
-  transition: all 0.2s;
-  letter-spacing: 0.5px;
-}
-
-.lang-options button:hover:not(.active) {
-  color: var(--text);
-  background: rgba(var(--bg-rgb, 0, 0, 0), 0.05);
-}
-
-.lang-options button.active {
-  background: var(--primary);
-  color: white;
-}
-
-.lang-divider {
-  width: 1px;
-  height: 16px;
-  background: var(--border);
-  opacity: 0.5;
-}
-
-@media (max-width: 640px) {
-  .lang-fab {
-    bottom: 100px;
-    right: 28px;
-  }
-}
 </style>
